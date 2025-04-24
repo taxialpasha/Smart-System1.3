@@ -1,0 +1,219 @@
+/**
+ * أنماط تكامل نظام المصادقة مع التطبيق
+ * تحسينات إضافية لواجهة المستخدم
+ */
+
+/* التحكم في ظهور/إخفاء العناصر حسب حالة المصادقة */
+body:not(.authenticated) .auth-only {
+    display: none !important;
+}
+
+body.authenticated .guest-only {
+    display: none !important;
+}
+
+/* أنماط انتظار تهيئة المصادقة */
+body.auth-pending .main-content {
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* تنسيق لوحة معلومات المستخدم في الهيدر */
+.auth-user-panel {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+    position: relative;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 30px;
+    transition: background-color 0.2s;
+}
+
+.auth-user-panel:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.auth-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 8px;
+    overflow: hidden;
+}
+
+.auth-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.auth-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.auth-user-role {
+    font-size: 12px;
+    color: #666;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* القائمة المنسدلة */
+.auth-user-dropdown {
+    position: relative;
+}
+
+.auth-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: 200px;
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    transform: translateY(10px);
+    opacity: 0;
+}
+
+.auth-user-panel:hover .auth-dropdown-menu {
+    display: block;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.auth-dropdown-item {
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.auth-dropdown-item:hover {
+    background-color: #f5f8ff;
+}
+
+.auth-dropdown-item i {
+    margin-left: 10px;
+    color: #3b82f6;
+    font-size: 16px;
+}
+
+.auth-dropdown-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+/* إصلاحات متنوعة للأقسام المختلفة */
+#logout-btn {
+    color: #e74c3c;
+}
+
+#logout-btn i {
+    color: #e74c3c;
+}
+
+/* زر تسجيل الدخول في الهيدر */
+#header-login-btn {
+    margin-right: 10px;
+}
+
+/* تحسينات للجوال والشاشات الصغيرة */
+@media (max-width: 768px) {
+    .auth-user-role {
+        display: none;
+    }
+    
+    .auth-dropdown-menu {
+        width: 180px;
+        right: 0;
+        left: auto;
+    }
+}
+
+/* تنسيقات النافذة المنبثقة للمصادقة */
+.auth-modal-overlay {
+    z-index: 9999 !important;
+}
+
+/* تحسينات لنافذة المصادقة في التطبيق */
+.auth-modal {
+    direction: rtl;
+    font-family: 'Tajawal', sans-serif;
+}
+
+/* تحسينات للأزرار لتتناسب مع نمط التطبيق */
+.auth-button-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.auth-button-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.auth-button-outline {
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* تأثيرات انتقالية */
+.auth-modal {
+    animation: auth-modal-in 0.3s forwards;
+}
+
+@keyframes auth-modal-in {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* تحسين الشكل العام */
+.auth-logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.auth-logo img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.auth-logo-title {
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #3b82f6;
+}

@@ -1,0 +1,200 @@
+<!-- التعديلات اللازمة لملف index.html -->
+
+<!-- 1. أضف هذا في قسم <head> قبل نهايته -->
+<link rel="stylesheet" href="auth-system-styles.css" />
+
+<!-- 2. أضف هذا في البداية مباشرة بعد فتح وسم <body> -->
+<!-- نافذة المصادقة -->
+<div class="auth-modal-overlay" id="auth-modal">
+    <div class="auth-modal">
+        <div class="auth-modal-header">
+            <h3 class="auth-modal-title">تسجيل الدخول</h3>
+            <button class="auth-modal-close" id="auth-modal-close">&times;</button>
+        </div>
+        
+        <div class="auth-modal-body">
+            <!-- شعار النظام -->
+            <div class="auth-logo">
+                <img src="assets/icon.png" alt="شعار النظام">
+                <div class="auth-logo-title">نظام الاستثمار المتكامل</div>
+            </div>
+            
+            <!-- رسائل الخطأ -->
+            <div class="auth-error" id="auth-error"></div>
+            
+            <!-- علامات تبويب المصادقة -->
+            <div class="auth-tabs">
+                <!-- تسجيل الدخول -->
+                <div class="auth-tab active" id="login-tab">
+                    <form class="auth-form" id="login-form">
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="login-email">البريد الإلكتروني</label>
+                            <input class="auth-input" type="email" id="login-email" placeholder="أدخل بريدك الإلكتروني" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="login-password">كلمة المرور</label>
+                            <input class="auth-input" type="password" id="login-password" placeholder="أدخل كلمة المرور" required>
+                        </div>
+                        
+                        <div class="auth-forgot-password">
+                            <a href="#" id="forgot-password">نسيت كلمة المرور؟</a>
+                        </div>
+                        
+                        <button class="auth-button auth-button-primary" type="submit" id="login-btn">تسجيل الدخول</button>
+                    </form>
+                </div>
+                
+                <!-- إنشاء حساب -->
+                <div class="auth-tab" id="signup-tab">
+                    <form class="auth-form" id="signup-form">
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="signup-name">الاسم الكامل</label>
+                            <input class="auth-input" type="text" id="signup-name" placeholder="أدخل اسمك الكامل">
+                        </div>
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="signup-email">البريد الإلكتروني</label>
+                            <input class="auth-input" type="email" id="signup-email" placeholder="أدخل بريدك الإلكتروني" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="signup-password">كلمة المرور</label>
+                            <input class="auth-input" type="password" id="signup-password" placeholder="أدخل كلمة المرور (6 أحرف على الأقل)" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="signup-confirm-password">تأكيد كلمة المرور</label>
+                            <input class="auth-input" type="password" id="signup-confirm-password" placeholder="أعد إدخال كلمة المرور" required>
+                        </div>
+                        
+                        <button class="auth-button auth-button-primary" type="submit" id="signup-btn">إنشاء حساب</button>
+                    </form>
+                </div>
+                
+                <!-- استعادة كلمة المرور -->
+                <div class="auth-tab" id="reset-tab">
+                    <form class="auth-form" id="reset-form">
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="reset-email">البريد الإلكتروني</label>
+                            <input class="auth-input" type="email" id="reset-email" placeholder="أدخل بريدك الإلكتروني" required>
+                        </div>
+                        
+                        <div class="auth-success" id="reset-success"></div>
+                        
+                        <button class="auth-button auth-button-primary" type="submit" id="reset-btn">إرسال رابط التعيين</button>
+                        
+                        <div class="auth-divider">
+                            <span class="auth-divider-text">أو</span>
+                        </div>
+                        
+                        <button class="auth-button auth-button-outline" type="button" id="back-to-login">العودة إلى تسجيل الدخول</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- تذييل النافذة -->
+        <div class="auth-modal-footer">
+            <p id="login-footer">
+                ليس لديك حساب؟ <a href="#" id="switch-to-signup">إنشاء حساب جديد</a>
+            </p>
+            <p id="signup-footer" style="display: none;">
+                لديك حساب بالفعل؟ <a href="#" id="switch-to-login">تسجيل الدخول</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- 3. في قسم header-actions أضف هذا قبل نهايته -->
+<!-- لوحة معلومات المستخدم -->
+<div class="auth-user-panel auth-only">
+    <div class="auth-user-avatar" id="user-avatar">م</div>
+    <div class="auth-user-info">
+        <div class="auth-user-name" id="user-name">مستخدم النظام</div>
+        <div class="auth-user-role" id="user-email">user@example.com</div>
+    </div>
+    <div class="auth-user-dropdown">
+        <div class="auth-dropdown-menu">
+            <div class="auth-dropdown-item" id="profile-btn">
+                <i class="fas fa-user"></i>
+                <span>الملف الشخصي</span>
+            </div>
+            <div class="auth-dropdown-item" id="settings-link">
+                <i class="fas fa-cog"></i>
+                <span>الإعدادات</span>
+            </div>
+            <div class="auth-dropdown-divider"></div>
+            <div class="auth-dropdown-item" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- زر تسجيل الدخول للزوار -->
+<button class="btn btn-primary guest-only" id="header-login-btn">
+    <i class="fas fa-sign-in-alt"></i>
+    <span>تسجيل الدخول</span>
+</button>
+
+<!-- 4. في نهاية الملف، قبل نهاية وسم </body> أضف هذا -->
+<!-- سكريبت نظام المصادقة -->
+<script src="auth-system.js"></script>
+<script src="auth-integration.js"></script>
+
+<!-- 5. أضف هذا السكريبت قبل نهاية وسم </body> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تنفيذ شفافية واجهة المستخدم قبل إكمال المصادقة
+        document.body.classList.add('auth-pending');
+        
+        // تهيئة نظام المصادقة
+        if (window.AuthSystem) {
+            AuthSystem.initialize().then(auth => {
+                // إزالة فئة الانتظار
+                document.body.classList.remove('auth-pending');
+                
+                if (auth.isAuthenticated) {
+                    // إظهار واجهة المستخدم المصادق
+                    document.body.classList.add('authenticated');
+                    console.log('تم تسجيل الدخول كـ:', auth.user.email);
+                    
+                    // تحميل البيانات بعد المصادقة
+                    if (window.FirebaseSync && window.FirebaseSync.loadDataWithSync) {
+                        window.FirebaseSync.loadDataWithSync();
+                    } else if (window.loadData) {
+                        window.loadData();
+                    }
+                } else {
+                    // إظهار شاشة تسجيل الدخول
+                    document.body.classList.remove('authenticated');
+                    AuthSystem.showAuthModal();
+                }
+                
+                // إطلاق حدث اكتمال تهيئة المصادقة
+                window.dispatchEvent(new CustomEvent('auth:initialized', { detail: auth }));
+            });
+        } else {
+            console.error('نظام المصادقة غير متوفر');
+            
+            // إذا لم يكن نظام المصادقة متاحاً، افترض أن المستخدم مسجل الدخول
+            document.body.classList.remove('auth-pending');
+            document.body.classList.add('authenticated');
+            
+            // تحميل البيانات
+            if (window.loadData) {
+                window.loadData();
+            }
+            
+            // إطلاق حدث اكتمال تهيئة المصادقة
+            window.dispatchEvent(new CustomEvent('auth:initialized', { detail: { isAuthenticated: true } }));
+        }
+        
+        // ربط أحداث المصادقة بواجهة المستخدم
+        document.getElementById('settings-link')?.addEventListener('click', function() {
+            // التنقل إلى صفحة الإعدادات
+            const settingsLink = document.querySelector('a[data-page="settings"]');
+            if (settingsLink) {
+                settingsLink.click();
+            }
+        });
+    });
+</script>
