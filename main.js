@@ -15,11 +15,6 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
-
-  // Handle navigation to employees-installments page
-  ipcMain.on('navigate-to-employees-installments', () => {
-    win.loadFile('employees-installments.html');
-  });
 }
 
 // تحسين التوافق مع الأنظمة القديمة
