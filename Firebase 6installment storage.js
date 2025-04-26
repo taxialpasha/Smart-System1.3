@@ -1,678 +1,545 @@
 /**
- * نظام تخزين الأقساط - التخزين المحلي وFirebase
- * يوفر هذا الملف وظائف لتخزين الأقساط في التخزين المحلي وقاعدة بيانات Firebase
+ * الحل الجذري لمشكلة تخزين واسترجاع بيانات الأقساط
+ * هذا الملف يقوم بإعادة كتابة الوظائف الأساسية لتخزين واسترجاع البيانات
  */
 
-// تهيئة Firebase (يجب تضمين مكتبة Firebase قبل هذا الملف)
-function initFirebase() {
-    // التحقق من أن Firebase غير مهيأة بالفعل
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase غير متوفرة. تأكد من تضمين مكتبة Firebase.');
-        showNotification('لم يتم العثور على Firebase، سيتم استخدام التخزين المحلي فقط', 'warning');
-        return false;
+(function() {
+    console.log('تطبيق الحل الجذري لمشكلة تخزين الأقساط...');
+    
+    // احتياط منع التنفيذ المتكرر
+    if (window.fixedInstallmentStorage === true) {
+        console.log('تم تطبيق الإصلاح مسبقًا');
+        return;
     }
-
-    try {
-        // إعدادات Firebase - استبدل هذه بإعداداتك الخاصة
-        const firebaseConfig = {
-            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
-            authDomain: "messageemeapp.firebaseapp.com",
-            databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
-            projectId: "messageemeapp",
-            storageBucket: "messageemeapp.appspot.com",
-            messagingSenderId: "255034474844",
-            appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
-        };
-
-        // تهيئة Firebase إذا لم تكن مهيأة بالفعل
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-        console.log('تم تهيئة Firebase بنجاح');
-        return true;
-    } catch (error) {
-        console.error('فشل في تهيئة Firebase:', error);
-        showNotification('فشل في الاتصال بقاعدة البيانات، سيتم استخدام التخزين المحلي فقط', 'warning');
-        return false;
-    }
-}
-
-// كائن مساعد للتخزين - يجمع بين التخزين المحلي وFirebase
-const StorageManager = {
-    // حالة الاتصال بـ Firebase
-    firebaseInitialized: false,
     
-    // تهيئة نظام التخزين
-    init: function() {
-        console.log('تهيئة نظام التخزين...');
-        
-        // محاولة تهيئة Firebase
-        this.firebaseInitialized = initFirebase();
-        
-        // إضافة مستمع أحداث للاتصال بالإنترنت
-        window.addEventListener('online', this.onConnectionChange.bind(this));
-        window.addEventListener('offline', this.onConnectionChange.bind(this));
-        
-        return this;
-    },
-    
-    // معالجة تغيير حالة الاتصال
-    onConnectionChange: function(event) {
-        if (event.type === 'online') {
-            console.log('تم استعادة الاتصال بالإنترنت');
-            // مزامنة البيانات مع Firebase عند استعادة الاتصال
-            if (this.firebaseInitialized) {
-                this.syncWithFirebase();
-            }
-        } else {
-            console.log('تم فقد الاتصال بالإنترنت، سيتم استخدام التخزين المحلي فقط');
-            showNotification('تم فقد الاتصال بالإنترنت، سيتم حفظ البيانات محلياً', 'warning');
-        }
-    },
-    
-    // حفظ البيانات
-    saveData: function(key, data) {
-        try {
-            // حفظ في التخزين المحلي أولاً
-            localStorage.setItem(key, JSON.stringify(data));
-            console.log(`تم حفظ البيانات بنجاح في التخزين المحلي: ${key}`);
-            
-            // حفظ في Firebase إذا كانت متاحة
-            if (this.firebaseInitialized && navigator.onLine) {
-                this.saveToFirebase(key, data);
-            }
-            
-            return true;
-        } catch (error) {
-            console.error(`خطأ في حفظ البيانات (${key}):`, error);
-            showNotification('حدث خطأ أثناء حفظ البيانات', 'error');
-            return false;
-        }
-    },
-    
-    // حفظ البيانات في Firebase
-    saveToFirebase: function(key, data) {
-        try {
-            const db = firebase.firestore();
-            const userID = this.getCurrentUserID(); // الحصول على معرف المستخدم الحالي
-            
-            // تحسين الأداء: تخزين مجموعات البيانات الكبيرة بشكل منفصل
-            if (key === 'installments' && Array.isArray(data)) {
-                // حذف البيانات القديمة
-                db.collection('users').doc(userID).collection(key).get()
-                    .then(snapshot => {
-                        const batch = db.batch();
-                        snapshot.forEach(doc => {
-                            batch.delete(doc.ref);
-                        });
-                        return batch.commit();
-                    })
-                    .then(() => {
-                        // إضافة البيانات الجديدة
-                        const batch = db.batch();
-                        data.forEach(item => {
-                            const docRef = db.collection('users').doc(userID).collection(key).doc(item.id);
-                            batch.set(docRef, item);
-                        });
-                        return batch.commit();
-                    })
-                    .then(() => {
-                        console.log(`تم حفظ ${data.length} قسط في Firebase`);
-                    })
-                    .catch(error => {
-                        console.error('خطأ في حفظ الأقساط في Firebase:', error);
-                    });
-            } else {
-                // حفظ البيانات الأخرى
-                db.collection('users').doc(userID).set({
-                    [key]: data,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true })
-                .then(() => {
-                    console.log(`تم حفظ البيانات بنجاح في Firebase: ${key}`);
-                })
-                .catch(error => {
-                    console.error(`خطأ في حفظ البيانات في Firebase (${key}):`, error);
-                });
-            }
-        } catch (error) {
-            console.error(`خطأ في الاتصال بـ Firebase لحفظ البيانات (${key}):`, error);
-        }
-    },
-    
-    // تحميل البيانات
-    loadData: function(key, defaultValue = null) {
-        try {
-            // محاولة تحميل البيانات من التخزين المحلي
-            const localData = localStorage.getItem(key);
-            
-            if (localData) {
-                const parsedData = JSON.parse(localData);
-                console.log(`تم تحميل البيانات من التخزين المحلي: ${key}`);
-                
-                // تحميل البيانات من Firebase للمزامنة إذا كانت متصلة
-                if (this.firebaseInitialized && navigator.onLine) {
-                    this.loadFromFirebase(key, parsedData);
-                }
-                
-                return parsedData;
-            }
-            
-            // إذا لم يتم العثور على بيانات محلية، حاول التحميل من Firebase
-            if (this.firebaseInitialized && navigator.onLine) {
-                this.loadFromFirebase(key);
-            }
-            
-            return defaultValue;
-        } catch (error) {
-            console.error(`خطأ في تحميل البيانات (${key}):`, error);
-            return defaultValue;
-        }
-    },
-    
-    // تحميل البيانات من Firebase
-    loadFromFirebase: function(key, localData = null) {
-        try {
-            const db = firebase.firestore();
-            const userID = this.getCurrentUserID();
-            
-            // تحميل البيانات المختلفة حسب النوع
-            if (key === 'installments') {
-                db.collection('users').doc(userID).collection(key).get()
-                    .then(snapshot => {
-                        if (snapshot.empty) {
-                            console.log(`لا توجد أقساط في Firebase`);
-                            return;
-                        }
-                        
-                        const firebaseData = [];
-                        snapshot.forEach(doc => {
-                            firebaseData.push(doc.data());
-                        });
-                        
-                        console.log(`تم تحميل ${firebaseData.length} قسط من Firebase`);
-                        
-                        // مقارنة البيانات واستخدام الأحدث
-                        this.mergeAndUpdateData(key, localData, firebaseData);
-                    })
-                    .catch(error => {
-                        console.error(`خطأ في تحميل الأقساط من Firebase:`, error);
-                    });
-            } else {
-                db.collection('users').doc(userID).get()
-                    .then(doc => {
-                        if (doc.exists && doc.data()[key]) {
-                            const firebaseData = doc.data()[key];
-                            console.log(`تم تحميل البيانات من Firebase: ${key}`);
-                            
-                            // مقارنة البيانات واستخدام الأحدث
-                            this.mergeAndUpdateData(key, localData, firebaseData);
-                        } else {
-                            console.log(`لم يتم العثور على بيانات في Firebase: ${key}`);
-                            
-                            // إذا كانت هناك بيانات محلية، قم بمزامنتها مع Firebase
-                            if (localData) {
-                                this.saveToFirebase(key, localData);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error(`خطأ في تحميل البيانات من Firebase (${key}):`, error);
-                    });
-            }
-        } catch (error) {
-            console.error(`خطأ في الاتصال بـ Firebase لتحميل البيانات (${key}):`, error);
-        }
-    },
-    
-    // دمج وتحديث البيانات (المحلية والسحابية)
-    mergeAndUpdateData: function(key, localData, firebaseData) {
-        if (!localData) {
-            // إذا لم تكن هناك بيانات محلية، استخدم بيانات Firebase
-            localStorage.setItem(key, JSON.stringify(firebaseData));
-            window.installments = firebaseData;
-            
-            // تحديث واجهة المستخدم
-            if (key === 'installments') {
-                if (window.renderInstallmentsTable) {
-                    window.renderInstallmentsTable();
-                }
-                if (window.updateInstallmentStatistics) {
-                    window.updateInstallmentStatistics();
-                }
-            }
-            
-            console.log(`تم تحديث التخزين المحلي ببيانات Firebase: ${key}`);
-            return;
-        }
-        
-        if (key === 'installments' && Array.isArray(localData) && Array.isArray(firebaseData)) {
-            // دمج الأقساط من التخزين المحلي وFirebase
-            const mergedInstallments = this.mergeInstallments(localData, firebaseData);
-            localStorage.setItem(key, JSON.stringify(mergedInstallments));
-            window.installments = mergedInstallments;
-            
-            // تحديث Firebase بالبيانات المدمجة
-            this.saveToFirebase(key, mergedInstallments);
-            
-            // تحديث واجهة المستخدم
-            if (window.renderInstallmentsTable) {
-                window.renderInstallmentsTable();
-            }
-            if (window.updateInstallmentStatistics) {
-                window.updateInstallmentStatistics();
-            }
-            
-            console.log(`تم دمج الأقساط من التخزين المحلي وFirebase`);
-        }
-    },
-    
-    // دمج الأقساط من مصدرين مختلفين
-    mergeInstallments: function(localInstallments, firebaseInstallments) {
-        // إنشاء خريطة للأقساط من المصدرين
-        const installmentsMap = new Map();
-        
-        // إضافة الأقساط المحلية إلى الخريطة
-        localInstallments.forEach(installment => {
-            installmentsMap.set(installment.id, installment);
-        });
-        
-        // دمج أو تحديث مع أقساط Firebase (الأولوية للأحدث)
-        firebaseInstallments.forEach(installment => {
-            const existingInstallment = installmentsMap.get(installment.id);
-            
-            if (!existingInstallment) {
-                // إضافة قسط جديد
-                installmentsMap.set(installment.id, installment);
-            } else {
-                // استخدام أحدث نسخة بناءً على تاريخ الإنشاء أو التعديل
-                const existingDate = new Date(existingInstallment.updatedAt || existingInstallment.createdAt);
-                const firebaseDate = new Date(installment.updatedAt || installment.createdAt);
-                
-                if (firebaseDate > existingDate) {
-                    installmentsMap.set(installment.id, installment);
-                }
-            }
-        });
-        
-        // تحويل الخريطة إلى مصفوفة
-        return Array.from(installmentsMap.values());
-    },
-    
-    // مزامنة البيانات المحلية مع Firebase
-    syncWithFirebase: function() {
-        if (!this.firebaseInitialized || !navigator.onLine) {
-            return;
-        }
-        
-        console.log('مزامنة البيانات مع Firebase...');
-        
-        // مزامنة الأقساط
-        const installments = this.loadData('installments', []);
-        this.saveToFirebase('installments', installments);
-        
-        // يمكن إضافة مزامنة لبيانات أخرى هنا
-    },
-    
-    // الحصول على معرف المستخدم الحالي
-    getCurrentUserID: function() {
-        // يمكن استبدال هذا بمنطق الحصول على المستخدم الحالي من نظام المصادقة
-        try {
-            if (firebase.auth().currentUser) {
-                return firebase.auth().currentUser.uid;
-            }
-        } catch (error) {
-            console.error('خطأ في الحصول على معرف المستخدم الحالي:', error);
-        }
-        
-        // إرجاع معرف افتراضي إذا لم يكن هناك مستخدم مسجل الدخول
-        return 'default-user';
-    },
-    
-    // تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
-    signIn: function(email, password) {
-        if (!this.firebaseInitialized) {
-            console.error('Firebase غير مهيأة');
-            return Promise.reject(new Error('Firebase غير مهيأة'));
-        }
-        
-        return firebase.auth().signInWithEmailAndPassword(email, password)
-            .then(userCredential => {
-                console.log('تم تسجيل الدخول بنجاح');
-                // مزامنة البيانات بعد تسجيل الدخول
-                this.syncWithFirebase();
-                return userCredential.user;
-            });
-    },
-    
-    // تسجيل الخروج
-    signOut: function() {
-        if (!this.firebaseInitialized) {
-            console.error('Firebase غير مهيأة');
-            return Promise.reject(new Error('Firebase غير مهيأة'));
-        }
-        
-        return firebase.auth().signOut()
-            .then(() => {
-                console.log('تم تسجيل الخروج بنجاح');
-            });
-    },
-    
-    // التحقق من حالة تسجيل الدخول
-    checkAuthState: function(callback) {
-        if (!this.firebaseInitialized) {
-            callback(null);
-            return;
-        }
-        
-        firebase.auth().onAuthStateChanged(user => {
-            callback(user);
-        });
-    }
-};
-
-// إنشاء دوال لحفظ وتحميل الأقساط
-function saveInstallmentData() {
-    try {
-        // تحديث تاريخ التعديل لكل قسط قبل الحفظ
-        window.installments.forEach(installment => {
-            installment.updatedAt = new Date().toISOString();
-        });
-        
-        // حفظ البيانات باستخدام مدير التخزين
-        const success = StorageManager.saveData('installments', window.installments);
-        
-        if (success) {
-            console.log('تم حفظ بيانات الأقساط بنجاح');
-            return true;
-        } else {
-            console.error('فشل في حفظ بيانات الأقساط');
-            showNotification('حدث خطأ أثناء حفظ بيانات الأقساط', 'error');
-            return false;
-        }
-    } catch (error) {
-        console.error('خطأ في حفظ بيانات الأقساط:', error);
-        showNotification('حدث خطأ أثناء حفظ بيانات الأقساط', 'error');
-        return false;
-    }
-}
-
-// تحميل بيانات الأقساط
-function loadInstallmentData() {
-    try {
-        // تحميل البيانات باستخدام مدير التخزين
-        const data = StorageManager.loadData('installments', []);
-        
-        // تحديث المتغير العالمي
-        window.installments = data;
-        
-        console.log(`تم تحميل ${window.installments.length} من سجلات الأقساط`);
-        return true;
-    } catch (error) {
-        console.error('خطأ في تحميل بيانات الأقساط:', error);
+    // 1. إصلاح البيانات الرئيسية: التأكد من وجود مصفوفة عالمية للأقساط
+    if (typeof window.installments === 'undefined') {
         window.installments = [];
-        return false;
-    }
-}
-
-// حذف قسط
-function deleteInstallment(installmentId) {
-    console.log(`حذف القسط: ${installmentId}`);
-    
-    // العثور على القسط
-    const installment = window.installments.find(inst => inst.id === installmentId);
-    if (!installment) {
-        showNotification('لم يتم العثور على القسط', 'error');
-        return false;
     }
     
-    // طلب تأكيد الحذف
-    if (!confirm(`هل أنت متأكد من رغبتك في حذف قسط ${installment.title}؟\nسيتم حذف جميع البيانات المتعلقة به.`)) {
-        return false;
-    }
+    // حفظ النسخة الأصلية من دالة إعادة تقديم الجدول إذا وجدت
+    const originalRenderTable = window.renderInstallmentsTable;
     
-    // حذف القسط
-    window.installments = window.installments.filter(inst => inst.id !== installmentId);
-    
-    // حفظ البيانات
-    if (saveInstallmentData()) {
-        // تحديث عرض الأقساط
-        if (window.renderInstallmentsTable) {
-            window.renderInstallmentsTable();
+    // 2. إعادة كتابة وظيفة تخزين البيانات بالكامل
+    window.saveInstallmentData = function(forceRender = true) {
+        console.log('حفظ بيانات الأقساط (النسخة المحسنة)...');
+        
+        try {
+            // للتأكد من أن البيانات صالحة للتخزين
+            if (!Array.isArray(window.installments)) {
+                console.error('خطأ: مصفوفة الأقساط غير صالحة');
+                window.installments = [];
+            }
+            
+            // حفظ البيانات في التخزين المحلي
+            localStorage.setItem('installments', JSON.stringify(window.installments));
+            console.log(`تم حفظ ${window.installments.length} قسط بنجاح`);
+            
+            // لنتأكد أن البيانات تم حفظها فعلاً
+            const verification = localStorage.getItem('installments');
+            if (!verification) {
+                throw new Error('فشل التحقق من حفظ البيانات');
+            }
+            
+            // إعادة رسم الجدول إذا تم طلب ذلك
+            if (forceRender && typeof window.renderInstallmentsTable === 'function') {
+                setTimeout(() => {
+                    window.renderInstallmentsTable();
+                }, 50);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('خطأ في حفظ بيانات الأقساط:', error.message);
+            
+            // محاولة بديلة للحفظ باستخدام آلية مختلفة
+            try {
+                const data = JSON.stringify(window.installments);
+                localStorage.removeItem('installments');
+                setTimeout(() => {
+                    localStorage.setItem('installments', data);
+                    console.log('تم الحفظ باستخدام الطريقة البديلة');
+                }, 100);
+            } catch (e) {
+                console.error('فشلت المحاولة البديلة للحفظ:', e.message);
+            }
+            
+            // عرض رسالة للمستخدم
+            if (window.showNotification) {
+                window.showNotification('حدث خطأ أثناء حفظ بيانات الأقساط', 'error');
+            } else {
+                alert('حدث خطأ أثناء حفظ بيانات الأقساط');
+            }
+            
+            return false;
         }
+    };
+    
+    // 3. إعادة كتابة وظيفة تحميل البيانات بالكامل
+    window.loadInstallmentData = function(forceRender = true) {
+        console.log('تحميل بيانات الأقساط (النسخة المحسنة)...');
+        
+        try {
+            const savedData = localStorage.getItem('installments');
+            
+            if (savedData) {
+                // محاولة تحليل البيانات
+                const parsed = JSON.parse(savedData);
+                
+                // التحقق من صحة البيانات
+                if (Array.isArray(parsed)) {
+                    window.installments = parsed;
+                    console.log(`تم تحميل ${window.installments.length} قسط من التخزين المحلي`);
+                } else {
+                    console.warn('البيانات المخزنة ليست مصفوفة، سيتم إنشاء مصفوفة جديدة');
+                    window.installments = [];
+                }
+            } else {
+                console.log('لم يتم العثور على بيانات في التخزين المحلي، سيتم استخدام مصفوفة فارغة');
+                window.installments = [];
+            }
+            
+            // طباعة البيانات للتحقق منها
+            console.log('بيانات الأقساط الحالية:', window.installments);
+            
+            // إعادة رسم الجدول إذا تم طلب ذلك
+            if (forceRender && typeof window.renderInstallmentsTable === 'function') {
+                setTimeout(() => {
+                    window.renderInstallmentsTable();
+                }, 50);
+            }
+            
+            return window.installments;
+        } catch (error) {
+            console.error('خطأ في تحميل بيانات الأقساط:', error.message);
+            
+            // محاولة استرداد البيانات الخام في حالة فشل التحليل
+            try {
+                const rawData = localStorage.getItem('installments');
+                console.log('البيانات الخام:', rawData);
+                
+                // محاولة معالجة البيانات يدويًا إذا كانت موجودة
+                if (rawData && rawData.startsWith('[') && rawData.endsWith(']')) {
+                    try {
+                        window.installments = JSON.parse(rawData);
+                        console.log('تم استرداد البيانات بنجاح');
+                    } catch (e) {
+                        window.installments = [];
+                        console.error('فشل تحليل البيانات الخام');
+                    }
+                } else {
+                    window.installments = [];
+                }
+            } catch (e) {
+                window.installments = [];
+                console.error('فشل استرداد البيانات الخام:', e.message);
+            }
+            
+            return window.installments;
+        }
+    };
+    
+    // 4. تعديل دالة إضافة الأقساط
+    if (typeof window.addNewInstallment === 'function') {
+        const originalAddInstallment = window.addNewInstallment;
+        
+        window.addNewInstallment = function() {
+            try {
+                // استدعاء الدالة الأصلية
+                const result = originalAddInstallment.apply(this, arguments);
+                
+                // تأكيد الحفظ بعد الإضافة
+                setTimeout(() => {
+                    window.saveInstallmentData(true);
+                    
+                    // تحديث العرض مرة أخرى للتأكد
+                    if (typeof window.renderInstallmentsTable === 'function') {
+                        window.renderInstallmentsTable();
+                    }
+                }, 200);
+                
+                return result;
+            } catch (error) {
+                console.error('خطأ في إضافة قسط جديد:', error);
+                
+                // محاولة إضافة القسط يدويًا
+                console.log('محاولة إضافة القسط بالطريقة البديلة...');
+                
+                try {
+                    // الحصول على قيم النموذج
+                    const investorId = document.getElementById('installment-investor').value;
+                    const title = document.getElementById('installment-title').value;
+                    const originalAmount = parseFloat(document.getElementById('original-amount').value) || 0;
+                    const interestRate = parseFloat(document.getElementById('interest-rate').value) || 0;
+                    const monthsCount = parseInt(document.getElementById('months-count').value) || 1;
+                    const startDate = document.getElementById('start-date').value;
+                    const notes = document.getElementById('installment-notes').value || '';
+                    
+                    if (!investorId || !title || originalAmount <= 0 || monthsCount <= 0 || !startDate) {
+                        alert('يرجى إدخال جميع البيانات المطلوبة');
+                        return;
+                    }
+                    
+                    // العثور على المستثمر
+                    const investor = window.investors.find(inv => inv.id === investorId);
+                    if (!investor) {
+                        alert('لم يتم العثور على المستثمر');
+                        return;
+                    }
+                    
+                    // حساب القيم
+                    const interestValue = (originalAmount * interestRate) / 100;
+                    const totalAmount = originalAmount + interestValue;
+                    const monthlyInstallment = totalAmount / monthsCount;
+                    
+                    // إنشاء مصفوفة الأقساط الشهرية
+                    const monthlyInstallments = [];
+                    const startDateObj = new Date(startDate);
+                    
+                    for (let i = 0; i < monthsCount; i++) {
+                        const dueDate = new Date(startDateObj);
+                        dueDate.setMonth(dueDate.getMonth() + i);
+                        
+                        monthlyInstallments.push({
+                            installmentNumber: i + 1,
+                            amount: monthlyInstallment,
+                            dueDate: dueDate.toISOString().split('T')[0],
+                            isPaid: false,
+                            paidDate: null,
+                            paidAmount: 0,
+                            notes: ''
+                        });
+                    }
+                    
+                    // إنشاء القسط الجديد
+                    const newInstallment = {
+                        id: Date.now().toString(),
+                        investorId,
+                        investorName: investor.name,
+                        title,
+                        originalAmount,
+                        interestRate,
+                        interestValue,
+                        totalAmount,
+                        monthsCount,
+                        monthlyInstallment,
+                        startDate,
+                        createdAt: new Date().toISOString(),
+                        notes,
+                        status: 'active',
+                        monthlyInstallments,
+                        paidAmount: 0,
+                        remainingAmount: totalAmount
+                    };
+                    
+                    // إضافة القسط إلى المصفوفة
+                    if (!Array.isArray(window.installments)) {
+                        window.installments = [];
+                    }
+                    
+                    window.installments.push(newInstallment);
+                    
+                    // حفظ البيانات
+                    window.saveInstallmentData(true);
+                    
+                    // إغلاق النافذة
+                    if (window.closeModal) {
+                        window.closeModal('add-installment-modal');
+                    }
+                    
+                    // عرض رسالة نجاح
+                    alert(`تم إضافة قسط ${title} للمستثمر ${investor.name} بنجاح!`);
+                } catch (e) {
+                    console.error('فشلت المحاولة البديلة:', e);
+                    alert('فشلت إضافة القسط. يرجى المحاولة مرة أخرى.');
+                }
+            }
+        };
+    }
+    
+    // 5. إعادة كتابة وظيفة عرض جدول الأقساط
+    window.renderInstallmentsTable = function() {
+        console.log('عرض جدول الأقساط (النسخة المعززة)...');
+        
+        try {
+            // إذا كانت هناك دالة أصلية، نحاول استخدامها أولاً
+            if (originalRenderTable && typeof originalRenderTable === 'function') {
+                originalRenderTable();
+                return;
+            }
+            
+            // التنفيذ البديل إذا فشلت الدالة الأصلية أو لم تكن موجودة
+            renderInstallmentsTableFallback();
+        } catch (error) {
+            console.error('خطأ في عرض جدول الأقساط:', error);
+            // استخدام الدالة البديلة
+            renderInstallmentsTableFallback();
+        }
+    };
+    
+    // دالة بديلة لعرض جدول الأقساط
+    function renderInstallmentsTableFallback() {
+        console.log('استخدام الطريقة البديلة لعرض جدول الأقساط...');
+        
+        // التأكد من تحميل البيانات أولاً
+        if (!window.installments || !Array.isArray(window.installments)) {
+            window.loadInstallmentData(false);
+        }
+        
+        // الحصول على جسم الجدول
+        const tableBody = document.querySelector('#installments-table tbody');
+        if (!tableBody) {
+            console.error('لم يتم العثور على جدول الأقساط');
+            return;
+        }
+        
+        // تفريغ الجدول
+        tableBody.innerHTML = '';
+        
+        if (!window.installments || window.installments.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">لا توجد أقساط</td></tr>';
+            return;
+        }
+        
+        // دالة تنسيق العملة
+        const formatCurrency = function(amount, addCurrency = true) {
+            const formatted = typeof amount === 'number' ? amount.toLocaleString('ar-SA') : amount;
+            return addCurrency ? `${formatted} دينار` : formatted;
+        };
+        
+        // ترتيب الأقساط (الأحدث أولاً)
+        const sortedInstallments = [...window.installments].sort((a, b) => {
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+        
+        // عرض الأقساط في الجدول
+        sortedInstallments.forEach(installment => {
+            try {
+                // تحديد عدد الأقساط المتبقية
+                const remainingInstallments = Array.isArray(installment.monthlyInstallments) ? 
+                    installment.monthlyInstallments.filter(inst => !inst.isPaid).length : 0;
+                
+                // تحديد تاريخ القسط القادم
+                let nextDueDate = '-';
+                if (Array.isArray(installment.monthlyInstallments)) {
+                    const nextInstallment = installment.monthlyInstallments.find(inst => !inst.isPaid);
+                    if (nextInstallment) {
+                        nextDueDate = nextInstallment.dueDate;
+                    }
+                }
+                
+                // تحديد حالة القسط
+                let statusClass = 'success';
+                let statusText = 'مكتمل';
+                
+                if (installment.status === 'active') {
+                    // التحقق من وجود أقساط متأخرة
+                    const today = new Date();
+                    let hasOverdue = false;
+                    
+                    if (Array.isArray(installment.monthlyInstallments)) {
+                        hasOverdue = installment.monthlyInstallments.some(inst => 
+                            !inst.isPaid && new Date(inst.dueDate) < today
+                        );
+                    }
+                    
+                    if (hasOverdue) {
+                        statusClass = 'danger';
+                        statusText = 'متأخر';
+                    } else {
+                        statusClass = 'primary';
+                        statusText = 'نشط';
+                    }
+                }
+                
+                // إنشاء صف الجدول
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', installment.id);
+                
+                row.innerHTML = `
+                    <td>${installment.id}</td>
+                    <td>
+                        <div class="investor-info">
+                            <div class="investor-avatar">${(installment.investorName || '').charAt(0)}</div>
+                            <div>
+                                <div class="investor-name">${installment.investorName || ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${installment.title || ''}</td>
+                    <td>${formatCurrency(installment.totalAmount)}</td>
+                    <td>${formatCurrency(installment.monthlyInstallment)}</td>
+                    <td>${remainingInstallments} من ${installment.monthsCount || 0}</td>
+                    <td>${nextDueDate !== '-' ? nextDueDate : 'مكتمل'}</td>
+                    <td><span class="badge badge-${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="installment-actions">
+                            <button class="installment-action-btn view-installment" data-id="${installment.id}" title="عرض التفاصيل">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${installment.status !== 'completed' ? `
+                            <button class="installment-action-btn pay pay-installment" data-id="${installment.id}" title="تسديد قسط">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </button>
+                            ` : ''}
+                            <button class="installment-action-btn delete delete-installment" data-id="${installment.id}" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+                
+                // إضافة مستمعي أحداث الأزرار
+                const viewBtn = row.querySelector('.view-installment');
+                const payBtn = row.querySelector('.pay-installment');
+                const deleteBtn = row.querySelector('.delete-installment');
+                
+                if (viewBtn) {
+                    viewBtn.addEventListener('click', function() {
+                        if (window.showInstallmentDetails) {
+                            window.showInstallmentDetails(installment.id);
+                        }
+                    });
+                }
+                
+                if (payBtn) {
+                    payBtn.addEventListener('click', function() {
+                        if (window.openPaymentModalForInstallment) {
+                            window.openPaymentModalForInstallment(installment.id);
+                        }
+                    });
+                }
+                
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function() {
+                        if (window.deleteInstallment) {
+                            window.deleteInstallment(installment.id);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('خطأ في عرض قسط:', error, installment);
+            }
+        });
         
         // تحديث إحصائيات الأقساط
-        if (window.updateInstallmentStatistics) {
-            window.updateInstallmentStatistics();
+        if (typeof window.updateInstallmentStatistics === 'function') {
+            try {
+                window.updateInstallmentStatistics();
+            } catch (error) {
+                console.error('خطأ في تحديث إحصائيات الأقساط:', error);
+            }
         }
-        
-        // إغلاق نافذة التفاصيل إذا كانت مفتوحة
-        if (window.closeModal) {
-            window.closeModal('installment-details-modal');
-        }
-        
-        // عرض إشعار النجاح
-        showNotification(`تم حذف القسط ${installment.title} بنجاح!`, 'success');
-        return true;
     }
     
-    return false;
-}
-
-// إضافة قسط جديد
-function addNewInstallment() {
-    console.log('إضافة قسط جديد...');
-    
-    try {
-        // الحصول على قيم النموذج
-        const investorId = document.getElementById('installment-investor').value;
-        const title = document.getElementById('installment-title').value;
-        const originalAmount = parseFloat(document.getElementById('original-amount').value) || 0;
-        const interestRate = parseFloat(document.getElementById('interest-rate').value) || 0;
-        const monthsCount = parseInt(document.getElementById('months-count').value) || 1;
-        const startDate = document.getElementById('start-date').value;
-        const notes = document.getElementById('installment-notes').value || '';
+    // 6. تصحيح دالة حذف الأقساط
+    if (typeof window.deleteInstallment === 'function') {
+        const originalDeleteInstallment = window.deleteInstallment;
         
-        // التحقق من صحة القيم
-        if (!investorId || !title || originalAmount <= 0 || monthsCount <= 0 || !startDate) {
-            showNotification('يرجى إدخال جميع البيانات المطلوبة بشكل صحيح', 'error');
-            return false;
-        }
-        
-        // العثور على المستثمر
-        const investor = window.investors.find(inv => inv.id === investorId);
-        if (!investor) {
-            showNotification('لم يتم العثور على المستثمر', 'error');
-            return false;
-        }
-        
-        // حساب قيمة الفائدة
-        const interestValue = (originalAmount * interestRate) / 100;
-        
-        // حساب إجمالي المبلغ
-        const totalAmount = originalAmount + interestValue;
-        
-        // حساب القسط الشهري
-        const monthlyInstallment = totalAmount / monthsCount;
-        
-        // إنشاء مصفوفة الأقساط الشهرية
-        const monthlyInstallments = [];
-        const startDateObj = new Date(startDate);
-        
-        for (let i = 0; i < monthsCount; i++) {
-            const dueDate = new Date(startDateObj);
-            dueDate.setMonth(dueDate.getMonth() + i);
-            
-            monthlyInstallments.push({
-                installmentNumber: i + 1,
-                amount: monthlyInstallment,
-                dueDate: dueDate.toISOString().split('T')[0],
-                isPaid: false,
-                paidDate: null,
-                paidAmount: 0,
-                notes: ''
-            });
-        }
-        
-        // التأكد من وجود مصفوفة installments
-        if (!window.installments) {
-            window.installments = [];
-        }
-        
-        // إنشاء كائن القسط الجديد
-        const timestamp = Date.now();
-        const newInstallment = {
-            id: timestamp.toString(),
-            investorId,
-            investorName: investor.name,
-            title,
-            originalAmount,
-            interestRate,
-            interestValue,
-            totalAmount,
-            monthsCount,
-            monthlyInstallment,
-            startDate,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            notes,
-            status: 'active',
-            monthlyInstallments,
-            paidAmount: 0,
-            remainingAmount: totalAmount
+        window.deleteInstallment = function(installmentId) {
+            try {
+                // استدعاء الدالة الأصلية
+                originalDeleteInstallment(installmentId);
+                
+                // تأكيد الحفظ بعد الحذف
+                setTimeout(() => {
+                    window.saveInstallmentData(true);
+                }, 200);
+            } catch (error) {
+                console.error('خطأ في حذف القسط:', error);
+                
+                // الطريقة البديلة للحذف
+                if (confirm(`هل أنت متأكد من رغبتك في حذف هذا القسط؟`)) {
+                    window.installments = window.installments.filter(inst => inst.id !== installmentId);
+                    window.saveInstallmentData(true);
+                    alert('تم حذف القسط بنجاح');
+                }
+            }
         };
-        
-        // إضافة القسط الجديد
-        window.installments.push(newInstallment);
-        
-        // حفظ البيانات
-        if (saveInstallmentData()) {
-            // إضافة علامة للمستثمر أن عليه أقساط
-            if (window.addInstallmentBadgeToInvestor) {
-                window.addInstallmentBadgeToInvestor(investorId);
-            }
-            
-            // تحديث عرض الأقساط
-            if (window.renderInstallmentsTable) {
-                window.renderInstallmentsTable();
-            }
-            
-            // تحديث إحصائيات الأقساط
-            if (window.updateInstallmentStatistics) {
-                window.updateInstallmentStatistics();
-            }
-            
-            // إغلاق النافذة المنبثقة
-            if (window.closeModal) {
-                window.closeModal('pay-installment-modal');
-            }
-            
-            // عرض إشعار النجاح
-            showNotification(`تم تسديد القسط رقم ${unpaidInstallment.installmentNumber} من ${installment.title} للمستثمر ${investor.name} بنجاح!`, 'success');
-            return true;
-        }
-    } catch (error) {
-        console.error('خطأ في تسديد قسط:', error);
-        showNotification('حدث خطأ أثناء تسديد القسط', 'error');
     }
     
-    return false;();
-            }
+    // 7. تصحيح دالة عرض الصفحات
+    if (typeof window.showPage === 'function') {
+        const originalShowPage = window.showPage;
+        
+        window.showPage = function(pageId) {
+            console.log(`عرض الصفحة: ${pageId}`);
             
-            // إغلاق النافذة المنبثقة
-            if (window.closeModal) {
-                window.closeModal('add-installment-modal');
+            if (pageId === 'installments') {
+                // تحميل البيانات قبل عرض الصفحة
+                window.loadInstallmentData(false);
+                
+                // إخفاء جميع الصفحات
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // إظهار صفحة الأقساط
+                const installmentsPage = document.getElementById('installments-page');
+                if (installmentsPage) {
+                    installmentsPage.classList.add('active');
+                    
+                    // عرض الأقساط بعد إظهار الصفحة
+                    setTimeout(() => {
+                        window.renderInstallmentsTable();
+                    }, 100);
+                } else {
+                    // إذا لم تكن صفحة الأقساط موجودة، نحاول إنشاءها
+                    console.warn('صفحة الأقساط غير موجودة، محاولة إنشائها...');
+                    
+                    if (typeof window.createInstallmentPage === 'function') {
+                        window.createInstallmentPage();
+                        
+                        setTimeout(() => {
+                            const newPage = document.getElementById('installments-page');
+                            if (newPage) {
+                                newPage.classList.add('active');
+                                window.renderInstallmentsTable();
+                            }
+                        }, 200);
+                    } else {
+                        console.error('دالة إنشاء صفحة الأقساط غير موجودة');
+                        // استدعاء الدالة الأصلية كاحتياط
+                        return originalShowPage(pageId);
+                    }
+                }
+            } else {
+                // بالنسبة للصفحات الأخرى، نستخدم الدالة الأصلية
+                return originalShowPage(pageId);
             }
-            
-            // عرض إشعار النجاح
-            showNotification(`تم إضافة قسط ${title} للمستثمر ${investor.name} بنجاح!`, 'success');
-            return true;
-        }
-    } catch (error) {
-        console.error('خطأ في إضافة قسط جديد:', error);
-        showNotification('حدث خطأ أثناء إضافة القسط الجديد', 'error');
+        };
     }
     
-    return false;
-}
-
-// تسديد قسط
-function payInstallment() {
-    console.log('تسديد قسط...');
+    // 8. تحميل البيانات أولي
+    window.loadInstallmentData(false);
     
-    try {
-        // الحصول على قيم النموذج
-        const investorId = document.getElementById('pay-investor').value;
-        const installmentId = document.getElementById('available-installments').value;
-        const paymentDate = document.getElementById('payment-date').value;
-        const notes = document.getElementById('payment-notes').value || '';
-        
-        // التحقق من صحة القيم
-        if (!investorId || !installmentId || !paymentDate) {
-            showNotification('يرجى إدخال جميع البيانات المطلوبة بشكل صحيح', 'error');
-            return false;
-        }
-        
-        // العثور على المستثمر
-        const investor = window.investors.find(inv => inv.id === investorId);
-        if (!investor) {
-            showNotification('لم يتم العثور على المستثمر', 'error');
-            return false;
-        }
-        
-        // العثور على القسط
-        const installmentIndex = window.installments.findIndex(inst => inst.id === installmentId);
-        if (installmentIndex === -1) {
-            showNotification('لم يتم العثور على القسط', 'error');
-            return false;
-        }
-        
-        const installment = window.installments[installmentIndex];
-        
-        // العثور على أول قسط غير مدفوع
-        const unpaidIndex = installment.monthlyInstallments.findIndex(inst => !inst.isPaid);
-        if (unpaidIndex === -1) {
-            showNotification('جميع الأقساط مدفوعة بالفعل', 'warning');
-            return false;
-        }
-        
-        // تحديث حالة القسط الشهري
-        const unpaidInstallment = installment.monthlyInstallments[unpaidIndex];
-        unpaidInstallment.isPaid = true;
-        unpaidInstallment.paidDate = paymentDate;
-        unpaidInstallment.paidAmount = unpaidInstallment.amount;
-        unpaidInstallment.notes = notes;
-        
-        // تحديث المبالغ المدفوعة والمتبقية
-        installment.paidAmount += unpaidInstallment.amount;
-        installment.remainingAmount -= unpaidInstallment.amount;
-        installment.updatedAt = new Date().toISOString();
-        
-        // تحديث حالة القسط إذا تم دفع جميع الأقساط
-        const allPaid = installment.monthlyInstallments.every(inst => inst.isPaid);
-        if (allPaid) {
-            installment.status = 'completed';
-        }
-        
-        // تحديث القسط في المصفوفة
-        window.installments[installmentIndex] = installment;
-        
-        // حفظ البيانات
-        if (saveInstallmentData()) {
-            // إضافة معاملة جديدة لدفع القسط (إذا كان مطلوباً)
-            if (window.addTransaction) {
-                const transactionNotes = `تسديد القسط رقم ${unpaidInstallment.installmentNumber} من ${installment.title}`;
-                window.addTransaction('دفع قسط', investorId, unpaidInstallment.amount, transactionNotes);
-            }
+    // 9. وضع دالة للتحميل عند بداية الصفحة
+    window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            // تحميل البيانات مرة أخرى عند تحميل الصفحة
+            window.loadInstallmentData(false);
             
-            // تحديث عرض الأقساط
-            if (window.renderInstallmentsTable) {
+            // إذا كنا في صفحة الأقساط، نقوم بعرض البيانات
+            const installmentsPage = document.getElementById('installments-page');
+            if (installmentsPage && installmentsPage.classList.contains('active')) {
                 window.renderInstallmentsTable();
             }
-            
-            // تحديث إحصائيات الأقساط
-            if (window.updateInstallmentStatistics) {
-                window.updateInstallmentStatistics();
-                
-                
+        }, 500);
+    });
+    
+    // 10. تنفيذ حفظ البيانات دوريًا كاحتياط
+    setInterval(() => {
+        // حفظ البيانات كل دقيقة بدون إعادة رسم الجدول
+        if (window.installments && window.installments.length > 0) {
+            console.log('حفظ بيانات الأقساط الاحتياطي...');
+            window.saveInstallmentData(false);
+        }
+    }, 60000);
+    
+    // تعيين علامة تثبيت الإصلاح
+    window.fixedInstallmentStorage = true;
+    
+    console.log('تم تطبيق الحل الجذري لمشكلة تخزين الأقساط!');
+})();
