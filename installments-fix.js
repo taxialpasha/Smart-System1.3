@@ -693,6 +693,7 @@ function saveInstallment() {
       investorId = investorSelect.value;
     }
   }
+}
   
 /**
  * إصلاح مشكلة عدم ظهور زر إدارة الأقساط في الواجهة الرئيسية
