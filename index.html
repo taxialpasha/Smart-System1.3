@@ -220,8 +220,206 @@
                             <span>الإعدادات</span>
                         </a>
                     </li>
-                    
-                    <!-- إضافة عنصر صفحة الموظفين -->
+                </ul>
+            </nav>
+
+            <li class="nav-item">
+                <a class="nav-link" id="logout-btn" href="#">
+                    <div class="nav-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </li>
+        </div>
+
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Page -->
+            <div class="page active" id="dashboard-page">
+                <div class="header">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">لوحة التحكم</h1>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <input class="search-input" placeholder="بحث..." type="text" />
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        <!-- هذا نموذج لما يجب تعديله في ملف index.html -->
+                        <!-- مؤشر تثبيت التطبيق -->
+                        <div id="pwa-install-container">
+                            <button class="pwa-close" id="pwa-close-btn">&times;</button>
+                            <div class="pwa-install-title">
+                                <i class="fas fa-download"></i>
+                                تثبيت التطبيق
+                            </div>
+                            <div class="pwa-install-text">
+                                قم بتثبيت نظام الاستثمار المتكامل على جهازك للوصول السريع والاستخدام دون اتصال
+                                بالإنترنت.
+                            </div>
+                            <div class="pwa-install-buttons">
+                                <button class="pwa-install-btn pwa-install-accept" id="pwa-install-btn">تثبيت</button>
+                                <button class="pwa-install-btn pwa-install-later" id="pwa-later-btn">لاحقاً</button>
+                            </div>
+                        </div>
+
+                        <!-- بعد التعديل - مع إضافة الشارة (badge) -->
+                        <button class="btn btn-outline" id="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-badge">0</span>
+                        </button>
+
+                        <!-- 2. إضافة عنصر نافذة التنبيهات في نهاية الصفحة قبل قسم العناصر البرمجية -->
+                        <div class="modal-overlay" id="notifications-modal">
+                            <div class="modal animate__animated animate__fadeInUp">
+                                <div class="modal-header">
+                                    <h3 class="modal-title">التنبيهات</h3>
+                                    <button class="modal-close">×</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="tabs">
+                                        <div class="tab-buttons">
+                                            <button class="tab-btn active" data-tab="due-profits">أرباح مستحقة <span
+                                                    id="due-profits-count" class="tab-badge">0</span></button>
+                                            <button class="tab-btn" data-tab="all-notifications">كافة التنبيهات <span
+                                                    id="all-notifications-count" class="tab-badge">0</span></button>
+                                        </div>
+                                        <div class="tab-content active" id="due-profits-tab">
+                                            <div id="due-profits-list" class="notifications-list">
+                                                <!-- سيتم ملؤه ديناميكياً -->
+                                            </div>
+                                        </div>
+                                        <div class="tab-content" id="all-notifications-tab">
+                                            <div id="all-notifications-list" class="notifications-list">
+                                                <!-- سيتم ملؤه ديناميكياً -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-outline modal-close-btn">إغلاق</button>
+                                    <button class="btn btn-primary" id="mark-all-read-btn">
+                                        <i class="fas fa-check-double"></i>
+                                        <span>تعيين الكل كمقروء</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-pattern">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">إجمالي الاستثمارات</div>
+                                <div class="card-value" id="total-investments">0 دينار</div>
+                                <div class="card-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>15% من الشهر الماضي</span>
+                                </div>
+                            </div>
+                            <div class="card-icon primary">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-pattern">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">الأرباح الشهرية</div>
+                                <div class="card-value" id="monthly-profits">0 دينار</div>
+                                <div class="card-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>12% من الشهر الماضي</span>
+                                </div>
+                            </div>
+                            <div class="card-icon success">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-pattern">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">عدد المستثمرين</div>
+                                <div class="card-value" id="investors-count">0</div>
+                                <div class="card-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>5 مستثمرين جدد</span>
+                                </div>
+                            </div>
+                            <div class="card-icon warning">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-pattern">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">نسبة العائد الشهري</div>
+                                <div class="card-value" id="interest-rate">17.5%</div>
+                                <div class="card-change">
+                                    <span>متوسط العائد السنوي: 210%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon info">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Recent Transactions Section -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">أحدث العمليات</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-filter"></i>
+                                <span>تصفية</span>
+                            </button>
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i>
+                                <span>عملية جديدة</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="recent-transactions">
+                            <thead>
+                                <tr>
+                                    <th>المعرف</th>
+                                    <th>المستثمر</th>
+                                    <th>نوع العملية</th>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- سيتم ملؤها ديناميكيًا -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- إضافة عنصر صفحة الموظفين -->
 <div class="page" id="employees-page">
     <div class="header">
         <button class="toggle-sidebar">
@@ -629,205 +827,6 @@
         </div>
     </div>
 </div>
-                </ul>
-            </nav>
-
-            <li class="nav-item">
-                <a class="nav-link" id="logout-btn" href="#">
-                    <div class="nav-icon">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </div>
-                    <span>تسجيل الخروج</span>
-                </a>
-            </li>
-        </div>
-
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Dashboard Page -->
-            <div class="page active" id="dashboard-page">
-                <div class="header">
-                    <button class="toggle-sidebar">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="page-title">لوحة التحكم</h1>
-                    <div class="header-actions">
-                        <div class="search-box">
-                            <input class="search-input" placeholder="بحث..." type="text" />
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                        <!-- هذا نموذج لما يجب تعديله في ملف index.html -->
-                        <!-- مؤشر تثبيت التطبيق -->
-                        <div id="pwa-install-container">
-                            <button class="pwa-close" id="pwa-close-btn">&times;</button>
-                            <div class="pwa-install-title">
-                                <i class="fas fa-download"></i>
-                                تثبيت التطبيق
-                            </div>
-                            <div class="pwa-install-text">
-                                قم بتثبيت نظام الاستثمار المتكامل على جهازك للوصول السريع والاستخدام دون اتصال
-                                بالإنترنت.
-                            </div>
-                            <div class="pwa-install-buttons">
-                                <button class="pwa-install-btn pwa-install-accept" id="pwa-install-btn">تثبيت</button>
-                                <button class="pwa-install-btn pwa-install-later" id="pwa-later-btn">لاحقاً</button>
-                            </div>
-                        </div>
-
-                        <!-- بعد التعديل - مع إضافة الشارة (badge) -->
-                        <button class="btn btn-outline" id="notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge" id="notification-badge">0</span>
-                        </button>
-
-                        <!-- 2. إضافة عنصر نافذة التنبيهات في نهاية الصفحة قبل قسم العناصر البرمجية -->
-                        <div class="modal-overlay" id="notifications-modal">
-                            <div class="modal animate__animated animate__fadeInUp">
-                                <div class="modal-header">
-                                    <h3 class="modal-title">التنبيهات</h3>
-                                    <button class="modal-close">×</button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="tabs">
-                                        <div class="tab-buttons">
-                                            <button class="tab-btn active" data-tab="due-profits">أرباح مستحقة <span
-                                                    id="due-profits-count" class="tab-badge">0</span></button>
-                                            <button class="tab-btn" data-tab="all-notifications">كافة التنبيهات <span
-                                                    id="all-notifications-count" class="tab-badge">0</span></button>
-                                        </div>
-                                        <div class="tab-content active" id="due-profits-tab">
-                                            <div id="due-profits-list" class="notifications-list">
-                                                <!-- سيتم ملؤه ديناميكياً -->
-                                            </div>
-                                        </div>
-                                        <div class="tab-content" id="all-notifications-tab">
-                                            <div id="all-notifications-list" class="notifications-list">
-                                                <!-- سيتم ملؤه ديناميكياً -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button class="btn btn-outline modal-close-btn">إغلاق</button>
-                                    <button class="btn btn-primary" id="mark-all-read-btn">
-                                        <i class="fas fa-check-double"></i>
-                                        <span>تعيين الكل كمقروء</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                <!-- Dashboard Cards -->
-                <div class="dashboard-cards">
-                    <div class="card">
-                        <div class="card-pattern">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">إجمالي الاستثمارات</div>
-                                <div class="card-value" id="total-investments">0 دينار</div>
-                                <div class="card-change positive">
-                                    <i class="fas fa-arrow-up"></i>
-                                    <span>15% من الشهر الماضي</span>
-                                </div>
-                            </div>
-                            <div class="card-icon primary">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-pattern">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">الأرباح الشهرية</div>
-                                <div class="card-value" id="monthly-profits">0 دينار</div>
-                                <div class="card-change positive">
-                                    <i class="fas fa-arrow-up"></i>
-                                    <span>12% من الشهر الماضي</span>
-                                </div>
-                            </div>
-                            <div class="card-icon success">
-                                <i class="fas fa-coins"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-pattern">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">عدد المستثمرين</div>
-                                <div class="card-value" id="investors-count">0</div>
-                                <div class="card-change positive">
-                                    <i class="fas fa-arrow-up"></i>
-                                    <span>5 مستثمرين جدد</span>
-                                </div>
-                            </div>
-                            <div class="card-icon warning">
-                                <i class="fas fa-users"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-pattern">
-                            <i class="fas fa-percentage"></i>
-                        </div>
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">نسبة العائد الشهري</div>
-                                <div class="card-value" id="interest-rate">17.5%</div>
-                                <div class="card-change">
-                                    <span>متوسط العائد السنوي: 210%</span>
-                                </div>
-                            </div>
-                            <div class="card-icon info">
-                                <i class="fas fa-percentage"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Recent Transactions Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h2 class="section-title">أحدث العمليات</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-outline btn-sm">
-                                <i class="fas fa-filter"></i>
-                                <span>تصفية</span>
-                            </button>
-                            <button class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i>
-                                <span>عملية جديدة</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table id="recent-transactions">
-                            <thead>
-                                <tr>
-                                    <th>المعرف</th>
-                                    <th>المستثمر</th>
-                                    <th>نوع العملية</th>
-                                    <th>التاريخ</th>
-                                    <th>المبلغ</th>
-                                    <th>الحالة</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- سيتم ملؤها ديناميكيًا -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
                 <!-- Statistics Section -->
                 <div class="grid-cols-2">
                     <div class="section">
