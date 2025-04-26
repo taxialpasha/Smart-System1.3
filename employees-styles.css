@@ -1,0 +1,172 @@
+/* 
+ * employees-styles.css
+ * أنماط إضافية لنظام إدارة الموظفين
+ */
+
+/* أنماط بطاقة الإحصائيات */
+.stat-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    border-right: 3px solid #3b82f6;
+}
+
+.stat-title {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+/* تحسينات نموذج الراتب */
+#salary-calculation {
+    line-height: 1.5;
+    margin-top: 8px;
+    direction: rtl;
+    text-align: center;
+}
+
+/* أنماط تفاصيل الموظف */
+.employee-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.employee-stat-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.employee-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.employee-stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* أنماط سجل الرواتب */
+.salary-history-bar {
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    margin-top: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.salary-history-progress {
+    height: 100%;
+    background-color: #3b82f6;
+    border-radius: 10px;
+}
+
+.salary-history-month {
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.salary-history-month span:first-child {
+    font-weight: 500;
+}
+
+.salary-history-month span:last-child {
+    color: #6c757d;
+}
+
+/* أنماط الطباعة */
+@media print {
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    .receipt-container {
+        border: none;
+    }
+    
+    .receipt-header {
+        margin-bottom: 30px;
+    }
+    
+    .receipt-signature {
+        margin-top: 60px;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* أنماط زر تحميل المبيعات تلقائياً */
+button.btn-info {
+    background-color: #0ea5e9;
+    color: white;
+    border: none;
+}
+
+button.btn-info:hover {
+    background-color: #0284c7;
+}
+
+/* أنماط لإحصائيات المبيعات */
+.sales-statistics {
+    padding: 10px 0;
+}
+
+.sales-statistics .grid-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* أنماط للموبايل */
+@media (max-width: 767px) {
+    .employee-details-grid,
+    .employee-stats,
+    .documents-container,
+    .sales-statistics .grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .employee-photo {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .employee-name {
+        font-size: 1.2rem;
+    }
+    
+    .receipt-container {
+        padding: 10px;
+    }
+    
+    .receipt-employee {
+        flex-direction: column;
+    }
+    
+    .receipt-date {
+        text-align: right;
+        margin-top: 10px;
+    }
+}
