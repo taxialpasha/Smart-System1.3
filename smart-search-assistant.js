@@ -719,7 +719,7 @@ const SmartSearchAssistant = (function() {
                 }
                 break;
                 
-            case 'transaction':
+           case 'transaction':
                 if (pageId === 'transactions-page') {
                     if (window.showTransactionDetails) {
                         window.showTransactionDetails(id);
@@ -1388,1175 +1388,1173 @@ const SmartSearchAssistant = (function() {
         ) || tagName === 'select' || tagName === 'textarea';
     }
     
-   /**
- * التحقق مما إذا كان العنصر هو حقل نص
- * @param {HTMLElement} element - العنصر المراد التحقق منه
- * @returns {boolean} - ما إذا كان العنصر حقل نص
- */
-function isTextInputElement(element) {
-    if (!element) return false;
-    
-    const tagName = element.tagName.toLowerCase();
-    const type = element.type && element.type.toLowerCase();
-    
-    return (
-        tagName === 'input' && 
-        (type === 'text' || type === 'email' || type === 'password' || type === 'tel' || type === 'number')
-    ) || tagName === 'textarea';
-}
-
 /**
- * البحث عن الحقل التالي في النموذج
- * @param {HTMLElement} currentField - الحقل الحالي
- * @returns {HTMLElement|null} - الحقل التالي أو null إذا لم يكن هناك حقل تالي
- */
-function findNextField(currentField) {
-    if (!currentField) return null;
-    
-    // الحصول على النموذج الذي ينتمي إليه الحقل
-    const form = currentField.closest('form');
-    if (!form) return null;
-    
-    // الحصول على جميع حقول الإدخال في النموذج
-    const fields = Array.from(form.querySelectorAll('input, select, textarea')).filter(field => {
-        return isInputElement(field) && !field.disabled && field.style.display !== 'none' && field.tabIndex !== -1;
-    });
-    
-    // ترتيب الحقول حسب ترتيب التبويب (tabIndex) ثم حسب الترتيب في المستند
-    fields.sort((a, b) => {
-        if (a.tabIndex > 0 && b.tabIndex > 0) {
-            return a.tabIndex - b.tabIndex;
-        } else if (a.tabIndex > 0) {
-            return -1;
-        } else if (b.tabIndex > 0) {
-            return 1;
+     * التحقق مما إذا كان العنصر هو حقل نص
+     * @param {HTMLElement} element - العنصر المراد التحقق منه
+     * @returns {boolean} - ما إذا كان العنصر حقل نص
+     */
+    function isTextInputElement(element) {
+        if (!element) return false;
+        
+        const tagName = element.tagName.toLowerCase();
+        const type = element.type && element.type.toLowerCase();
+        
+        return (
+            tagName === 'input' && 
+            (type === 'text' || type === 'email' || type === 'password' || type === 'tel' || type === 'number')
+        ) || tagName === 'textarea';
+    }
+
+    /**
+     * البحث عن الحقل التالي في النموذج
+     * @param {HTMLElement} currentField - الحقل الحالي
+     * @returns {HTMLElement|null} - الحقل التالي أو null إذا لم يكن هناك حقل تالي
+     */
+    function findNextField(currentField) {
+        if (!currentField) return null;
+        
+        // الحصول على النموذج الذي ينتمي إليه الحقل
+        const form = currentField.closest('form');
+        if (!form) return null;
+        
+        // الحصول على جميع حقول الإدخال في النموذج
+        const fields = Array.from(form.querySelectorAll('input, select, textarea')).filter(field => {
+            return isInputElement(field) && !field.disabled && field.style.display !== 'none' && field.tabIndex !== -1;
+        });
+        
+        // ترتيب الحقول حسب ترتيب التبويب (tabIndex) ثم حسب الترتيب في المستند
+        fields.sort((a, b) => {
+            if (a.tabIndex > 0 && b.tabIndex > 0) {
+                return a.tabIndex - b.tabIndex;
+            } else if (a.tabIndex > 0) {
+                return -1;
+            } else if (b.tabIndex > 0) {
+                return 1;
+            }
+            
+            return 0;
+        });
+        
+        // البحث عن الحقل الحالي في القائمة
+        const currentIndex = fields.indexOf(currentField);
+        
+        // إذا لم يتم العثور على الحقل الحالي أو كان هو الحقل الأخير
+        if (currentIndex === -1 || currentIndex === fields.length - 1) {
+            return null;
         }
         
-        return 0;
-    });
-    
-    // البحث عن الحقل الحالي في القائمة
-    const currentIndex = fields.indexOf(currentField);
-    
-    // إذا لم يتم العثور على الحقل الحالي أو كان هو الحقل الأخير
-    if (currentIndex === -1 || currentIndex === fields.length - 1) {
-        return null;
+        // إرجاع الحقل التالي
+        return fields[currentIndex + 1];
     }
-    
-    // إرجاع الحقل التالي
-    return fields[currentIndex + 1];
-}
 
-/**
- * تهيئة اختصارات لوحة المفاتيح
- */
-function initializeHotkeys() {
-    console.log('تهيئة اختصارات لوحة المفاتيح...');
-    
-    // قائمة الاختصارات
-    const hotkeys = [
-        { key: 'n', ctrl: true, description: 'إضافة مستثمر جديد', action: () => openModal('add-investor-modal') },
-        { key: 'd', ctrl: true, description: 'إضافة إيداع جديد', action: () => openModal('add-deposit-modal') },
-        { key: 'w', ctrl: true, description: 'سحب جديد', action: () => openModal('add-withdraw-modal') },
-        { key: 'p', ctrl: true, description: 'دفع الأرباح', action: () => openModal('pay-profit-modal') },
-        { key: 'f', ctrl: true, description: 'البحث', action: focusSearch },
-        { key: 'h', ctrl: true, description: 'العودة للوحة التحكم', action: () => showPage('dashboard') },
-        { key: 'i', ctrl: true, description: 'صفحة المستثمرين', action: () => showPage('investors') },
-        { key: 't', ctrl: true, description: 'صفحة العمليات', action: () => showPage('transactions') },
-        { key: 'o', ctrl: true, description: 'صفحة الأرباح', action: () => showPage('profits') },
-        { key: 's', ctrl: true, description: 'الإعدادات', action: () => showPage('settings') },
-        { key: 'e', ctrl: true, description: 'الموظفين', action: () => showPage('employees') },
-        { key: '?', ctrl: true, description: 'عرض قائمة الاختصارات', action: showHotkeysHelp }
-    ];
-    
-    // الاستماع إلى أحداث ضغط المفاتيح
-    document.addEventListener('keydown', function(event) {
-        // التحقق من أن التركيز ليس على حقل نصي
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+    /**
+     * تهيئة اختصارات لوحة المفاتيح
+     */
+    function initializeHotkeys() {
+        console.log('تهيئة اختصارات لوحة المفاتيح...');
+        
+        // قائمة الاختصارات
+        const hotkeys = [
+            { key: 'n', ctrl: true, description: 'إضافة مستثمر جديد', action: () => openModal('add-investor-modal') },
+            { key: 'd', ctrl: true, description: 'إضافة إيداع جديد', action: () => openModal('add-deposit-modal') },
+            { key: 'w', ctrl: true, description: 'سحب جديد', action: () => openModal('add-withdraw-modal') },
+            { key: 'p', ctrl: true, description: 'دفع الأرباح', action: () => openModal('pay-profit-modal') },
+            { key: 'f', ctrl: true, description: 'البحث', action: focusSearch },
+            { key: 'h', ctrl: true, description: 'العودة للوحة التحكم', action: () => showPage('dashboard') },
+            { key: 'i', ctrl: true, description: 'صفحة المستثمرين', action: () => showPage('investors') },
+            { key: 't', ctrl: true, description: 'صفحة العمليات', action: () => showPage('transactions') },
+            { key: 'o', ctrl: true, description: 'صفحة الأرباح', action: () => showPage('profits') },
+            { key: 's', ctrl: true, description: 'الإعدادات', action: () => showPage('settings') },
+            { key: 'e', ctrl: true, description: 'الموظفين', action: () => showPage('employees') },
+            { key: '?', ctrl: true, description: 'عرض قائمة الاختصارات', action: showHotkeysHelp }
+        ];
+        
+        // الاستماع إلى أحداث ضغط المفاتيح
+        document.addEventListener('keydown', function(event) {
+            // التحقق من أن التركيز ليس على حقل نصي
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            // البحث عن اختصار مطابق
+            const hotkey = hotkeys.find(hk => 
+                hk.key.toLowerCase() === event.key.toLowerCase() && 
+                hk.ctrl === event.ctrlKey
+            );
+            
+            if (hotkey) {
+                event.preventDefault();
+                hotkey.action();
+            }
+        });
+        
+        // إضافة صفحة مساعدة الاختصارات
+        addHotkeysHelpModal(hotkeys);
+    }
+
+    /**
+     * التركيز على حقل البحث
+     */
+    function focusSearch() {
+        // البحث عن حقل البحث في الصفحة النشطة
+        const activePage = document.querySelector('.page.active');
+        if (!activePage) return;
+        
+        const searchInput = activePage.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+
+    /**
+     * إضافة نافذة مساعدة الاختصارات
+     * @param {Array} hotkeys - قائمة الاختصارات
+     */
+    function addHotkeysHelpModal(hotkeys) {
+        // التحقق من عدم وجود النافذة مسبقًا
+        if (document.getElementById('hotkeys-help-modal')) {
             return;
         }
         
-        // البحث عن اختصار مطابق
-        const hotkey = hotkeys.find(hk => 
-            hk.key.toLowerCase() === event.key.toLowerCase() && 
-            hk.ctrl === event.ctrlKey
+        // إنشاء النافذة
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.id = 'hotkeys-help-modal';
+        
+        const modalContent = `
+            <div class="modal animate__animated animate__fadeInUp">
+                <div class="modal-header">
+                    <h3 class="modal-title">اختصارات لوحة المفاتيح</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="hotkeys-list">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">الاختصار</th>
+                                    <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">الوصف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${hotkeys.map(hotkey => `
+                                    <tr>
+                                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                                            <kbd style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; padding: 2px 5px; font-family: monospace;">
+                                                ${hotkey.ctrl ? 'Ctrl +' : ''} ${hotkey.key.toUpperCase()}
+                                            </kbd>
+                                        </td>
+                                        <td style="padding: 8px; border-bottom: 1px solid #eee;">${hotkey.description}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <p style="color: #666;">اضغط على <kbd style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; padding: 2px 5px; font-family: monospace;">Ctrl + ?</kbd> في أي وقت لعرض هذه القائمة.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline modal-close-btn">إغلاق</button>
+                </div>
+            </div>
+        `;
+        
+        modalOverlay.innerHTML = modalContent;
+        
+        // إضافة النافذة إلى المستند
+        document.body.appendChild(modalOverlay);
+        
+        // إضافة مستمعي الأحداث للأزرار
+        const closeButtons = modalOverlay.querySelectorAll('.modal-close, .modal-close-btn');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                modalOverlay.classList.remove('active');
+            });
+        });
+    }
+
+    /**
+     * عرض نافذة مساعدة الاختصارات
+     */
+    function showHotkeysHelp() {
+        const modal = document.getElementById('hotkeys-help-modal');
+        if (modal) {
+            modal.classList.add('active');
+        }
+    }
+
+    /**
+     * فتح نافذة منبثقة
+     * @param {string} modalId - معرف النافذة
+     */
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+            
+            // التركيز على أول حقل في النافذة
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input, select, textarea');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 50);
+        }
+    }
+    
+    /**
+     * تنفيذ إجراء بعد تأخير
+     * @param {Function} func - الدالة المراد تنفيذها
+     * @param {number} wait - وقت التأخير بالميلي ثانية
+     * @returns {Function} - دالة مؤجلة
+     */
+    function debounce(func, wait) {
+        let timeout;
+        
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * تنسيق المبلغ المالي
+     * @param {number} amount - المبلغ
+     * @param {boolean} addCurrency - إضافة اسم العملة
+     * @returns {string} - المبلغ المنسق
+     */
+    function formatCurrency(amount, addCurrency = true) {
+        // استخدام دالة تنسيق العملة الموجودة في التطبيق إذا كانت متوفرة
+        if (window.formatCurrency && typeof window.formatCurrency === 'function') {
+            return window.formatCurrency(amount, addCurrency);
+        }
+        
+        // تنفيذ بديل إذا لم تكن الدالة متوفرة
+        if (amount === undefined || amount === null || isNaN(amount)) {
+            return addCurrency ? "0 دينار" : "0";
+        }
+        
+        // تقريب المبلغ إلى رقمين عشريين إذا كان يحتوي على كسور
+        amount = parseFloat(amount);
+        if (amount % 1 !== 0) {
+            amount = amount.toFixed(2);
+        }
+        
+        // تحويل المبلغ إلى نص وإضافة الفواصل بين كل ثلاثة أرقام
+        const parts = amount.toString().split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+        // إعادة المبلغ مع إضافة العملة إذا تم طلب ذلك
+        const formattedAmount = parts.join('.');
+        
+        if (addCurrency) {
+            const currency = (window.settings && window.settings.currency) ? window.settings.currency : 'دينار';
+            return `${formattedAmount} ${currency}`;
+        } else {
+            return formattedAmount;
+        }
+    }
+
+    /**
+     * البحث الذكي المستبق
+     * يقوم بتنبؤ ما قد يبحث عنه المستخدم بناءً على الأنماط السابقة
+     * @param {string} query - نص البحث الحالي
+     * @param {string} type - نوع البحث
+     * @returns {Array} - اقتراحات البحث المستبق
+     */
+    function predictiveSearch(query, type) {
+        if (!query || query.length < 2) return [];
+        
+        // تخزين سجل البحث في التخزين المحلي
+        const searchHistory = localStorage.getItem('searchHistory');
+        let history = searchHistory ? JSON.parse(searchHistory) : [];
+        
+        // تصفية التاريخ حسب النوع
+        if (type !== 'all') {
+            history = history.filter(item => item.type === type);
+        }
+        
+        // البحث عن العناصر المشابهة في التاريخ
+        const similarQueries = history.filter(item => 
+            item.query.toLowerCase().includes(query.toLowerCase())
         );
         
-        if (hotkey) {
-            event.preventDefault();
-            hotkey.action();
-        }
-    });
-    
-    // إضافة صفحة مساعدة الاختصارات
-    addHotkeysHelpModal(hotkeys);
-}
-
-/**
- * التركيز على حقل البحث
- */
-function focusSearch() {
-    // البحث عن حقل البحث في الصفحة النشطة
-    const activePage = document.querySelector('.page.active');
-    if (!activePage) return;
-    
-    const searchInput = activePage.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.focus();
-        searchInput.select();
-    }
-}
-
-/**
- * إضافة نافذة مساعدة الاختصارات
- * @param {Array} hotkeys - قائمة الاختصارات
- */
-function addHotkeysHelpModal(hotkeys) {
-    // التحقق من عدم وجود النافذة مسبقًا
-    if (document.getElementById('hotkeys-help-modal')) {
-        return;
-    }
-    
-    // إنشاء النافذة
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-    modalOverlay.id = 'hotkeys-help-modal';
-    
-    const modalContent = `
-        <div class="modal animate__animated animate__fadeInUp">
-            <div class="modal-header">
-                <h3 class="modal-title">اختصارات لوحة المفاتيح</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="hotkeys-list">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">الاختصار</th>
-                                <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">الوصف</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${hotkeys.map(hotkey => `
-                                <tr>
-                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                                        <kbd style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; padding: 2px 5px; font-family: monospace;">
-                                            ${hotkey.ctrl ? 'Ctrl +' : ''} ${hotkey.key.toUpperCase()}
-                                        </kbd>
-                                    </td>
-                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${hotkey.description}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div style="margin-top: 20px;">
-                    <p style="color: #666;">اضغط على <kbd style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; padding: 2px 5px; font-family: monospace;">Ctrl + ?</kbd> في أي وقت لعرض هذه القائمة.</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline modal-close-btn">إغلاق</button>
-            </div>
-        </div>
-    `;
-    
-    modalOverlay.innerHTML = modalContent;
-    
-    // إضافة النافذة إلى المستند
-    document.body.appendChild(modalOverlay);
-    
-    // إضافة مستمعي الأحداث للأزرار
-    const closeButtons = modalOverlay.querySelectorAll('.modal-close, .modal-close-btn');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            modalOverlay.classList.remove('active');
-        });
-    });
-}
-
-/**
- * عرض نافذة مساعدة الاختصارات
- */
-function showHotkeysHelp() {
-    const modal = document.getElementById('hotkeys-help-modal');
-    if (modal) {
-        modal.classList.add('active');
-    }
-}
-
-/**
- * فتح نافذة منبثقة
- * @param {string} modalId - معرف النافذة
- */
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('active');
-        
-        // التركيز على أول حقل في النافذة
-        setTimeout(() => {
-            const firstInput = modal.querySelector('input, select, textarea');
-            if (firstInput) {
-                firstInput.focus();
+        // ترتيب النتائج حسب التكرار والحداثة
+        similarQueries.sort((a, b) => {
+            // ترتيب أولاً حسب التكرار
+            if (a.count !== b.count) {
+                return b.count - a.count;
             }
-        }, 50);
+            
+            // ثم حسب الحداثة
+            return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+        
+        // إرجاع أول 5 نتائج فريدة
+        const uniqueResults = [];
+        const addedQueries = new Set();
+        
+        for (const item of similarQueries) {
+            if (!addedQueries.has(item.query.toLowerCase()) && uniqueResults.length < 5) {
+                uniqueResults.push(item.query);
+                addedQueries.add(item.query.toLowerCase());
+            }
+        }
+        
+        return uniqueResults;
     }
-}
 
-/**
- * تنفيذ إجراء بعد تأخير
- * @param {Function} func - الدالة المراد تنفيذها
- * @param {number} wait - وقت التأخير بالميلي ثانية
- * @returns {Function} - دالة مؤجلة
- */
-function debounce(func, wait) {
-    let timeout;
-    
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
+    /**
+     * تسجيل البحث في التاريخ
+     * @param {string} query - نص البحث
+     * @param {string} type - نوع البحث
+     */
+    function recordSearch(query, type) {
+        if (!query || query.length < 2) return;
+        
+        // تخزين سجل البحث في التخزين المحلي
+        const searchHistory = localStorage.getItem('searchHistory');
+        let history = searchHistory ? JSON.parse(searchHistory) : [];
+        
+        // البحث عن العنصر في التاريخ
+        const existingIndex = history.findIndex(item => 
+            item.query.toLowerCase() === query.toLowerCase() && item.type === type
+        );
+        
+        if (existingIndex !== -1) {
+            // تحديث العنصر الموجود
+            history[existingIndex].count++;
+            history[existingIndex].timestamp = new Date().toISOString();
+        } else {
+            // إضافة عنصر جديد
+            history.push({
+                query,
+                type,
+                count: 1,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // الاحتفاظ بأحدث 100 عنصر فقط
+        if (history.length > 100) {
+            history = history
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 100);
+        }
+        
+        // حفظ التاريخ المحدث
+        localStorage.setItem('searchHistory', JSON.stringify(history));
+    }
+
+    /**
+     * إضافة قائمة البحث بتصفية سريعة
+     * @param {HTMLInputElement} inputElement - حقل البحث
+     * @param {Array} data - البيانات المراد تصفيتها
+     * @param {Object} options - خيارات التصفية
+     */
+    function addQuickFilterTags(inputElement, data, options = {}) {
+        // الخيارات الافتراضية
+        const defaultOptions = {
+            container: null, // حاوية مخصصة للعلامات
+            maxTags: 5,      // الحد الأقصى لعدد العلامات
+            field: 'type',   // الحقل المراد استخدامه للتصفية
+            onTagClick: null // دالة يتم استدعاؤها عند النقر على علامة
         };
         
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-/**
- * تنسيق المبلغ المالي
- * @param {number} amount - المبلغ
- * @param {boolean} addCurrency - إضافة اسم العملة
- * @returns {string} - المبلغ المنسق
- */
-function formatCurrency(amount, addCurrency = true) {
-    // استخدام دالة تنسيق العملة الموجودة في التطبيق إذا كانت متوفرة
-    if (window.formatCurrency && typeof window.formatCurrency === 'function') {
-        return window.formatCurrency(amount, addCurrency);
-    }
-    
-    // تنفيذ بديل إذا لم تكن الدالة متوفرة
-    if (amount === undefined || amount === null || isNaN(amount)) {
-        return addCurrency ? "0 دينار" : "0";
-    }
-    
-    // تقريب المبلغ إلى رقمين عشريين إذا كان يحتوي على كسور
-    amount = parseFloat(amount);
-    if (amount % 1 !== 0) {
-        amount = amount.toFixed(2);
-    }
-    
-    // تحويل المبلغ إلى نص وإضافة الفواصل بين كل ثلاثة أرقام
-    const parts = amount.toString().split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    // إعادة المبلغ مع إضافة العملة إذا تم طلب ذلك
-    const formattedAmount = parts.join('.');
-    
-    if (addCurrency) {
-        const currency = (window.settings && window.settings.currency) ? window.settings.currency : 'دينار';
-        return `${formattedAmount} ${currency}`;
-    } else {
-        return formattedAmount;
-    }
-}
-
-/**
- * البحث الذكي المستبق
- * يقوم بتنبؤ ما قد يبحث عنه المستخدم بناءً على الأنماط السابقة
- * @param {string} query - نص البحث الحالي
- * @param {string} type - نوع البحث
- * @returns {Array} - اقتراحات البحث المستبق
- */
-function predictiveSearch(query, type) {
-    if (!query || query.length < 2) return [];
-    
-    // تخزين سجل البحث في التخزين المحلي
-    const searchHistory = localStorage.getItem('searchHistory');
-    let history = searchHistory ? JSON.parse(searchHistory) : [];
-    
-    // تصفية التاريخ حسب النوع
-    if (type !== 'all') {
-        history = history.filter(item => item.type === type);
-    }
-    
-    // البحث عن العناصر المشابهة في التاريخ
-    const similarQueries = history.filter(item => 
-        item.query.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    // ترتيب النتائج حسب التكرار والحداثة
-    similarQueries.sort((a, b) => {
-        // ترتيب أولاً حسب التكرار
-        if (a.count !== b.count) {
-            return b.count - a.count;
+        const config = { ...defaultOptions, ...options };
+        
+        // إنشاء حاوية العلامات إذا لم يتم تحديدها
+        let tagsContainer = config.container;
+        if (!tagsContainer) {
+            // البحث عن الحاوية أو إنشاء واحدة
+            tagsContainer = inputElement.parentElement.querySelector('.quick-filter-tags');
+            
+            if (!tagsContainer) {
+                tagsContainer = document.createElement('div');
+                tagsContainer.className = 'quick-filter-tags';
+                tagsContainer.style.marginTop = '5px';
+                tagsContainer.style.display = 'flex';
+                tagsContainer.style.flexWrap = 'wrap';
+                tagsContainer.style.gap = '5px';
+                
+                // إضافة الحاوية بعد حقل البحث
+                inputElement.parentElement.appendChild(tagsContainer);
+            }
         }
         
-        // ثم حسب الحداثة
-        return new Date(b.timestamp) - new Date(a.timestamp);
-    });
-    
-    // إرجاع أول 5 نتائج فريدة
-    const uniqueResults = [];
-    const addedQueries = new Set();
-    
-    for (const item of similarQueries) {
-        if (!addedQueries.has(item.query.toLowerCase()) && uniqueResults.length < 5) {
-            uniqueResults.push(item.query);
-            addedQueries.add(item.query.toLowerCase());
-        }
-    }
-    
-    return uniqueResults;
-}
-
-/**
- * تسجيل البحث في التاريخ
- * @param {string} query - نص البحث
- * @param {string} type - نوع البحث
- */
-function recordSearch(query, type) {
-    if (!query || query.length < 2) return;
-    
-    // تخزين سجل البحث في التخزين المحلي
-    const searchHistory = localStorage.getItem('searchHistory');
-    let history = searchHistory ? JSON.parse(searchHistory) : [];
-    
-    // البحث عن العنصر في التاريخ
-    const existingIndex = history.findIndex(item => 
-        item.query.toLowerCase() === query.toLowerCase() && item.type === type
-    );
-    
-    if (existingIndex !== -1) {
-        // تحديث العنصر الموجود
-        history[existingIndex].count++;
-        history[existingIndex].timestamp = new Date().toISOString();
-    } else {
-        // إضافة عنصر جديد
-        history.push({
-            query,
-            type,
-            count: 1,
-            timestamp: new Date().toISOString()
+        // جمع القيم الفريدة من البيانات
+        const uniqueValues = new Set();
+        data.forEach(item => {
+            const value = item[config.field];
+            if (value) {
+                uniqueValues.add(value);
+            }
+        });
+        
+        // تحويل القيم إلى مصفوفة وترتيبها
+        const tags = Array.from(uniqueValues).sort();
+        
+        // اختيار أول n علامات (وفقًا لـ maxTags)
+        const selectedTags = tags.slice(0, config.maxTags);
+        
+        // إنشاء عناصر العلامات
+        tagsContainer.innerHTML = '';
+        
+        selectedTags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'quick-filter-tag';
+            tagElement.textContent = tag;
+            tagElement.style.padding = '3px 8px';
+            tagElement.style.borderRadius = '12px';
+            tagElement.style.backgroundColor = '#f5f5f5';
+            tagElement.style.color = '#333';
+            tagElement.style.fontSize = '0.85rem';
+            tagElement.style.cursor = 'pointer';
+            tagElement.style.transition = 'all 0.2s ease';
+            
+            // إضافة مستمع النقر
+            tagElement.addEventListener('click', function() {
+                // تعيين قيمة حقل البحث
+                inputElement.value = tag;
+                inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // استدعاء الدالة المخصصة إذا كانت موجودة
+                if (typeof config.onTagClick === 'function') {
+                    config.onTagClick(tag);
+                }
+            });
+            
+            // تغيير نمط العلامة عند تمرير الماوس
+            tagElement.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#e0e0e0';
+            });
+            
+            tagElement.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '#f5f5f5';
+            });
+            
+            tagsContainer.appendChild(tagElement);
         });
     }
-    
-    // الاحتفاظ بأحدث 100 عنصر فقط
-    if (history.length > 100) {
-        history = history
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 100);
-    }
-    
-    // حفظ التاريخ المحدث
-    localStorage.setItem('searchHistory', JSON.stringify(history));
-}
 
-/**
- * إضافة قائمة البحث بتصفية سريعة
- * @param {HTMLInputElement} inputElement - حقل البحث
- * @param {Array} data - البيانات المراد تصفيتها
- * @param {Object} options - خيارات التصفية
- */
-function addQuickFilterTags(inputElement, data, options = {}) {
-    // الخيارات الافتراضية
-    const defaultOptions = {
-        container: null, // حاوية مخصصة للعلامات
-        maxTags: 5,      // الحد الأقصى لعدد العلامات
-        field: 'type',   // الحقل المراد استخدامه للتصفية
-        onTagClick: null // دالة يتم استدعاؤها عند النقر على علامة
-    };
-    
-    const config = { ...defaultOptions, ...options };
-    
-    // إنشاء حاوية العلامات إذا لم يتم تحديدها
-    let tagsContainer = config.container;
-    if (!tagsContainer) {
-        // البحث عن الحاوية أو إنشاء واحدة
-        tagsContainer = inputElement.parentElement.querySelector('.quick-filter-tags');
+    /**
+     * التبديل بين وضعي البحث العادي والمتقدم
+     * @param {HTMLInputElement} inputElement - حقل البحث
+     */
+    function toggleAdvancedSearch(inputElement) {
+        // التحقق من أن العنصر هو حقل بحث
+        if (!inputElement || !inputElement.classList.contains('search-input')) {
+            return;
+        }
         
-        if (!tagsContainer) {
-            tagsContainer = document.createElement('div');
-            tagsContainer.className = 'quick-filter-tags';
-            tagsContainer.style.marginTop = '5px';
-            tagsContainer.style.display = 'flex';
-            tagsContainer.style.flexWrap = 'wrap';
-            tagsContainer.style.gap = '5px';
+        // التحقق من وجود حاوية البحث المتقدم
+        let advancedSearchContainer = inputElement.parentElement.querySelector('.advanced-search-container');
+        
+        if (!advancedSearchContainer) {
+            // إنشاء حاوية البحث المتقدم
+            advancedSearchContainer = document.createElement('div');
+            advancedSearchContainer.className = 'advanced-search-container';
+            advancedSearchContainer.style.display = 'none';
+            advancedSearchContainer.style.marginTop = '10px';
+            advancedSearchContainer.style.padding = '10px';
+            advancedSearchContainer.style.backgroundColor = '#f9f9f9';
+            advancedSearchContainer.style.borderRadius = '5px';
+            advancedSearchContainer.style.border = '1px solid #ddd';
+            
+            // إضافة محتوى البحث المتقدم (يعتمد على نوع البحث)
+            const searchType = inputElement.getAttribute('data-search-type') || 'all';
+            
+            let formContent = '';
+            
+            switch (searchType) {
+                case 'investors':
+                    formContent = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>الاسم</label>
+                                <input type="text" class="form-input" name="name" placeholder="اسم المستثمر">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الهاتف</label>
+                                <input type="text" class="form-input" name="phone" placeholder="رقم الهاتف">
+                            </div>
+                            <div class="form-group">
+                                <label>الحالة</label>
+                                <select class="form-select" name="status">
+                                    <option value="">الكل</option>
+                                    <option value="active">نشط</option>
+                                    <option value="inactive">غير نشط</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>المبلغ أكبر من</label>
+                                <input type="number" class="form-input" name="minAmount" placeholder="الحد الأدنى">
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'transactions':
+                    formContent = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>المستثمر</label>
+                                <input type="text" class="form-input" name="investorName" placeholder="اسم المستثمر">
+                            </div>
+                            <div class="form-group">
+                                <label>نوع العملية</label>
+                                <select class="form-select" name="type">
+                                    <option value="">الكل</option>
+                                    <option value="إيداع">إيداع</option>
+                                    <option value="سحب">سحب</option>
+                                    <option value="دفع أرباح">دفع أرباح</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>من تاريخ</label>
+                                <input type="date" class="form-input" name="fromDate">
+                            </div>
+                            <div class="form-group">
+                                <label>إلى تاريخ</label>
+                                <input type="date" class="form-input" name="toDate">
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'employees':
+                    formContent = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>الاسم</label>
+                                <input type="text" class="form-input" name="name" placeholder="اسم الموظف">
+                            </div>
+                            <div class="form-group">
+                                <label>المسمى الوظيفي</label>
+                                <input type="text" class="form-input" name="position" placeholder="المسمى الوظيفي">
+                            </div>
+                            <div class="form-group">
+                                <label>القسم</label>
+                                <input type="text" class="form-input" name="department" placeholder="القسم">
+                            </div>
+                            <div class="form-group">
+                                <label>الحالة</label>
+                                <select class="form-select" name="status">
+                                    <option value="">الكل</option>
+                                    <option value="active">نشط</option>
+                                    <option value="inactive">غير نشط</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    formContent = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>الاسم</label>
+                                <input type="text" class="form-input" name="name" placeholder="اسم">
+                            </div>
+                            <div class="form-group">
+                                <label>من تاريخ</label>
+                                <input type="date" class="form-input" name="fromDate">
+                            </div>
+                            <div class="form-group">
+                                <label>إلى تاريخ</label>
+                                <input type="date" class="form-input" name="toDate">
+                            </div>
+                            <div class="form-group">
+                                <label>النوع</label>
+                                <select class="form-select" name="type">
+                                    <option value="">الكل</option>
+                                    <option value="investors">المستثمرين</option>
+                                    <option value="transactions">العمليات</option>
+                                    <option value="employees">الموظفين</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+            }
+            
+            // إضافة زر البحث
+            formContent += `
+                <div style="margin-top: 10px; text-align: left;">
+                    <button class="btn btn-primary btn-sm advanced-search-btn">بحث متقدم</button>
+                    <button class="btn btn-outline btn-sm advanced-search-reset">إعادة تعيين</button>
+                </div>
+            `;
+            
+            // إضافة المحتوى إلى الحاوية
+            advancedSearchContainer.innerHTML = formContent;
             
             // إضافة الحاوية بعد حقل البحث
-            inputElement.parentElement.appendChild(tagsContainer);
+            inputElement.parentElement.appendChild(advancedSearchContainer);
+            
+            // إضافة مستمعي الأحداث للأزرار
+            const searchButton = advancedSearchContainer.querySelector('.advanced-search-btn');
+            const resetButton = advancedSearchContainer.querySelector('.advanced-search-reset');
+            
+            if (searchButton) {
+                searchButton.addEventListener('click', function() {
+                    performAdvancedSearch(advancedSearchContainer, inputElement);
+                });
+            }
+            
+            if (resetButton) {
+                resetButton.addEventListener('click', function() {
+                    resetAdvancedSearch(advancedSearchContainer, inputElement);
+                });
+            }
         }
+        
+        // تبديل حالة العرض
+        advancedSearchContainer.style.display = 
+            advancedSearchContainer.style.display === 'none' ? 'block' : 'none';
     }
     
-    // جمع القيم الفريدة من البيانات
-    const uniqueValues = new Set();
-    data.forEach(item => {
-        const value = item[config.field];
-        if (value) {
-            uniqueValues.add(value);
-        }
-    });
-    
-    // تحويل القيم إلى مصفوفة وترتيبها
-    const tags = Array.from(uniqueValues).sort();
-    
-    // اختيار أول n علامات (وفقًا لـ maxTags)
-    const selectedTags = tags.slice(0, config.maxTags);
-    
-    // إنشاء عناصر العلامات
-    tagsContainer.innerHTML = '';
-    
-    selectedTags.forEach(tag => {
-        const tagElement = document.createElement('span');
-        tagElement.className = 'quick-filter-tag';
-        tagElement.textContent = tag;
-        tagElement.style.padding = '3px 8px';
-        tagElement.style.borderRadius = '12px';
-        tagElement.style.backgroundColor = '#f5f5f5';
-        tagElement.style.color = '#333';
-        tagElement.style.fontSize = '0.85rem';
-        tagElement.style.cursor = 'pointer';
-        tagElement.style.transition = 'all 0.2s ease';
+    /**
+     * تنفيذ البحث المتقدم
+     * @param {HTMLElement} container - حاوية البحث المتقدم
+     * @param {HTMLInputElement} inputElement - حقل البحث
+     */
+    function performAdvancedSearch(container, inputElement) {
+        // جمع قيم حقول البحث المتقدم
+        const form = {};
         
-        // إضافة مستمع النقر
-        tagElement.addEventListener('click', function() {
-            // تعيين قيمة حقل البحث
-            inputElement.value = tag;
-            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-            
-            // استدعاء الدالة المخصصة إذا كانت موجودة
-            if (typeof config.onTagClick === 'function') {
-                config.onTagClick(tag);
+        // جمع قيم الحقول النصية
+        container.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(input => {
+            const name = input.getAttribute('name');
+            const value = input.value.trim();
+            if (value) {
+                form[name] = value;
             }
         });
         
-        // تغيير نمط العلامة عند تمرير الماوس
-        tagElement.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = '#e0e0e0';
+        // جمع قيم القوائم المنسدلة
+        container.querySelectorAll('select').forEach(select => {
+            const name = select.getAttribute('name');
+            const value = select.value;
+            if (value) {
+                form[name] = value;
+            }
         });
         
-        tagElement.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = '#f5f5f5';
-        });
-        
-        tagsContainer.appendChild(tagElement);
-    });
-}
-
-/**
- * التبديل بين وضعي البحث العادي والمتقدم
- * @param {HTMLInputElement} inputElement - حقل البحث
- */
-function toggleAdvancedSearch(inputElement) {
-    // التحقق من أن العنصر هو حقل بحث
-    if (!inputElement || !inputElement.classList.contains('search-input')) {
-        return;
-    }
-    
-    // التحقق من وجود حاوية البحث المتقدم
-    let advancedSearchContainer = inputElement.parentElement.querySelector('.advanced-search-container');
-    
-    if (!advancedSearchContainer) {
-        // إنشاء حاوية البحث المتقدم
-        advancedSearchContainer = document.createElement('div');
-        advancedSearchContainer.className = 'advanced-search-container';
-        advancedSearchContainer.style.display = 'none';
-        advancedSearchContainer.style.marginTop = '10px';
-        advancedSearchContainer.style.padding = '10px';
-        advancedSearchContainer.style.backgroundColor = '#f9f9f9';
-        advancedSearchContainer.style.borderRadius = '5px';
-        advancedSearchContainer.style.border = '1px solid #ddd';
-        
-        // إضافة محتوى البحث المتقدم (يعتمد على نوع البحث)
+        // الحصول على نوع البحث
         const searchType = inputElement.getAttribute('data-search-type') || 'all';
         
-        let formContent = '';
-        
+        // تنفيذ البحث بناءً على النوع
         switch (searchType) {
             case 'investors':
-                formContent = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>الاسم</label>
-                            <input type="text" class="form-input" name="name" placeholder="اسم المستثمر">
-                        </div>
-                        <div class="form-group">
-                            <label>رقم الهاتف</label>
-                            <input type="text" class="form-input" name="phone" placeholder="رقم الهاتف">
-                        </div>
-                        <div class="form-group">
-                            <label>الحالة</label>
-                            <select class="form-select" name="status">
-                                <option value="">الكل</option>
-                                <option value="active">نشط</option>
-                                <option value="inactive">غير نشط</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>المبلغ أكبر من</label>
-                            <input type="number" class="form-input" name="minAmount" placeholder="الحد الأدنى">
-                        </div>
-                    </div>
-                `;
-                break;
-                
-            case 'transactions':
-                formContent = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>المستثمر</label>
-                            <input type="text" class="form-input" name="investorName" placeholder="اسم المستثمر">
-                        </div>
-                        <div class="form-group">
-                            <label>نوع العملية</label>
-                            <select class="form-select" name="type">
-                                <option value="">الكل</option>
-                                <option value="إيداع">إيداع</option>
-                                <option value="سحب">سحب</option>
-                                <option value="دفع أرباح">دفع أرباح</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>من تاريخ</label>
-                            <input type="date" class="form-input" name="fromDate">
-                        </div>
-                        <div class="form-group">
-                            <label>إلى تاريخ</label>
-                            <input type="date" class="form-input" name="toDate">
-                        </div>
-                    </div>
-                `;
-                break;
-                
-            case 'employees':
-                formContent = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>الاسم</label>
-                            <input type="text" class="form-input" name="name" placeholder="اسم الموظف">
-                        </div>
-                        <div class="form-group">
-                            <label>المسمى الوظيفي</label>
-                            <input type="text" class="form-input" name="position" placeholder="المسمى الوظيفي">
-                        </div>
-                        <div class="form-group">
-                            <label>القسم</label>
-                            <input type="text" class="form-input" name="department" placeholder="القسم">
-                        </div>
-                        <div class="form-group">
-                            <label>الحالة</label>
-                            <select class="form-select" name="status">
-                                <option value="">الكل</option>
-                                <option value="active">نشط</option>
-                                <option value="inactive">غير نشط</option>
-                            </select>
-                        </div>
-                    </div>
-                `;
-                break;
-                
-            default:
-                formContent = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>الاسم</label>
-                            <input type="text" class="form-input" name="name" placeholder="اسم">
-                        </div>
-                        <div class="form-group">
-                            <label>من تاريخ</label>
-                            <input type="date" class="form-input" name="fromDate">
-                        </div>
-                        <div class="form-group">
-                            <label>إلى تاريخ</label>
-                            <input type="date" class="form-input" name="toDate">
-                        </div>
-                        <div class="form-group">
-                            <label>النوع</label>
-                            <select class="form-select" name="type">
-                                <option value="">الكل</option>
-                                <option value="investors">المستثمرين</option>
-                                <option value="transactions">العمليات</option>
-                                <option value="employees">الموظفين</option>
-                            </select>
-                        </div>
-                    </div>
-                `;
-        }
-        
-        // إضافة زر البحث
-        formContent += `
-            <div style="margin-top: 10px; text-align: left;">
-                <button class="btn btn-primary btn-sm advanced-search-btn">بحث متقدم</button>
-                <button class="btn btn-outline btn-sm advanced-search-reset">إعادة تعيين</button>
-            </div>
-        `;
-        
-        // إضافة المحتوى إلى الحاوية
-        advancedSearchContainer.innerHTML = formContent;
-        
-        // إضافة الحاوية بعد حقل البحث
-        inputElement.parentElement.appendChild(advancedSearchContainer);
-        
-        // إضافة مستمعي الأحداث للأزرار
-        const searchButton = advancedSearchContainer.querySelector('.advanced-search-btn');
-        const resetButton = advancedSearchContainer.querySelector('.advanced-search-reset');
-        
-        if (searchButton) {
-            searchButton.addEventListener('click', function() {
-                performAdvancedSearch(advancedSearchContainer, inputElement);
-            });
-        }
-        
-        if (resetButton) {
-            resetButton.addEventListener('click', function() {
-                resetAdvancedSearch(advancedSearchContainer, inputElement);
-            });
-        }
-    }
-    
-    // تبديل حالة العرض
-    advancedSearchContainer.style.display = 
-        advancedSearchContainer.style.display === 'none' ? 'block' : 'none';
-}
-
-/**
- * تنفيذ البحث المتقدم
- * @param {HTMLElement} container - حاوية البحث المتقدم
- * @param {HTMLInputElement} inputElement - حقل البحث
- */
-function performAdvancedSearch(container, inputElement) {
-    // جمع قيم حقول البحث المتقدم
-    const form = {};
-    
-    // جمع قيم الحقول النصية
-    container.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(input => {
-        const name = input.getAttribute('name');
-        const value = input.value.trim();
-        if (value) {
-            form[name] = value;
-        }
-    });
-    
-    // جمع قيم القوائم المنسدلة
-    container.querySelectorAll('select').forEach(select => {
-        const name = select.getAttribute('name');
-        const value = select.value;
-        if (value) {
-            form[name] = value;
-        }
-    });
-    
-    // الحصول على نوع البحث
-    const searchType = inputElement.getAttribute('data-search-type') || 'all';
-    
-    // تنفيذ البحث بناءً على النوع
-    switch (searchType) {
-        case 'investors':
-            // البحث في المستثمرين
-            searchInvestorsAdvanced(form);
-            break;
-            
-        case 'transactions':
-            // البحث في العمليات
-            searchTransactionsAdvanced(form);
-            break;
-            
-        case 'employees':
-            // البحث في الموظفين
-            searchEmployeesAdvanced(form);
-            break;
-            
-        case 'all':
-            // البحث في كل شيء
-            if (form.type) {
-                // إذا تم تحديد نوع محدد في البحث المتقدم
-                switch (form.type) {
-                    case 'investors':
-                        searchInvestorsAdvanced(form);
-                        break;
-                    case 'transactions':
-                        searchTransactionsAdvanced(form);
-                        break;
-                    case 'employees':
-                        searchEmployeesAdvanced(form);
-                        break;
-                }
-            } else {
-                // بحث عام في جميع الأنواع
-                searchAllAdvanced(form);
-            }
-            break;
-    }
-    
-    // تحديث قيمة حقل البحث لعرض البحث الحالي
-    inputElement.value = 'بحث متقدم...';
-}
-
-/**
- * إعادة تعيين البحث المتقدم
- * @param {HTMLElement} container - حاوية البحث المتقدم
- * @param {HTMLInputElement} inputElement - حقل البحث
- */
-function resetAdvancedSearch(container, inputElement) {
-    // إعادة تعيين قيم جميع الحقول
-    container.querySelectorAll('input, select').forEach(element => {
-        if (element.tagName === 'SELECT') {
-            element.selectedIndex = 0;
-        } else {
-            element.value = '';
-        }
-    });
-    
-    // مسح حقل البحث الرئيسي
-    inputElement.value = '';
-    
-    // تنفيذ البحث (إعادة تعيين النتائج)
-    inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-    
-    // إخفاء حاوية البحث المتقدم
-    container.style.display = 'none';
-}
-
-/**
- * تنفيذ البحث المتقدم في المستثمرين
- * @param {Object} form - بيانات نموذج البحث
- */
-function searchInvestorsAdvanced(form) {
-    console.log('تنفيذ البحث المتقدم في المستثمرين:', form);
-    
-    // التحقق من وجود الجدول
-    const tableBody = document.querySelector('#investors-table tbody');
-    if (!tableBody) {
-        console.warn('لم يتم العثور على جدول المستثمرين');
-        return;
-    }
-    
-    // التحقق من وجود البيانات
-    if (!window.investors || !Array.isArray(window.investors)) {
-        console.warn('بيانات المستثمرين غير متوفرة');
-        return;
-    }
-    
-    // تصفية المستثمرين حسب معايير البحث
-    let filteredInvestors = window.investors.filter(investor => {
-        // التحقق من تطابق جميع المعايير المحددة
-        
-        // البحث في الاسم
-        if (form.name && !investor.name.toLowerCase().includes(form.name.toLowerCase())) {
-            return false;
-        }
-        
-        // البحث في رقم الهاتف
-        if (form.phone && !investor.phone.includes(form.phone)) {
-            return false;
-        }
-        
-        // تصفية حسب الحالة
-        if (form.status && investor.status !== form.status) {
-            return false;
-        }
-        
-        // تصفية حسب الحد الأدنى للمبلغ
-        if (form.minAmount && (!investor.amount || investor.amount < parseFloat(form.minAmount))) {
-            return false;
-        }
-        
-        // إذا اجتاز جميع شروط التصفية
-        return true;
-    });
-    
-    // تحديث الجدول
-    tableBody.innerHTML = '';
-    
-    if (filteredInvestors.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = '<td colspan="8" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
-        tableBody.appendChild(emptyRow);
-        return;
-    }
-    
-    // عرض المستثمرين المصفاة
-    filteredInvestors.forEach(investor => {
-        const row = document.createElement('tr');
-        
-        // تنسيق تاريخ الانضمام
-        const joinDate = investor.joinDate || investor.createdAt || '';
-        
-        // إنشاء صف الجدول
-        row.innerHTML = `
-            <td>${investor.id}</td>
-            <td>
-                <div class="investor-info">
-                    <div class="investor-avatar">${investor.name.charAt(0)}</div>
-                    <div>
-                        <div class="investor-name">${investor.name}</div>
-                        <div class="investor-phone">${investor.phone}</div>
-                    </div>
-                </div>
-            </td>
-            <td>${investor.phone}</td>
-            <td>${formatCurrency(investor.amount || 0)}</td>
-            <td>${formatCurrency(calculateMonthlyProfit(investor) || 0)}</td>
-            <td>${joinDate}</td>
-            <td><span class="badge badge-${investor.status === 'inactive' ? 'danger' : 'success'}">${investor.status === 'inactive' ? 'غير نشط' : 'نشط'}</span></td>
-            <td>
-                <div class="investor-actions">
-                    <button class="investor-action-btn view-investor" data-id="${investor.id}">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="investor-action-btn edit edit-investor" data-id="${investor.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="investor-action-btn delete delete-investor" data-id="${investor.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        tableBody.appendChild(row);
-        
-        // إضافة مستمعي الأحداث للأزرار
-        addInvestorRowEventListeners(row);
-    });
-}
-
-/**
- * تنفيذ البحث المتقدم في العمليات
- * @param {Object} form - بيانات نموذج البحث
- */
-function searchTransactionsAdvanced(form) {
-    console.log('تنفيذ البحث المتقدم في العمليات:', form);
-    
-    // التحقق من وجود الجدول
-    const tableBody = document.querySelector('#transactions-table tbody');
-    if (!tableBody) {
-        console.warn('لم يتم العثور على جدول العمليات');
-        return;
-    }
-    
-    // التحقق من وجود البيانات
-    if (!window.transactions || !Array.isArray(window.transactions)) {
-        console.warn('بيانات العمليات غير متوفرة');
-        return;
-    }
-    
-    // تصفية العمليات حسب معايير البحث
-    let filteredTransactions = window.transactions.filter(transaction => {
-        // التحقق من تطابق جميع المعايير المحددة
-        
-        // البحث في اسم المستثمر
-        if (form.investorName && (!transaction.investorName || !transaction.investorName.toLowerCase().includes(form.investorName.toLowerCase()))) {
-            return false;
-        }
-        
-        // تصفية حسب نوع العملية
-        if (form.type && transaction.type !== form.type) {
-            return false;
-        }
-        
-        // تصفية حسب تاريخ البداية
-        if (form.fromDate) {
-            const fromDate = new Date(form.fromDate);
-            const transactionDate = new Date(transaction.date);
-            if (transactionDate < fromDate) {
-                return false;
-            }
-        }
-        
-        // تصفية حسب تاريخ النهاية
-        if (form.toDate) {
-            const toDate = new Date(form.toDate);
-            toDate.setHours(23, 59, 59); // نهاية اليوم
-            const transactionDate = new Date(transaction.date);
-            if (transactionDate > toDate) {
-                return false;
-            }
-        }
-        
-        // إذا اجتاز جميع شروط التصفية
-        return true;
-    });
-    
-    // تحديث الجدول
-    tableBody.innerHTML = '';
-    
-    if (filteredTransactions.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = '<td colspan="7" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
-        tableBody.appendChild(emptyRow);
-        return;
-    }
-    
-    // عرض العمليات المصفاة
-    filteredTransactions.forEach(transaction => {
-        const row = document.createElement('tr');
-        
-        // تحديد نوع العملية وأيقونتها
-        let typeClass = '';
-        let typeIcon = '';
-        
-        switch(transaction.type) {
-            case 'إيداع':
-                typeClass = 'success';
-                typeIcon = '<i class="fas fa-arrow-up"></i>';
-                break;
-            case 'سحب':
-                typeClass = 'danger';
-                typeIcon = '<i class="fas fa-arrow-down"></i>';
-                break;
-            case 'دفع أرباح':
-                typeClass = 'info';
-                typeIcon = '<i class="fas fa-hand-holding-usd"></i>';
-                break;
-            default:
-                typeClass = 'primary';
-                typeIcon = '<i class="fas fa-exchange-alt"></i>';
-        }
-        
-        // إنشاء صف الجدول
-        row.innerHTML = `
-            <td>${transaction.id}</td>
-            <td>${transaction.investorName || ''}</td>
-            <td>
-                <span class="badge badge-${typeClass}">${typeIcon} ${transaction.type}</span>
-            </td>
-            <td>${transaction.date || ''}</td>
-            <td>${formatCurrency(transaction.amount || 0)}</td>
-            <td>${transaction.balanceAfter ? formatCurrency(transaction.balanceAfter) : '-'}</td>
-            <td>
-                <button class="btn btn-outline btn-sm transaction-details" data-id="${transaction.id}">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        `;
-        
-        tableBody.appendChild(row);
-        
-        // إضافة مستمع حدث لزر التفاصيل
-        const detailsButton = row.querySelector('.transaction-details');
-        if (detailsButton) {
-            detailsButton.addEventListener('click', function() {
-                const transactionId = this.getAttribute('data-id');
-                if (window.showTransactionDetails) {
-                    window.showTransactionDetails(transactionId);
-                }
-            });
-        }
-    });
-}
-
-/**
- * تنفيذ البحث المتقدم في الموظفين
- * @param {Object} form - بيانات نموذج البحث
- */
-function searchEmployeesAdvanced(form) {
-    console.log('تنفيذ البحث المتقدم في الموظفين:', form);
-    
-    // التحقق من وجود الجدول
-    const tableBody = document.querySelector('#employees-table tbody');
-    if (!tableBody) {
-        console.warn('لم يتم العثور على جدول الموظفين');
-        return;
-    }
-    
-    // التحقق من وجود البيانات
-    if (!window.employees || !Array.isArray(window.employees)) {
-        console.warn('بيانات الموظفين غير متوفرة');
-        return;
-    }
-    
-    // تصفية الموظفين حسب معايير البحث
-    let filteredEmployees = window.employees.filter(employee => {
-        // التحقق من تطابق جميع المعايير المحددة
-        
-        // البحث في الاسم
-        if (form.name && !employee.name.toLowerCase().includes(form.name.toLowerCase())) {
-            return false;
-        }
-        
-        // البحث في المسمى الوظيفي
-        if (form.position && (!employee.position || !employee.position.toLowerCase().includes(form.position.toLowerCase()))) {
-            return false;
-        }
-        
-        // البحث في القسم
-        if (form.department && (!employee.department || !employee.department.toLowerCase().includes(form.department.toLowerCase()))) {
-            return false;
-        }
-        
-        // تصفية حسب الحالة
-        if (form.status && employee.status !== form.status) {
-            return false;
-        }
-        
-        // إذا اجتاز جميع شروط التصفية
-        return true;
-    });
-    
-    // تحديث الجدول
-    tableBody.innerHTML = '';
-    
-    if (filteredEmployees.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = '<td colspan="8" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
-        tableBody.appendChild(emptyRow);
-        return;
-    }
-    
-    // عرض الموظفين المصفاة
-    filteredEmployees.forEach(employee => {
-        const row = document.createElement('tr');
-        
-        // تنسيق تاريخ التعيين
-        const hireDate = employee.hireDate ? new Date(employee.hireDate).toLocaleDateString() : '';
-        
-        // إنشاء صف الجدول
-        row.innerHTML = `
-            <td>${employee.id}</td>
-            <td>
-                <div class="employee-info">
-                    <div class="employee-avatar">${employee.name.charAt(0)}</div>
-                    <div>
-                        <div class="employee-name">${employee.name}</div>
-                        <div class="employee-email">${employee.email || employee.phone}</div>
-                    </div>
-                </div>
-            </td>
-            <td>${employee.position || ''}</td>
-            <td>${employee.phone || ''}</td>
-            <td>${hireDate}</td>
-            <td>${formatCurrency(employee.salary || 0)}</td>
-            <td><span class="badge badge-${employee.status === 'inactive' ? 'danger' : 'success'}">${employee.status === 'inactive' ? 'غير نشط' : 'نشط'}</span></td>
-            <td>
-                <div class="employee-actions">
-                    <button class="employee-action-btn view-employee" data-id="${employee.id}">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="employee-action-btn edit edit-employee" data-id="${employee.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="employee-action-btn delete delete-employee" data-id="${employee.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        tableBody.appendChild(row);
-        
-        // إضافة مستمعي الأحداث للأزرار
-        addEmployeeRowEventListeners(row);
-    });
-}
-
-/**
- * تنفيذ البحث المتقدم في جميع الأنواع
- * @param {Object} form - بيانات نموذج البحث
- */
-function searchAllAdvanced(form) {
-    console.log('تنفيذ البحث المتقدم في جميع الأنواع:', form);
-    
-    // الحصول على الصفحة النشطة
-    const activePage = document.querySelector('.page.active');
-    if (!activePage) return;
-    
-    const pageId = activePage.id;
-    
-    // تنفيذ البحث حسب الصفحة النشطة
-    switch (pageId) {
-        case 'investors-page':
-            searchInvestorsAdvanced(form);
-            break;
-            
-        case 'transactions-page':
-            searchTransactionsAdvanced(form);
-            break;
-            
-        case 'employees-page':
-            searchEmployeesAdvanced(form);
-            break;
-            
-        case 'profits-page':
-            // تنفيذ البحث في الأرباح عن طريق البحث في المستثمرين
-            searchInvestorsAdvanced(form);
-            break;
-            
-        case 'dashboard-page':
-            // البحث في لوحة التحكم (آخر العمليات)
-            searchTransactionsAdvanced(form);
-            break;
-    }
-}
-
-/**
- * الواجهة العامة لمساعد البحث الذكي
- */
-const SmartSearchAssistant = {
-    // تهيئة المساعد
-    init: function(options = {}) {
-        init(options);
-        return this;
-    },
-    
-    // تحديث البيانات المخزنة
-    updateCachedData: function(dataType = 'all') {
-        updateCachedData(dataType);
-        return this;
-    },
-    
-    // تنفيذ البحث يدويًا
-    search: function(query, type, pageId) {
-        performSearch(query, type, pageId);
-        return this;
-    },
-    
-    // تنفيذ البحث المتقدم
-    advancedSearch: function(form, type) {
-        switch (type) {
-            case 'investors':
+                // البحث في المستثمرين
                 searchInvestorsAdvanced(form);
                 break;
+                
             case 'transactions':
+                // البحث في العمليات
                 searchTransactionsAdvanced(form);
                 break;
+                
             case 'employees':
+                // البحث في الموظفين
                 searchEmployeesAdvanced(form);
                 break;
-            default:
-                searchAllAdvanced(form);
+                
+            case 'all':
+                // البحث في كل شيء
+                if (form.type) {
+                    // إذا تم تحديد نوع محدد في البحث المتقدم
+                    switch (form.type) {
+                        case 'investors':
+                            searchInvestorsAdvanced(form);
+                            break;
+                        case 'transactions':
+                            searchTransactionsAdvanced(form);
+                            break;
+                        case 'employees':
+                            searchEmployeesAdvanced(form);
+                            break;
+                    }
+                } else {
+                    // بحث عام في جميع الأنواع
+                    searchAllAdvanced(form);
+                }
+                break;
         }
-        return this;
-    },
-    
-    // تبديل وضع البحث المتقدم
-    toggleAdvancedSearch: function(inputElement) {
-        toggleAdvancedSearch(inputElement);
-        return this;
-    },
-    
-    // إضافة علامات التصفية السريعة
-    addQuickFilterTags: function(inputElement, data, options) {
-        addQuickFilterTags(inputElement, data, options);
-        return this;
-    },
-    
-    // عرض مساعدة الاختصارات
-    showHotkeysHelp: function() {
-        showHotkeysHelp();
-        return this;
-    },
-    
-    // إعادة تهيئة خانات البحث
-    reinitializeSearchBoxes: function() {
-        initializeSearchBoxes();
-        return this;
+        
+        // تحديث قيمة حقل البحث لعرض البحث الحالي
+        inputElement.value = 'بحث متقدم...';
     }
-};
 
-// إضافة المساعد للنافذة
-window.SmartSearchAssistant = SmartSearchAssistant;
+    /**
+     * إعادة تعيين البحث المتقدم
+     * @param {HTMLElement} container - حاوية البحث المتقدم
+     * @param {HTMLInputElement} inputElement - حقل البحث
+     */
+    function resetAdvancedSearch(container, inputElement) {
+        // إعادة تعيين قيم جميع الحقول
+        container.querySelectorAll('input, select').forEach(element => {
+            if (element.tagName === 'SELECT') {
+                element.selectedIndex = 0;
+            } else {
+                element.value = '';
+            }
+        });
+        
+        // مسح حقل البحث الرئيسي
+        inputElement.value = '';
+        
+        // تنفيذ البحث (إعادة تعيين النتائج)
+        inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // إخفاء حاوية البحث المتقدم
+        container.style.display = 'none';
+    }
+
+    /**
+     * تنفيذ البحث المتقدم في المستثمرين
+     * @param {Object} form - بيانات نموذج البحث
+     */
+    function searchInvestorsAdvanced(form) {
+        console.log('تنفيذ البحث المتقدم في المستثمرين:', form);
+        
+        // التحقق من وجود الجدول
+        const tableBody = document.querySelector('#investors-table tbody');
+        if (!tableBody) {
+            console.warn('لم يتم العثور على جدول المستثمرين');
+            return;
+        }
+        
+        // التحقق من وجود البيانات
+        if (!window.investors || !Array.isArray(window.investors)) {
+            console.warn('بيانات المستثمرين غير متوفرة');
+            return;
+        }
+        
+        // تصفية المستثمرين حسب معايير البحث
+        let filteredInvestors = window.investors.filter(investor => {
+            // التحقق من تطابق جميع المعايير المحددة
+            
+            // البحث في الاسم
+            if (form.name && !investor.name.toLowerCase().includes(form.name.toLowerCase())) {
+                return false;
+            }
+            
+            // البحث في رقم الهاتف
+            if (form.phone && !investor.phone.includes(form.phone)) {
+                return false;
+            }
+            
+            // تصفية حسب الحالة
+            if (form.status && investor.status !== form.status) {
+                return false;
+            }
+            
+            // تصفية حسب الحد الأدنى للمبلغ
+            if (form.minAmount && (!investor.amount || investor.amount < parseFloat(form.minAmount))) {
+                return false;
+            }
+            
+            // إذا اجتاز جميع شروط التصفية
+            return true;
+        });
+        
+        // تحديث الجدول
+        tableBody.innerHTML = '';
+        
+        if (filteredInvestors.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="8" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        // عرض المستثمرين المصفاة
+        filteredInvestors.forEach(investor => {
+            const row = document.createElement('tr');
+            
+            // تنسيق تاريخ الانضمام
+            const joinDate = investor.joinDate || investor.createdAt || '';
+            
+            // إنشاء صف الجدول
+            row.innerHTML = `
+                <td>${investor.id}</td>
+                <td>
+                    <div class="investor-info">
+                        <div class="investor-avatar">${investor.name.charAt(0)}</div>
+                        <div>
+                            <div class="investor-name">${investor.name}</div>
+                            <div class="investor-phone">${investor.phone}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${investor.phone}</td>
+                <td>${formatCurrency(investor.amount || 0)}</td>
+                <td>${formatCurrency(calculateMonthlyProfit(investor) || 0)}</td>
+                <td>${joinDate}</td>
+                <td><span class="badge badge-${investor.status === 'inactive' ? 'danger' : 'success'}">${investor.status === 'inactive' ? 'غير نشط' : 'نشط'}</span></td>
+                <td>
+                    <div class="investor-actions">
+                        <button class="investor-action-btn view-investor" data-id="${investor.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="investor-action-btn edit edit-investor" data-id="${investor.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="investor-action-btn delete delete-investor" data-id="${investor.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+            
+            // إضافة مستمعي الأحداث للأزرار
+            addInvestorRowEventListeners(row);
+        });
+    }
+
+    /**
+     * تنفيذ البحث المتقدم في العمليات
+     * @param {Object} form - بيانات نموذج البحث
+     */
+    function searchTransactionsAdvanced(form) {
+        console.log('تنفيذ البحث المتقدم في العمليات:', form);
+        
+        // التحقق من وجود الجدول
+        const tableBody = document.querySelector('#transactions-table tbody');
+        if (!tableBody) {
+            console.warn('لم يتم العثور على جدول العمليات');
+            return;
+        }
+        
+        // التحقق من وجود البيانات
+        if (!window.transactions || !Array.isArray(window.transactions)) {
+            console.warn('بيانات العمليات غير متوفرة');
+            return;
+        }
+        
+        // تصفية العمليات حسب معايير البحث
+        let filteredTransactions = window.transactions.filter(transaction => {
+            // التحقق من تطابق جميع المعايير المحددة
+            
+            // البحث في اسم المستثمر
+            if (form.investorName && (!transaction.investorName || !transaction.investorName.toLowerCase().includes(form.investorName.toLowerCase()))) {
+                return false;
+            }
+            
+            // تصفية حسب نوع العملية
+            if (form.type && transaction.type !== form.type) {
+                return false;
+            }
+            
+            // تصفية حسب تاريخ البداية
+            if (form.fromDate) {
+                const fromDate = new Date(form.fromDate);
+                const transactionDate = new Date(transaction.date);
+                if (transactionDate < fromDate) {
+                    return false;
+                }
+            }
+            
+            // تصفية حسب تاريخ النهاية
+            if (form.toDate) {
+                const toDate = new Date(form.toDate);
+                toDate.setHours(23, 59, 59); // نهاية اليوم
+                const transactionDate = new Date(transaction.date);
+                if (transactionDate > toDate) {
+                    return false;
+                }
+            }
+            
+            // إذا اجتاز جميع شروط التصفية
+            return true;
+        });
+        
+        // تحديث الجدول
+        tableBody.innerHTML = '';
+        
+        if (filteredTransactions.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="7" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        // عرض العمليات المصفاة
+        filteredTransactions.forEach(transaction => {
+            const row = document.createElement('tr');
+            
+            // تحديد نوع العملية وأيقونتها
+            let typeClass = '';
+            let typeIcon = '';
+            
+            switch(transaction.type) {
+                case 'إيداع':
+                    typeClass = 'success';
+                    typeIcon = '<i class="fas fa-arrow-up"></i>';
+                    break;
+                case 'سحب':
+                    typeClass = 'danger';
+                    typeIcon = '<i class="fas fa-arrow-down"></i>';
+                    break;
+                case 'دفع أرباح':
+                    typeClass = 'info';
+                    typeIcon = '<i class="fas fa-hand-holding-usd"></i>';
+                    break;
+                default:
+                    typeClass = 'primary';
+                    typeIcon = '<i class="fas fa-exchange-alt"></i>';
+            }
+            
+            // إنشاء صف الجدول
+            row.innerHTML = `
+                <td>${transaction.id}</td>
+                <td>${transaction.investorName || ''}</td>
+                <td>
+                    <span class="badge badge-${typeClass}">${typeIcon} ${transaction.type}</span>
+                </td>
+                <td>${transaction.date || ''}</td>
+                <td>${formatCurrency(transaction.amount || 0)}</td>
+                <td>${transaction.balanceAfter ? formatCurrency(transaction.balanceAfter) : '-'}</td>
+                <td>
+                    <button class="btn btn-outline btn-sm transaction-details" data-id="${transaction.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+            
+            // إضافة مستمع حدث لزر التفاصيل
+            const detailsButton = row.querySelector('.transaction-details');
+            if (detailsButton) {
+                detailsButton.addEventListener('click', function() {
+                    const transactionId = this.getAttribute('data-id');
+                    if (window.showTransactionDetails) {
+                        window.showTransactionDetails(transactionId);
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * تنفيذ البحث المتقدم في الموظفين
+     * @param {Object} form - بيانات نموذج البحث
+     */
+    function searchEmployeesAdvanced(form) {
+        console.log('تنفيذ البحث المتقدم في الموظفين:', form);
+        
+        // التحقق من وجود الجدول
+        const tableBody = document.querySelector('#employees-table tbody');
+        if (!tableBody) {
+            console.warn('لم يتم العثور على جدول الموظفين');
+            return;
+        }
+        
+        // التحقق من وجود البيانات
+        if (!window.employees || !Array.isArray(window.employees)) {
+            console.warn('بيانات الموظفين غير متوفرة');
+            return;
+        }
+        
+        // تصفية الموظفين حسب معايير البحث
+        let filteredEmployees = window.employees.filter(employee => {
+            // التحقق من تطابق جميع المعايير المحددة
+            
+            // البحث في الاسم
+            if (form.name && !employee.name.toLowerCase().includes(form.name.toLowerCase())) {
+                return false;
+            }
+            
+            // البحث في المسمى الوظيفي
+            if (form.position && (!employee.position || !employee.position.toLowerCase().includes(form.position.toLowerCase()))) {
+                return false;
+            }
+            
+            // البحث في القسم
+            if (form.department && (!employee.department || !employee.department.toLowerCase().includes(form.department.toLowerCase()))) {
+                return false;
+            }
+            
+            // تصفية حسب الحالة
+            if (form.status && employee.status !== form.status) {
+                return false;
+            }
+            
+            // إذا اجتاز جميع شروط التصفية
+            return true;
+        });
+        
+        // تحديث الجدول
+        tableBody.innerHTML = '';
+        
+        if (filteredEmployees.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="8" class="text-center">لم يتم العثور على نتائج مطابقة لمعايير البحث</td>';
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        // عرض الموظفين المصفاة
+        filteredEmployees.forEach(employee => {
+            const row = document.createElement('tr');
+            
+            // تنسيق تاريخ التعيين
+            const hireDate = employee.hireDate ? new Date(employee.hireDate).toLocaleDateString() : '';
+            
+            // إنشاء صف الجدول
+            row.innerHTML = `
+                <td>${employee.id}</td>
+                <td>
+                    <div class="employee-info">
+                        <div class="employee-avatar">${employee.name.charAt(0)}</div>
+                        <div>
+                            <div class="employee-name">${employee.name}</div>
+                            <div class="employee-email">${employee.email || employee.phone}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${employee.position || ''}</td>
+                <td>${employee.phone || ''}</td>
+                <td>${hireDate}</td>
+                <td>${formatCurrency(employee.salary || 0)}</td>
+                <td><span class="badge badge-${employee.status === 'inactive' ? 'danger' : 'success'}">${employee.status === 'inactive' ? 'غير نشط' : 'نشط'}</span></td>
+                <td>
+                    <div class="employee-actions">
+                        <button class="employee-action-btn view-employee" data-id="${employee.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="employee-action-btn edit edit-employee" data-id="${employee.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="employee-action-btn delete delete-employee" data-id="${employee.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+            
+            // إضافة مستمعي الأحداث للأزرار
+            addEmployeeRowEventListeners(row);
+        });
+    }
+
+    /**
+     * تنفيذ البحث المتقدم في جميع الأنواع
+     * @param {Object} form - بيانات نموذج البحث
+     */
+    function searchAllAdvanced(form) {
+        console.log('تنفيذ البحث المتقدم في جميع الأنواع:', form);
+        
+        // الحصول على الصفحة النشطة
+        const activePage = document.querySelector('.page.active');
+        if (!activePage) return;
+        
+        const pageId = activePage.id;
+        
+        // تنفيذ البحث حسب الصفحة النشطة
+        switch (pageId) {
+            case 'investors-page':
+                searchInvestorsAdvanced(form);
+                break;
+                
+            case 'transactions-page':
+                searchTransactionsAdvanced(form);
+                break;
+                
+            case 'employees-page':
+                searchEmployeesAdvanced(form);
+                break;
+                
+            case 'profits-page':
+                // تنفيذ البحث في الأرباح عن طريق البحث في المستثمرين
+                searchInvestorsAdvanced(form);
+                break;
+                
+            case 'dashboard-page':
+                // البحث في لوحة التحكم (آخر العمليات)
+                searchTransactionsAdvanced(form);
+                break;
+        }
+    }
+
+    /**
+     * الواجهة العامة لمساعد البحث الذكي
+     */
+    return {
+        // تهيئة المساعد
+        init: function(options = {}) {
+            init(options);
+            return this;
+        },
+        
+        // تحديث البيانات المخزنة
+        updateCachedData: function(dataType = 'all') {
+            updateCachedData(dataType);
+            return this;
+        },
+        
+        // تنفيذ البحث يدويًا
+        search: function(query, type, pageId) {
+            performSearch(query, type, pageId);
+            return this;
+        },
+        
+        // تنفيذ البحث المتقدم
+        advancedSearch: function(form, type) {
+            switch (type) {
+                case 'investors':
+                    searchInvestorsAdvanced(form);
+                    break;
+                case 'transactions':
+                    searchTransactionsAdvanced(form);
+                    break;
+                case 'employees':
+                    searchEmployeesAdvanced(form);
+                    break;
+                default:
+                    searchAllAdvanced(form);
+            }
+            return this;
+        },
+        
+        // تبديل وضع البحث المتقدم
+        toggleAdvancedSearch: function(inputElement) {
+            toggleAdvancedSearch(inputElement);
+            return this;
+        },
+        
+        // إضافة علامات التصفية السريعة
+        addQuickFilterTags: function(inputElement, data, options) {
+            addQuickFilterTags(inputElement, data, options);
+            return this;
+        },
+        
+        // عرض مساعدة الاختصارات
+        showHotkeysHelp: function() {
+            showHotkeysHelp();
+            return this;
+        },
+        
+        // إعادة تهيئة خانات البحث
+        reinitializeSearchBoxes: function() {
+            initializeSearchBoxes();
+            return this;
+        }
+    };
+})();
 
 // تنفيذ التهيئة التلقائية عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
