@@ -1,20 +1,23 @@
+
+
 /**
- * employees-management-integrated.js
- * نظام إدارة الموظفين المتكامل ذوي النسبة والرواتب
- * يتكامل مع نظام الاستثمار المتكامل
- * تم دمج جميع الوظائف والإصلاحات في ملف واحد متكامل
+ * employees-integration.js
+ * ملف تكامل نظام إدارة الموظفين مع نظام الاستثمار المتكامل
+ * هذا الملف يحل مشكلة عدم عمل صفحة الموظفين عند النقر على القائمة الجانبية
  */
 
 (function() {
-    // المتغيرات الرئيسية
-    let employees = [];
-    let salaryTransactions = [];
-
     // تهيئة النظام عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('تهيئة نظام إدارة الموظفين المتكامل...');
-        
-        // إضافة رابط الصفحة في القائمة الجانبية
+        console.log('تهيئة تكامل نظام إدارة الموظفين...');
+        initEmployeesSystem();
+    });
+
+    /**
+     * تهيئة نظام الموظفين
+     */
+    function initEmployeesSystem() {
+        // إضافة رابط صفحة الموظفين إلى القائمة الجانبية
         addEmployeesSidebarLink();
         
         // إضافة صفحة الموظفين إلى التطبيق
@@ -23,31 +26,33 @@
         // إضافة نوافذ إدارة الموظفين
         addEmployeesModals();
         
-        // إضافة أنماط CSS
-        addEmployeesStyles();
-        
         // تهيئة مستمعي الأحداث
         initEmployeesEventListeners();
         
+        // إضافة أنماط CSS
+        addEmployeesStyles();
+
         // تحميل بيانات الموظفين
-        loadEmployeesData();
-        
-        // إضافة تكامل مع النظام
-        setupIntegration();
-        
-        // توجيه الأحداث للتبويبات الداخلية
-        handleTabEvents();
-    });
+        setTimeout(function() {
+            loadEmployeesData();
+        }, 500);
+    }
 
     /**
      * إضافة رابط صفحة الموظفين إلى القائمة الجانبية
      */
     function addEmployeesSidebarLink() {
         const navList = document.querySelector('.nav-list');
-        if (!navList) return;
+        if (!navList) {
+            console.error('لم يتم العثور على القائمة الجانبية');
+            return;
+        }
         
         // التحقق من عدم وجود الرابط مسبقاً
-        if (document.querySelector('a[data-page="employees"]')) return;
+        if (document.querySelector('a[data-page="employees"]')) {
+            console.log('رابط الموظفين موجود بالفعل');
+            return;
+        }
         
         // إنشاء عنصر الرابط
         const navItem = document.createElement('li');
@@ -124,10 +129,16 @@
      */
     function addEmployeesPage() {
         const mainContent = document.querySelector('.main-content');
-        if (!mainContent) return;
+        if (!mainContent) {
+            console.error('لم يتم العثور على المحتوى الرئيسي');
+            return;
+        }
         
         // التحقق من عدم وجود الصفحة مسبقاً
-        if (document.getElementById('employees-page')) return;
+        if (document.getElementById('employees-page')) {
+            console.log('صفحة الموظفين موجودة بالفعل');
+            return;
+        }
         
         // إنشاء عنصر الصفحة
         const employeesPage = document.createElement('div');
@@ -273,13 +284,9 @@
                 document.body.classList.toggle('sidebar-collapsed');
             });
         }
-    }
 
-    /**
-     * توجيه الأحداث للتبويبات الداخلية
-     */
-    function handleTabEvents() {
-        const tabButtons = document.querySelectorAll('#employees-page .tab-btn');
+        // تهيئة تبويبات الصفحة
+        const tabButtons = employeesPage.querySelectorAll('.tab-btn');
         tabButtons.forEach(button => {
             button.addEventListener('click', function() {
                 // إزالة الفئة النشطة من جميع الأزرار
@@ -292,7 +299,7 @@
                 const tabId = this.getAttribute('data-tab') + '-tab';
                 
                 // إخفاء جميع محتويات التبويبات
-                document.querySelectorAll('#employees-page .tab-content').forEach(tab => {
+                employeesPage.querySelectorAll('.tab-content').forEach(tab => {
                     tab.classList.remove('active');
                 });
                 
@@ -319,10 +326,17 @@
      */
     function addEmployeesModals() {
         // التحقق من عدم وجود النوافذ مسبقاً
-        if (document.getElementById('add-employee-modal')) return;
+        if (document.getElementById('add-employee-modal')) {
+            console.log('نوافذ الموظفين موجودة بالفعل');
+            return;
+        }
         
         // إنشاء عناصر النوافذ
-        const modalsHTML = `
+        const modalsContainer = document.createElement('div');
+        modalsContainer.id = 'employees-modals-container';
+        modalsContainer.style.display = 'none';
+        
+        modalsContainer.innerHTML = `
             <!-- نافذة إضافة موظف جديد -->
             <div class="modal-overlay" id="add-employee-modal">
                 <div class="modal animate__animated animate__fadeInUp">
@@ -578,7 +592,6 @@
                                         <button class="btn btn-icon-sm mic-btn" data-input="salary-deductions" type="button">
                                             <i class="fas fa-microphone"></i>
                                         </button>
-                                    </div
                                     </div>
                                 </div>
                             </div>
@@ -656,7 +669,7 @@
         `;
         
         // إضافة النوافذ إلى نهاية الصفحة
-        document.body.insertAdjacentHTML('beforeend', modalsHTML);
+        document.body.appendChild(modalsContainer);
     }
 
     /**
@@ -664,7 +677,10 @@
      */
     function addEmployeesStyles() {
         // التحقق من عدم وجود الأنماط مسبقاً
-        if (document.getElementById('employees-management-styles')) return;
+        if (document.getElementById('employees-management-styles')) {
+            console.log('أنماط الموظفين موجودة بالفعل');
+            return;
+        }
         
         // إنشاء عنصر نمط
         const styleElement = document.createElement('style');
@@ -1021,20 +1037,6 @@
                 font-weight: 700;
                 color: #3b82f6;
             }
-            
-            .receipt-signature {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 40px;
-            }
-            
-            .signature-box {
-                flex: 1;
-                max-width: 200px;
-                border-top: 1px solid #adb5bd;
-                padding-top: 10px;
-                text-align: center;
-            }
 
             /* إضافة نمط للموظفين في الجدول */
             .employee-avatar {
@@ -1089,88 +1091,6 @@
                 color: #ef4444;
             }
 
-            /* أنماط الإشعارات */
-            .notification {
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                padding: 15px 20px;
-                border-radius: 5px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                animation: slideIn 0.3s ease;
-                max-width: 350px;
-            }
-            
-            .notification.success {
-                background-color: rgba(16, 185, 129, 0.1);
-                border-right: 4px solid #10b981;
-                color: #10b981;
-            }
-            
-            .notification.error {
-                background-color: rgba(239, 68, 68, 0.1);
-                border-right: 4px solid #ef4444;
-                color: #ef4444;
-            }
-            
-            .notification.warning {
-                background-color: rgba(245, 158, 11, 0.1);
-                border-right: 4px solid #f59e0b;
-                color: #f59e0b;
-            }
-            
-            .notification.info {
-                background-color: rgba(59, 130, 246, 0.1);
-                border-right: 4px solid #3b82f6;
-                color: #3b82f6;
-            }
-            
-            .notification-icon {
-                margin-left: 15px;
-                font-size: 1.25rem;
-            }
-            
-            .notification-content {
-                flex: 1;
-            }
-            
-            .notification-title {
-                font-weight: 600;
-                margin-bottom: 2px;
-            }
-            
-            .notification-message {
-                font-size: 0.9rem;
-            }
-            
-            .notification-close {
-                background: none;
-                border: none;
-                font-size: 1.25rem;
-                margin-right: 10px;
-                cursor: pointer;
-                opacity: 0.7;
-                transition: opacity 0.2s;
-            }
-            
-            .notification-close:hover {
-                opacity: 1;
-            }
-            
-            @keyframes slideIn {
-                from {
-                    transform: translateX(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            
             @media print {
                 body * {
                     visibility: hidden;
@@ -1192,131 +1112,7 @@
                     display: none !important;
                 }
             }
-
-            /* أنماط توزيع المبيعات */
-            .sales-statistics .grid-cols-2 {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 10px;
-            }
-            
-            .sales-statistics .stat-card {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 10px;
-                text-align: center;
-            }
-            
-            .sales-statistics .stat-title {
-                font-size: 0.85rem;
-                color: #6c757d;
-                margin-bottom: 5px;
-            }
-            
-            .sales-statistics .stat-value {
-                font-size: 1.2rem;
-                font-weight: 600;
-                color: #3b82f6;
-            }
-            
-            .sales-performance {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 10px 15px;
-            }
-            
-            .sales-performance h5 {
-                color: #3b82f6;
-                font-weight: 600;
-                margin-top: 0;
-            }
-            
-            .performance-metric {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 5px;
-                font-size: 0.9rem;
-            }
-            
-            .metric-label {
-                color: #6c757d;
-            }
-            
-            .metric-value {
-                font-weight: 500;
-            }
-            
-            /* أنماط توزيع المبيعات */
-            .distribution-container {
-                margin-top: 20px;
-            }
-            
-            .employee-distribution-item {
-                display: flex;
-                align-items: center;
-                padding: 10px;
-                border-bottom: 1px solid #e9ecef;
-            }
-            
-            .employee-distribution-item:last-child {
-                border-bottom: none;
-            }
-            
-            .employee-distribution {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
-            
-            .distribution-controls {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
-            
-            .distribution-range {
-                flex: 1;
-                margin-left: 10px;
-            }
-            
-            .distribution-value {
-                display: flex;
-                align-items: center;
-                width: 80px;
-            }
-            
-            .distribution-percent {
-                width: 60px;
-                text-align: center;
-                padding: 4px;
-            }
-            
-            .distribution-amount {
-                width: 120px;
-                text-align: left;
-                font-weight: 500;
-            }
-            
-            .distribution-summary {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 15px;
-                padding-top: 10px;
-                border-top: 1px solid #e9ecef;
-            }
-            
-            .distribution-total {
-                font-weight: 700;
-            }
-            
-            .month-name {
-                display: block;
-                font-size: 0.8em;
-                color: #6c757d;
-            }
-        `;
+        `; 
         
         // إضافة عنصر النمط إلى رأس الصفحة
         document.head.appendChild(styleElement);
@@ -1329,13 +1125,15 @@
         // مستمع زر إضافة موظف
         const addEmployeeBtn = document.getElementById('add-employee-btn');
         if (addEmployeeBtn) {
-            addEmployeeBtn.addEventListener('click', () => openModal('add-employee-modal'));
+            addEmployeeBtn.addEventListener('click', function() {
+                openModal('add-employee-modal');
+            });
         }
         
         // مستمع زر صرف راتب
         const paySalaryBtn = document.getElementById('pay-salary-btn');
         if (paySalaryBtn) {
-            paySalaryBtn.addEventListener('click', () => {
+            paySalaryBtn.addEventListener('click', function() {
                 openModal('pay-salary-modal');
                 populateEmployeeSelect();
             });
@@ -1347,14 +1145,10 @@
             formTabButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
-                    // إزالة الفئة النشطة من جميع الأزرار في نفس المجموعة
-                    const tabButtonsContainer = this.closest('.form-tab-buttons');
-                    if (tabButtonsContainer) {
-                        tabButtonsContainer.querySelectorAll('.form-tab-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
-                    }
+                    // إزالة الفئة النشطة من جميع الأزرار
+                    document.querySelectorAll('.form-tab-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
                     
                     // إضافة الفئة النشطة للزر الحالي
                     this.classList.add('active');
@@ -1362,13 +1156,10 @@
                     // تحديد معرف التبويب
                     const tabId = this.getAttribute('data-tab') + '-tab';
                     
-                    // إخفاء جميع محتويات التبويبات في نفس المجموعة
-                    const formContainer = this.closest('.form-tabs');
-                    if (formContainer) {
-                        formContainer.querySelectorAll('.form-tab-content').forEach(tab => {
-                            tab.classList.remove('active');
-                        });
-                    }
+                    // إخفاء جميع محتويات التبويبات
+                    document.querySelectorAll('.form-tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
                     
                     // إظهار محتوى التبويب المطلوب
                     const tabContent = document.getElementById(tabId);
@@ -1428,7 +1219,7 @@
         });
         
         // إضافة مستمعي أزرار فلترة جدول الموظفين
-        const filterButtons = document.querySelectorAll('#employees-page .btn-group [data-filter]');
+        const filterButtons = document.querySelectorAll('.btn-group [data-filter]');
         if (filterButtons.length > 0) {
             filterButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -1446,9 +1237,9 @@
         }
         
         // مستمع زر تصدير بيانات الموظفين
-        const exportEmployeesBtn = document.getElementById('export-employees-btn');
-        if (exportEmployeesBtn) {
-            exportEmployeesBtn.addEventListener('click', exportEmployeesData);
+        const exportBtn = document.getElementById('export-employees-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportEmployeesData);
         }
         
         // مستمع زر تصدير بيانات الرواتب
@@ -1485,7 +1276,7 @@
         
         if (!uploadBtn || !fileInput || !preview) return;
         
-        uploadBtn.addEventListener('click', () => {
+        uploadBtn.addEventListener('click', function() {
             fileInput.click();
         });
         
@@ -1501,6 +1292,10 @@
             }
         });
     }
+
+    // المتغيرات الرئيسية
+    let employees = [];
+    let salaryTransactions = [];
 
     /**
      * تحميل بيانات الموظفين من التخزين المحلي
@@ -1754,10 +1549,7 @@
             row.innerHTML = `
                 <td>${transaction.id}</td>
                 <td>${transaction.employeeName}</td>
-                <td>
-                    ${transaction.date}
-                    <span class="month-name">${getArabicMonthName(parseInt(transaction.date.split('-')[1]))}</span>
-                </td>
+                <td>${transaction.date}</td>
                 <td>${formatCurrency(transaction.baseSalary || 0)}</td>
                 <td>${formatCurrency(transaction.sales || 0)}</td>
                 <td>${commissionRate}%</td>
@@ -1896,11 +1688,6 @@
         if (salaryMonthSelect && !salaryMonthSelect.value) {
             const currentMonth = new Date().getMonth() + 1; // الأشهر تبدأ من 0
             salaryMonthSelect.value = currentMonth.toString();
-        }
-        
-        // تحميل بيانات المبيعات للشهر إذا كانت متاحة
-        if (window.currentMonthSales && document.getElementById('salary-sales').value === '') {
-            document.getElementById('salary-sales').value = window.currentMonthSales;
         }
         
         // إعادة حساب الراتب الإجمالي
@@ -2267,7 +2054,7 @@
         `).join('');
     }
 
-    /**
+  /**
      * فتح نافذة صرف راتب لموظف محدد
      * @param {string} employeeId - معرف الموظف
      */
@@ -2952,10 +2739,7 @@
         // إجراءات خاصة حسب النافذة
         if (modalId === 'add-employee-modal') {
             // إعادة تعيين النموذج
-            const form = document.getElementById('add-employee-form');
-            if (form) {
-                form.reset();
-            }
+            document.getElementById('add-employee-form').reset();
             
             // إعادة تعيين معاينة الصور
             document.getElementById('id-card-preview').innerHTML = '';
@@ -2986,23 +2770,17 @@
                 saveButton.onclick = addNewEmployee;
             }
             
-            // تعيين تاريخ اليوم في حقل تاريخ التعيين
+         // تعيين تاريخ اليوم في حقل تاريخ التعيين
             const hireDateInput = document.getElementById('employee-hire-date');
             if (hireDateInput) {
                 hireDateInput.value = new Date().toISOString().split('T')[0];
             }
         } else if (modalId === 'pay-salary-modal') {
             // إعادة تعيين النموذج
-            const form = document.getElementById('pay-salary-form');
-            if (form) {
-                form.reset();
-            }
+            document.getElementById('pay-salary-form').reset();
             
             // إخفاء معلومات الموظف
-            const salaryInfoContainer = document.getElementById('employee-salary-info');
-            if (salaryInfoContainer) {
-                salaryInfoContainer.style.display = 'none';
-            }
+            document.getElementById('employee-salary-info').style.display = 'none';
             
             // تعبئة قائمة الموظفين
             populateEmployeeSelect();
@@ -3215,809 +2993,6 @@
         return months[monthNumber] || `الشهر ${month}`;
     }
 
-    /**
-     * إعداد التكامل مع النظام
-     */
-    function setupIntegration() {
-        // ربط دفع الرواتب بسجل العمليات المالية
-        setupSalaryTransactionIntegration();
-        
-        // إضافة تكامل مع نظام الإبلاغ عن المبيعات
-        setupSalesNotifications();
-        
-        // ربط بيانات المبيعات بسجلات الموظفين
-        linkSalesDataToEmployees();
-        
-        // إضافة تكامل مع النظام المالي
-        setupFinancialIntegration();
-        
-        // إضافة الربط مع نظام المصادقة
-        setupAuthIntegration();
-    }
-
-    /**
-     * ربط دفع الرواتب بسجل العمليات المالية
-     */
-    function setupSalaryTransactionIntegration() {
-        // التنصت على أحداث دفع الرواتب
-        document.body.addEventListener('click', function(e) {
-            // التحقق من أن الزر هو زر تأكيد دفع الراتب
-            const confirmButton = e.target.closest('#confirm-pay-salary-btn');
-            if (!confirmButton) return;
-            
-            // إضافة مستمع حدث لما بعد دفع الراتب
-            setTimeout(() => {
-                const salaryDetailsContent = document.getElementById('salary-details-content');
-                if (!salaryDetailsContent) return;
-                
-                // إضافة زر إضافة العملية للسجل المالي
-                if (!document.getElementById('add-to-transactions-btn')) {
-                    const addToTransactionsButton = document.createElement('button');
-                    addToTransactionsButton.id = 'add-to-transactions-btn';
-                    addToTransactionsButton.className = 'btn btn-primary no-print';
-                    addToTransactionsButton.style.marginRight = '10px';
-                    addToTransactionsButton.innerHTML = '<i class="fas fa-exchange-alt"></i> إضافة للسجل المالي';
-                    
-                    // إضافة الزر قبل زر الطباعة
-                    const printButton = document.getElementById('print-salary-details-btn');
-                    if (printButton && printButton.parentNode) {
-                        printButton.parentNode.insertBefore(addToTransactionsButton, printButton);
-                        
-                        // إضافة مستمع حدث للزر
-                        addToTransactionsButton.addEventListener('click', function() {
-                            // استخراج معرف معاملة الراتب من عنوان النافذة
-                            const modalTitle = document.querySelector('#salary-details-modal .modal-title').textContent;
-                            const employeeName = modalTitle.replace('تفاصيل راتب - ', '');
-                            
-                            // البحث عن معاملة الراتب الأخيرة للموظف
-                            const latestSalaryTransaction = salaryTransactions.find(tr => 
-                                tr.employeeName === employeeName
-                            );
-                            
-                            if (latestSalaryTransaction) {
-                                // إضافة العملية إلى سجل العمليات المالية
-                                addSalaryToFinancialTransactions(latestSalaryTransaction);
-                            } else {
-                                showNotification('لم يتم العثور على معاملة الراتب', 'error');
-                            }
-                        });
-                    }
-                }
-            }, 500);
-        });
-    }
-
-    /**
-     * إضافة معاملة راتب إلى سجل العمليات المالية
-     * @param {Object} salaryTransaction - معاملة الراتب
-     */
-    function addSalaryToFinancialTransactions(salaryTransaction) {
-        // التحقق من وجود دالة إضافة العمليات
-        if (typeof window.addTransaction !== 'function') {
-            showNotification('لا يمكن إضافة العملية للسجل المالي، النظام غير متاح', 'error');
-            return;
-        }
-        
-        try {
-            // إضافة العملية للسجل المالي
-            window.addTransaction(
-                'سحب', // نوع العملية
-                'expenses-account', // حساب النفقات (يمكن تغييره)
-                salaryTransaction.totalSalary, // المبلغ
-                `دفع راتب للموظف ${salaryTransaction.employeeName} - ${getArabicMonthName(salaryTransaction.month)}` // ملاحظات
-            );
-            
-            showNotification('تم إضافة الراتب للسجل المالي بنجاح', 'success');
-            
-            // إغلاق النافذة المنبثقة
-            closeModal('salary-details-modal');
-            
-        } catch (error) {
-            console.error('خطأ في إضافة الراتب للسجل المالي:', error);
-            showNotification('حدث خطأ أثناء إضافة الراتب للسجل المالي', 'error');
-        }
-    }
-
-    /**
-     * إعداد تكامل مع نظام الإبلاغ عن المبيعات
-     */
-    function setupSalesNotifications() {
-        // الاستماع لأحداث إضافة/تعديل العمليات
-        document.addEventListener('transaction:update', function() {
-            // تحديث إحصائيات المبيعات
-            updateSalesStatistics();
-        });
-    }
-
-    /**
-     * تحديث إحصائيات المبيعات
-     */
-    function updateSalesStatistics() {
-        // لا يتم تنفيذ هذه الوظيفة إلا إذا كانت هناك مصفوفة معاملات
-        if (!window.transactions) return;
-        
-        try {
-            // حساب إجمالي المبيعات للشهر الحالي
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            // تصفية المعاملات للشهر الحالي
-            const currentMonthDeposits = window.transactions.filter(tx => {
-                if (tx.type !== 'إيداع') return false;
-                
-                const txDate = new Date(tx.date);
-                return txDate.getMonth() === currentMonth && 
-                       txDate.getFullYear() === currentYear;
-            });
-            
-            // حساب إجمالي المبيعات
-            const totalMonthSales = currentMonthDeposits.reduce((total, tx) => total + tx.amount, 0);
-            
-            console.log(`إجمالي المبيعات للشهر الحالي: ${totalMonthSales}`);
-            
-            // تخزين البيانات المؤقتة للاستخدام في نظام الموظفين
-            window.currentMonthSales = totalMonthSales;
-            
-            // إذا كانت صفحة الموظفين مفتوحة، تحديث القيم التلقائية للمبيعات
-            const salesInput = document.getElementById('salary-sales');
-            if (salesInput && salesInput.value === '') {
-                salesInput.value = totalMonthSales;
-                
-                // إعادة حساب إجمالي الراتب
-                calculateTotalSalary();
-            }
-        } catch (error) {
-            console.error('خطأ في تحديث إحصائيات المبيعات:', error);
-        }
-    }
-
-    /**
-     * ربط بيانات المبيعات بسجلات الموظفين
-     */
-    function linkSalesDataToEmployees() {
-        // التحقق من وجود بيانات المعاملات والموظفين
-        if (!window.transactions) return;
-        
-        // ربط المعاملات بالموظفين المسؤولين عنها
-        try {
-            // تحديث نموذج صرف الراتب
-            enhancePaySalaryForm();
-            
-            // إضافة عرض المبيعات في تفاصيل الموظف
-            enhanceEmployeeDetails();
-            
-        } catch (error) {
-            console.error('خطأ في ربط بيانات المبيعات بسجلات الموظفين:', error);
-        }
-    }
-
-    /**
-     * تحسين نموذج صرف الراتب
-     */
-    function enhancePaySalaryForm() {
-        // إضافة زر التحميل التلقائي للمبيعات
-        const salaryForm = document.getElementById('pay-salary-form');
-        if (!salaryForm) return;
-        
-        const salesInputGroup = document.querySelector('#salary-sales')?.parentNode;
-        if (!salesInputGroup) return;
-        
-        // إضافة زر التحميل التلقائي إذا لم يكن موجودًا
-        if (!document.getElementById('auto-load-sales-btn')) {
-            const autoLoadButton = document.createElement('button');
-            autoLoadButton.id = 'auto-load-sales-btn';
-            autoLoadButton.type = 'button';
-            autoLoadButton.className = 'btn btn-info btn-sm';
-            autoLoadButton.style.marginTop = '5px';
-            autoLoadButton.innerHTML = '<i class="fas fa-sync-alt"></i> تحميل المبيعات تلقائياً';
-            
-            autoLoadButton.addEventListener('click', function() {
-                // تحميل المبيعات للشهر الحالي
-                updateSalesStatistics();
-                
-                // استخدام القيمة المحسوبة
-                if (window.currentMonthSales) {
-                    document.getElementById('salary-sales').value = window.currentMonthSales;
-                    
-                    // إعادة حساب إجمالي الراتب
-                    calculateTotalSalary();
-                    
-                    showNotification('تم تحميل بيانات المبيعات للشهر الحالي', 'success');
-                } else {
-                    showNotification('لا توجد بيانات مبيعات للشهر الحالي', 'warning');
-                }
-            });
-            
-            // إضافة الزر بعد حقل المبيعات
-            salesInputGroup.appendChild(autoLoadButton);
-        }
-    }
-
-    /**
-     * تحسين عرض تفاصيل الموظف
-     */
-    function enhanceEmployeeDetails() {
-        // إضافة مستمع حدث لعرض تفاصيل الموظف
-        document.body.addEventListener('click', function(e) {
-            // التحقق من أن الزر هو زر عرض تفاصيل الموظف
-            const viewButton = e.target.closest('.view-employee');
-            if (!viewButton) return;
-            
-            // الحصول على معرف الموظف
-            const employeeId = viewButton.getAttribute('data-id');
-            if (!employeeId) return;
-            
-            // إضافة إحصائيات المبيعات لعرض تفاصيل الموظف
-            setTimeout(() => {
-                addSalesStatisticsToEmployeeDetails(employeeId);
-            }, 500);
-        });
-    }
-
-    /**
-     * إضافة إحصائيات المبيعات لعرض تفاصيل الموظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function addSalesStatisticsToEmployeeDetails(employeeId) {
-        const detailsContent = document.getElementById('employee-details-content');
-        if (!detailsContent) return;
-        
-        // البحث عن آخر قسم في التفاصيل (سجل الرواتب)
-        const lastCard = detailsContent.querySelector('.employee-detail-card:last-child');
-        if (!lastCard) return;
-        
-        // إنشاء قسم إحصائيات المبيعات إذا لم يكن موجوداً
-        if (!document.getElementById('employee-sales-stats-card')) {
-            const salesStatsCard = document.createElement('div');
-            salesStatsCard.id = 'employee-sales-stats-card';
-            salesStatsCard.className = 'employee-detail-card';
-            salesStatsCard.innerHTML = `
-                <h4><i class="fas fa-chart-line"></i> إحصائيات المبيعات</h4>
-                <div id="employee-sales-stats">
-                    <div class="loader" style="margin: 20px auto;"></div>
-                    <p class="text-center">جاري تحميل إحصائيات المبيعات...</p>
-                </div>
-            `;
-            
-            // إضافة القسم قبل سجل الرواتب
-            lastCard.parentNode.insertBefore(salesStatsCard, lastCard);
-            
-            // تحميل إحصائيات المبيعات
-            loadEmployeeSalesStatistics(employeeId);
-        }
-    }
-
-    /**
-     * تحميل إحصائيات المبيعات للموظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function loadEmployeeSalesStatistics(employeeId) {
-        const statsContainer = document.getElementById('employee-sales-stats');
-        if (!statsContainer) return;
-        
-        try {
-            // الحصول على إحصائيات المبيعات للموظف
-            const employee = employees.find(emp => emp.id === employeeId);
-            if (!employee) throw new Error('لم يتم العثور على الموظف');
-            
-            // حساب إحصائيات المبيعات للأشهر الستة الماضية
-            const months = [];
-            const monthlySales = [];
-            const monthlyCommissions = [];
-            
-            const today = new Date();
-            
-            for (let i = 5; i >= 0; i--) {
-                // حساب الشهر
-                const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                const monthName = month.toLocaleDateString('ar', { month: 'short' });
-                months.push(monthName);
-                
-                // إيجاد معاملات رواتب الموظف لهذا الشهر
-                const monthSalary = salaryTransactions.find(salary => {
-                    const salaryDate = new Date(salary.date);
-                    return salary.employeeId === employeeId && 
-                           salaryDate.getMonth() === month.getMonth() && 
-                           salaryDate.getFullYear() === month.getFullYear();
-                });
-                
-                // إضافة المبيعات والعمولات
-                monthlySales.push(monthSalary ? monthSalary.sales : 0);
-                monthlyCommissions.push(monthSalary ? monthSalary.commissionAmount : 0);
-            }
-            
-            // حساب المتوسط والإجماليات
-            const totalSales = monthlySales.reduce((a, b) => a + b, 0);
-            const totalCommissions = monthlyCommissions.reduce((a, b) => a + b, 0);
-            const avgMonthlySales = totalSales / (monthlySales.filter(s => s > 0).length || 1);
-            const avgMonthlyCommission = totalCommissions / (monthlyCommissions.filter(c => c > 0).length || 1);
-            
-            // إنشاء عرض الإحصائيات
-            let statsHTML = `
-                <div class="sales-statistics">
-                    <div class="grid-cols-2">
-                        <div class="stat-card">
-                            <div class="stat-title">إجمالي المبيعات (6 أشهر)</div>
-                            <div class="stat-value">${formatCurrency(totalSales)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">إجمالي العمولات (6 أشهر)</div>
-                            <div class="stat-value">${formatCurrency(totalCommissions)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">متوسط المبيعات الشهرية</div>
-                            <div class="stat-value">${formatCurrency(avgMonthlySales)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">متوسط العمولة الشهرية</div>
-                            <div class="stat-value">${formatCurrency(avgMonthlyCommission)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container" style="height: 200px; margin-top: 20px;">
-                        <canvas id="employee-sales-chart"></canvas>
-                    </div>
-                    
-                    <div class="sales-performance" style="margin-top: 20px;">
-                        <h5 style="margin-bottom: 10px;">تحليل الأداء</h5>
-                        <div class="performance-metric">
-                            <div class="metric-label">نسبة العمولة:</div>
-                            <div class="metric-value">${employee.commissionRate}%</div>
-                        </div>
-                        <div class="performance-metric">
-                            <div class="metric-label">نسبة العمولة من إجمالي المبيعات:</div>
-                            <div class="metric-value">${totalSales > 0 ? ((totalCommissions / totalSales) * 100).toFixed(2) : 0}%</div>
-                        </div>
-                        <div class="performance-metric">
-                            <div class="metric-label">اتجاه المبيعات:</div>
-                            <div class="metric-value">
-                                ${getSalesTrend(monthlySales)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // تحديث المحتوى
-            statsContainer.innerHTML = statsHTML;
-            
-            // إنشاء الرسم البياني
-            if (window.Chart) {
-                const ctx = document.getElementById('employee-sales-chart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [
-                            {
-                                label: 'المبيعات',
-                                data: monthlySales,
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            },
-                            {
-                                label: 'العمولات',
-                                data: monthlyCommissions,
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-            
-        } catch (error) {
-            console.error('خطأ في تحميل إحصائيات المبيعات للموظف:', error);
-            statsContainer.innerHTML = '<p class="text-center">تعذر تحميل إحصائيات المبيعات</p>';
-        }
-    }
-
-    /**
-     * تحليل اتجاه المبيعات
-     * @param {Array} sales - مصفوفة المبيعات
-     * @returns {string} - وصف اتجاه المبيعات مع أيقونة
-     */
-    function getSalesTrend(sales) {
-        if (sales.length < 2) return 'غير متوفر';
-
-        // حساب متوسط التغير
-        let totalChange = 0;
-        let numChanges = 0;
-
-        for (let i = 1; i < sales.length; i++) {
-            if (sales[i-1] > 0 && sales[i] > 0) {
-                const change = sales[i] - sales[i-1];
-                totalChange += change;
-                numChanges++;
-            }
-        }
-
-        const avgChange = numChanges > 0 ? totalChange / numChanges : 0;
-
-        // تحديد الاتجاه
-        if (Math.abs(avgChange) < 1000) {
-            return '<i class="fas fa-equals" style="color: #6c757d;"></i> مستقر';
-        } else if (avgChange > 0) {
-            return '<i class="fas fa-arrow-up" style="color: #10b981;"></i> متزايد';
-        } else {
-            return '<i class="fas fa-arrow-down" style="color: #ef4444;"></i> متناقص';
-        }
-    }
-
-    /**
-     * إضافة تكامل مع النظام المالي
-     */
-    function setupFinancialIntegration() {
-        // إضافة تقارير رواتب الموظفين إلى نظام التقارير
-        setupEmployeeReportsIntegration();
-        
-        // ربط نظام الموظفين بنظام المصروفات
-        setupExpensesIntegration();
-    }
-
-    /**
-     * إضافة تقارير رواتب الموظفين إلى نظام التقارير
-     */
-    function setupEmployeeReportsIntegration() {
-        // إذا كان هناك صفحة تقارير، إضافة تبويب للموظفين
-        const reportsPage = document.getElementById('reports-page');
-        if (!reportsPage) return;
-        
-        // البحث عن أزرار التبويبات
-        const tabButtons = reportsPage.querySelector('.tab-buttons');
-        if (!tabButtons) return;
-        
-        // إضافة تبويب للموظفين إذا لم يكن موجوداً
-        if (!document.querySelector('button[data-tab="employees-reports"]')) {
-            const employeesTabButton = document.createElement('button');
-            employeesTabButton.className = 'tab-btn';
-            employeesTabButton.setAttribute('data-tab', 'employees-reports');
-            employeesTabButton.textContent = 'الموظفين';
-            
-            // إضافة الزر إلى الأزرار
-            tabButtons.appendChild(employeesTabButton);
-            
-            // إضافة مستمع حدث للزر
-            employeesTabButton.addEventListener('click', function() {
-                // إزالة الفئة النشطة من جميع الأزرار
-                tabButtons.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // إضافة الفئة النشطة للزر الحالي
-                this.classList.add('active');
-                
-                // عرض تقارير الموظفين
-                showEmployeesInReports();
-            });
-        }
-    }
-
-    /**
-     * عرض تقارير الموظفين في صفحة التقارير
-     */
-    function showEmployeesInReports() {
-        // العثور على حاوية المحتوى
-        const reportsContent = document.querySelector('#reports-page .tab-content');
-        if (!reportsContent) return;
-        
-        // إنشاء محتوى تقارير الموظفين
-        reportsContent.innerHTML = `
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">توزيع رواتب الموظفين</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="employees-salaries-report-chart"></canvas>
-                </div>
-            </div>
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">أداء الموظفين (المبيعات)</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="employees-performance-report-chart"></canvas>
-                </div>
-            </div>
-        `;
-        
-        // إنشاء الرسوم البيانية
-        if (window.Chart) {
-            // رسم توزيع الرواتب
-            renderEmployeesSalariesReportChart();
-            
-            // رسم أداء الموظفين
-            renderEmployeesPerformanceReportChart();
-        }
-    }
-
-    /**
-     * رسم مخطط توزيع رواتب الموظفين في التقارير
-     */
-    function renderEmployeesSalariesReportChart() {
-        const canvas = document.getElementById('employees-salaries-report-chart');
-        if (!canvas) return;
-        
-        // تجميع بيانات الرواتب
-        const employeeSalaries = {};
-        
-        salaryTransactions.forEach(transaction => {
-            if (!employeeSalaries[transaction.employeeId]) {
-                employeeSalaries[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    baseSalary: 0,
-                    commission: 0,
-                    total: 0
-                };
-            }
-            
-            employeeSalaries[transaction.employeeId].baseSalary += transaction.baseSalary || 0;
-            employeeSalaries[transaction.employeeId].commission += transaction.commissionAmount || 0;
-            employeeSalaries[transaction.employeeId].total += transaction.totalSalary || 0;
-        });
-        
-        // تحويل البيانات إلى مصفوفات
-        const labels = [];
-        const baseSalaryData = [];
-        const commissionData = [];
-        
-        Object.values(employeeSalaries).forEach(salary => {
-            labels.push(salary.name);
-            baseSalaryData.push(salary.baseSalary);
-            commissionData.push(salary.commission);
-        });
-        
-        // إنشاء الرسم البياني
-        new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'الراتب الأساسي',
-                        data: baseSalaryData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)'
-                    },
-                    {
-                        label: 'العمولات',
-                        data: commissionData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.7)'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع رواتب الموظفين'
-                    }
-                },
-                scales: {
-                    x: {
-                        stacked: true
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * رسم مخطط أداء الموظفين في التقارير
-     */
-    function renderEmployeesPerformanceReportChart() {
-        const canvas = document.getElementById('employees-performance-report-chart');
-        if (!canvas) return;
-        
-        // تجميع بيانات المبيعات
-        const employeeSales = {};
-        
-        salaryTransactions.forEach(transaction => {
-            if (!employeeSales[transaction.employeeId]) {
-                employeeSales[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    sales: 0
-                };
-            }
-            
-            employeeSales[transaction.employeeId].sales += transaction.sales || 0;
-        });
-        
-        // تحويل البيانات إلى مصفوفات
-        const data = Object.values(employeeSales).map(sale => ({
-            name: sale.name,
-            sales: sale.sales
-        }));
-        
-        // ترتيب البيانات تنازلياً حسب المبيعات
-        data.sort((a, b) => b.sales - a.sales);
-        
-        // إنشاء الرسم البياني
-        new Chart(canvas.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: data.map(item => item.name),
-                datasets: [{
-                    data: data.map(item => item.sales),
-                    backgroundColor: [
-                        'rgba(59, 130, 246, 0.7)',
-                        'rgba(16, 185, 129, 0.7)',
-                        'rgba(245, 158, 11, 0.7)',
-                        'rgba(239, 68, 68, 0.7)',
-                        'rgba(139, 92, 246, 0.7)',
-                        'rgba(236, 72, 153, 0.7)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع المبيعات حسب الموظفين'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = formatCurrency(context.raw);
-                                const percentage = ((context.raw / data.reduce((sum, item) => sum + item.sales, 0)) * 100).toFixed(1) + '%';
-                                return `${label}: ${value} (${percentage})`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * ربط نظام الموظفين بنظام المصروفات
-     */
-    function setupExpensesIntegration() {
-        // إذا كان هناك صفحة لوحة تحكم، إضافة قسم لمصروفات الموظفين
-        const dashboard = document.getElementById('dashboard-page');
-        if (!dashboard) return;
-        
-        // البحث عن قسم الإحصائيات
-        const statisticsSection = dashboard.querySelector('.dashboard-cards');
-        if (!statisticsSection) return;
-        
-        // إضافة بطاقة مصروفات الموظفين إذا لم تكن موجودة
-        if (!document.getElementById('employee-expenses-card')) {
-            const employeeExpensesCard = document.createElement('div');
-            employeeExpensesCard.id = 'employee-expenses-card';
-            employeeExpensesCard.className = 'card';
-            employeeExpensesCard.innerHTML = `
-                <div class="card-pattern">
-                    <i class="fas fa-user-tie"></i>
-                </div>
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">مصروفات الموظفين</div>
-                        <div class="card-value" id="employee-expenses">0 دينار</div>
-                        <div class="card-change">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>الشهر الحالي</span>
-                        </div>
-                    </div>
-                    <div class="card-icon warning">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                </div>
-            `;
-            
-            // إضافة البطاقة إلى قسم الإحصائيات
-            statisticsSection.appendChild(employeeExpensesCard);
-            
-            // تحديث البطاقة
-            updateEmployeeExpensesCard();
-        }
-    }
-
-    /**
-     * تحديث بطاقة مصروفات الموظفين
-     */
-    function updateEmployeeExpensesCard() {
-        // البحث عن معاملات رواتب الموظفين للشهر الحالي
-        if (!salaryTransactions) return;
-        
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        
-        // تصفية معاملات الرواتب للشهر الحالي
-        const currentMonthSalaries = salaryTransactions.filter(salary => {
-            const salaryDate = new Date(salary.date);
-            return salaryDate.getMonth() === currentMonth && 
-                   salaryDate.getFullYear() === currentYear;
-        });
-        
-        // حساب إجمالي مصروفات الموظفين
-        const totalExpenses = currentMonthSalaries.reduce((total, salary) => 
-            total + (salary.totalSalary || 0), 0);
-        
-        // تحديث القيمة في البطاقة
-        const expensesElement = document.getElementById('employee-expenses');
-        if (expensesElement) {
-            expensesElement.textContent = formatCurrency(totalExpenses);
-        }
-    }
-
-    /**
-     * إضافة الربط مع نظام المصادقة
-     */
-    function setupAuthIntegration() {
-        // تعيين الصلاحيات للصفحات
-        addPagePermissions();
-        
-        // ربط صلاحيات المستخدمين
-        linkUserPermissions();
-    }
-
-    /**
-     * إضافة صلاحيات الصفحات
-     */
-    function addPagePermissions() {
-        // إذا كان هناك نظام صلاحيات، إضافة صلاحيات للصفحة
-        if (typeof window.PermissionsSystem !== 'undefined') {
-            // إضافة صفحة الموظفين إلى قائمة الصفحات المحمية
-            if (window.PermissionsSystem.addProtectedPage) {
-                window.PermissionsSystem.addProtectedPage('employees', ['admin', 'manager']);
-            }
-        }
-    }
-
-    /**
-     * ربط صلاحيات المستخدمين
-     */
-    function linkUserPermissions() {
-        // إضافة مستمع حدث للتحقق من صلاحيات الوصول
-        document.addEventListener('page:change', function(e) {
-            if (e.detail && e.detail.page === 'employees') {
-                // التحقق من صلاحيات المستخدم للوصول إلى صفحة الموظفين
-                checkEmployeesPageAccess();
-            }
-        });
-    }
-
-    /**
-     * التحقق من صلاحيات الوصول لصفحة الموظفين
-     */
-    function checkEmployeesPageAccess() {
-        // التحقق من وجود نظام صلاحيات
-        if (typeof window.AuthSystem !== 'undefined' && window.AuthSystem.hasPermission) {
-            if (!window.AuthSystem.hasPermission('employees')) {
-                // عرض رسالة خطأ وإعادة التوجيه
-                showNotification('ليس لديك صلاحية للوصول إلى صفحة الموظفين', 'error');
-                
-                // العودة إلى الصفحة الرئيسية
-                const dashboardLink = document.querySelector('a[data-page="dashboard"]');
-                if (dashboardLink) {
-                    dashboardLink.click();
-                }
-            }
-        }
-    }
-
     // تصدير دوال النظام للاستخدام العام
     window.EmployeesModule = {
         activate: activateEmployeesPage,
@@ -4031,9 +3006,195 @@
         showEmployeeDetails: showEmployeeDetails,
         showSalaryDetails: showSalaryDetails,
         exportEmployeesData: exportEmployeesData,
-        exportSalariesData: exportSalariesData,
-        getArabicMonthName: getArabicMonthName
+        exportSalariesData: exportSalariesData
     };
 
-    console.log('تم تهيئة نظام إدارة الموظفين ذوي النسبة والرواتب بنجاح');
+    // تحميل النظام
+    console.log('تم تحميل نظام إدارة الموظفين بنجاح');
+})();
+
+
+
+
+/**
+ * employees-system-init.js
+ * ملف لتهيئة وربط نظام إدارة الموظفين مع نظام الاستثمار المتكامل
+ */
+
+(function() {
+    // تنفيذ الكود بعد اكتمال تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('بدء تهيئة نظام إدارة الموظفين...');
+        
+        // تحميل المكونات المطلوبة
+        loadEmployeesComponents().then(() => {
+            console.log('تم تحميل جميع مكونات نظام إدارة الموظفين بنجاح');
+            
+            // تهيئة مستمع حدث للروابط في القائمة الجانبية
+            setupSidebarListeners();
+        });
+    });
+    
+    /**
+     * تحميل مكونات نظام إدارة الموظفين
+     * @returns {Promise} - وعد يتم حله عند اكتمال تحميل جميع المكونات
+     */
+    function loadEmployeesComponents() {
+        return new Promise((resolve, reject) => {
+            try {
+                // تحميل الملفات المطلوبة بالترتيب
+                const scripts = [
+                    'employees-integration.js',
+                    'employees-integration-continued.js',
+                    'employees-integration-final-part.js',
+                    'employees-integration-final-functions.js'
+                ];
+                
+                // تحميل الملفات تتابعياً
+                loadScripts(scripts, 0, resolve);
+            } catch (error) {
+                console.error('خطأ في تحميل مكونات نظام إدارة الموظفين:', error);
+                
+                // إظهار إشعار الخطأ
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('فشل في تحميل نظام إدارة الموظفين. يرجى تحديث الصفحة والمحاولة مرة أخرى.', 'error');
+                }
+                
+                reject(error);
+            }
+        });
+    }
+    
+    /**
+     * تحميل ملفات النصوص البرمجية تتابعياً
+     * @param {Array} scripts - مصفوفة بأسماء ملفات النصوص البرمجية
+     * @param {number} index - مؤشر الملف الحالي
+     * @param {Function} resolve - دالة الوعد المحقق
+     */
+    function loadScripts(scripts, index, resolve) {
+        if (index >= scripts.length) {
+            // اكتمل تحميل جميع الملفات
+            resolve();
+            return;
+        }
+        
+        // إنشاء عنصر النص البرمجي
+        const script = document.createElement('script');
+        script.src = scripts[index];
+        
+        // تنفيذ الدالة عند اكتمال تحميل الملف
+        script.onload = function() {
+            console.log(`تم تحميل الملف: ${scripts[index]}`);
+            
+            // الانتقال للملف التالي
+            loadScripts(scripts, index + 1, resolve);
+        };
+        
+        // تنفيذ الدالة عند فشل تحميل الملف
+        script.onerror = function() {
+            console.error(`فشل تحميل الملف: ${scripts[index]}`);
+            
+            // عرض إشعار بالفشل
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(`فشل في تحميل الملف: ${scripts[index]}`, 'error');
+            }
+            
+            // محاولة الانتقال للملف التالي
+            loadScripts(scripts, index + 1, resolve);
+        };
+        
+        // إضافة العنصر إلى الصفحة
+        document.head.appendChild(script);
+    }
+    
+    /**
+     * تهيئة مستمعي أحداث القائمة الجانبية
+     */
+    function setupSidebarListeners() {
+        // البحث عن رابط صفحة الموظفين
+        const employeesLink = document.querySelector('a[data-page="employees"]');
+        if (!employeesLink) {
+            console.warn('لم يتم العثور على رابط صفحة الموظفين في القائمة');
+            return;
+        }
+        
+        // إضافة مستمع حدث لرابط الموظفين في القائمة الجانبية
+        employeesLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // إلغاء تنشيط جميع الروابط
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // تنشيط رابط الموظفين
+            this.classList.add('active');
+            
+            // إخفاء جميع الصفحات
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // عرض صفحة الموظفين
+            const employeesPage = document.getElementById('employees-page');
+            if (employeesPage) {
+                employeesPage.classList.add('active');
+                
+                // تحديث جدول الموظفين
+                if (window.EmployeesModule && window.EmployeesModule.renderEmployeesTable) {
+                    window.EmployeesModule.renderEmployeesTable();
+                }
+            } else {
+                console.error('لم يتم العثور على صفحة الموظفين');
+                
+                // إعادة المحاولة مرة واحدة
+                if (window.EmployeesModule && window.EmployeesModule.activate) {
+                    window.EmployeesModule.activate();
+                }
+            }
+        });
+        
+        // تسجيل وظيفة المزامنة
+        registerSyncFunction();
+    }
+    
+    /**
+     * تسجيل وظيفة المزامنة مع نظام التحديث
+     */
+    function registerSyncFunction() {
+        // إذا كان هناك زر تحديث، إضافة مستمع حدث له
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            const originalClickHandler = refreshBtn.onclick;
+            
+            refreshBtn.onclick = function(e) {
+                // استدعاء المعالج الأصلي إذا كان موجودًا
+                if (typeof originalClickHandler === 'function') {
+                    originalClickHandler.call(this, e);
+                }
+                
+                // تحديث بيانات الموظفين
+                if (window.EmployeesModule && window.EmployeesModule.loadEmployees) {
+                    setTimeout(() => {
+                        window.EmployeesModule.loadEmployees();
+                    }, 500);
+                }
+            };
+        }
+        
+        // تسجيل وظيفة تحديث الموظفين مع نظام التحديث العام
+        if (window.loadData) {
+            const originalLoadData = window.loadData;
+            
+            window.loadData = function() {
+                // استدعاء الدالة الأصلية
+                originalLoadData.apply(this, arguments);
+                
+                // تحديث بيانات الموظفين
+                if (window.EmployeesModule && window.EmployeesModule.loadEmployees) {
+                    window.EmployeesModule.loadEmployees();
+                }
+            };
+        }
+    }
 })();
