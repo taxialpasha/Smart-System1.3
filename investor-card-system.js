@@ -2316,7 +2316,7 @@ function searchCards(searchText) {
         return;
     }
     
-  // البحث في البطاقات
+   // البحث في البطاقات
     const cards = getInvestorCards();
     const filteredCards = cards.filter(card => {
         return (
