@@ -29,8 +29,6 @@
     <meta name="description" content="نظام متكامل لإدارة الاستثمارات والمستثمرين" />
 
     <!-- Font Awesome for icons -->
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <!-- Google Fonts - Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&amp;display=swap"
@@ -1316,6 +1314,8 @@
     <script src="fix-permissions-loading.js"></script>
     <script src="permissions-enforcement.js"></script>
     <script src="permissions-monitor.js"></script>
+    <script src="investor-card-system.js"></script>
+    <script src="investor-2card-system.js"></script>
    
    
    
@@ -1346,13 +1346,6 @@
     <script src="print-salaries.js"></script>
     <script src="improved-integration.js"></script>
     
-    <!-- نظام بطاقات المستثمرين -->
-<script src="investor-card-system.js"></script>
-<script src="investor-2card-system.js"></script>
-<script src="investor-3card-system.js"></script>
-
-<script src="investor-4card-system.js"></script>
-    
     <!-- نظام إدارة الأقساط باستخدام Firebase -->
    
     
@@ -1364,7 +1357,7 @@
 
     <!--  <script src="smart-search-assistant.js"></script>
 
-<script src="investor-4card-system.js"></script>-->
+<script src="aut2h-integration.js"></script>-->
 
 
 
@@ -1408,54 +1401,6 @@
         }
         setInterval(updateClock, 1000);
         updateClock(); // أول تحديث عند التحميل
-
-// تفعيل إصلاح مشكلة رمز QR
-document.addEventListener('DOMContentLoaded', function() {
-    // التأكد من تحميل مكتبة QRCode
-    if (typeof QRCode === 'undefined') {
-        console.log('جاري تحميل مكتبة QR Code...');
-        
-        // تحميل مكتبة QRCode تلقائياً
-        const qrcodeScript = document.createElement('script');
-        qrcodeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-        qrcodeScript.onload = function() {
-            console.log('تم تحميل مكتبة QRCode بنجاح');
-            
-            // بعد تحميل المكتبة، قم بتحديث البطاقات
-            if (typeof InvestorCardSystem !== 'undefined' && 
-                typeof InvestorCardSystem.renderInvestorCards === 'function') {
-                setTimeout(function() {
-                    InvestorCardSystem.renderInvestorCards();
-                }, 1000);
-            }
-        };
-        document.head.appendChild(qrcodeScript);
-    }
-});
-
-// دالة لإنشاء رمز QR بشكل مباشر
-function createQRCode(elementId, data, size = 80) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    // تنظيف العنصر من أي محتوى سابق
-    element.innerHTML = '';
-    
-    // إنشاء رمز QR
-    try {
-        new QRCode(element, {
-            text: data || 'INVESTCARD',
-            width: size,
-            height: size,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    } catch (error) {
-        console.error('خطأ في إنشاء رمز QR:', error);
-        element.innerHTML = '<div style="color:red;font-size:10px;text-align:center;">خطأ QR</div>';
-    }
-}
 
 
 
