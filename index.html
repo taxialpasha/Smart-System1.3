@@ -1409,6 +1409,54 @@
         setInterval(updateClock, 1000);
         updateClock(); // أول تحديث عند التحميل
 
+// تفعيل إصلاح مشكلة رمز QR
+document.addEventListener('DOMContentLoaded', function() {
+    // التأكد من تحميل مكتبة QRCode
+    if (typeof QRCode === 'undefined') {
+        console.log('جاري تحميل مكتبة QR Code...');
+        
+        // تحميل مكتبة QRCode تلقائياً
+        const qrcodeScript = document.createElement('script');
+        qrcodeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        qrcodeScript.onload = function() {
+            console.log('تم تحميل مكتبة QRCode بنجاح');
+            
+            // بعد تحميل المكتبة، قم بتحديث البطاقات
+            if (typeof InvestorCardSystem !== 'undefined' && 
+                typeof InvestorCardSystem.renderInvestorCards === 'function') {
+                setTimeout(function() {
+                    InvestorCardSystem.renderInvestorCards();
+                }, 1000);
+            }
+        };
+        document.head.appendChild(qrcodeScript);
+    }
+});
+
+// دالة لإنشاء رمز QR بشكل مباشر
+function createQRCode(elementId, data, size = 80) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // تنظيف العنصر من أي محتوى سابق
+    element.innerHTML = '';
+    
+    // إنشاء رمز QR
+    try {
+        new QRCode(element, {
+            text: data || 'INVESTCARD',
+            width: size,
+            height: size,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } catch (error) {
+        console.error('خطأ في إنشاء رمز QR:', error);
+        element.innerHTML = '<div style="color:red;font-size:10px;text-align:center;">خطأ QR</div>';
+    }
+}
+
 
 
       
