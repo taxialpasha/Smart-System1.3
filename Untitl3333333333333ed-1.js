@@ -1,261 +1,365 @@
 /**
- * employees-management-integrated.js
- * نظام إدارة الموظفين المتكامل ذوي النسبة والرواتب
- * يتكامل مع نظام الاستثمار المتكامل
- * تم دمج جميع الوظائف والإصلاحات في ملف واحد متكامل
+ * investor-card-system.js
+ * نظام بطاقات المستثمرين المتكامل
+ * يتيح إنشاء وإدارة وعرض بطاقات ماستر كارد للمستثمرين
+ * مع إمكانية قراءة الباركود وعرض المعلومات
  */
 
-(function() {
-    // المتغيرات الرئيسية
-    let employees = [];
-    let salaryTransactions = [];
-
-    // تهيئة النظام عند تحميل الصفحة
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('تهيئة نظام إدارة الموظفين المتكامل...');
+// كائن عام لإدارة نظام البطاقات
+const InvestorCardSystem = (function() {
+    // المتغيرات الخاصة
+    let cardTemplate = null;
+    let cardScanner = null;
+    let isInitialized = false;
+    let currentCardId = null;
+    
+    // ألوان وأنماط البطاقات
+    const CARD_STYLES = {
+        default: {
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            color: '#ffffff',
+            accent: '#ffd700',
+            pattern: 'circles'
+        },
+        gold: {
+            background: 'linear-gradient(135deg, #b8860b 0%, #daa520 100%)',
+            color: '#000000',
+            accent: '#ffffff',
+            pattern: 'lines'
+        },
+        platinum: {
+            background: 'linear-gradient(135deg, #7a7a7a 0%, #c0c0c0 100%)',
+            color: '#000000',
+            accent: '#0a0a0a',
+            pattern: 'dots'
+        },
+        premium: {
+            background: 'linear-gradient(135deg, #000428 0%, #004e92 100%)',
+            color: '#ffffff',
+            accent: '#ff9d00',
+            pattern: 'waves'
+        }
+    };
+    
+   /**
+ * تهيئة نظام البطاقات
+ * @returns {Promise} وعد بنجاح أو فشل التهيئة
+ */
+function initialize() {
+    return new Promise((resolve, reject) => {
+        if (isInitialized) {
+            console.log('نظام البطاقات مهيأ مسبقاً');
+            resolve(true);
+            return;
+        }
         
-        // إضافة رابط الصفحة في القائمة الجانبية
-        addEmployeesSidebarLink();
+        console.log('جاري تهيئة نظام بطاقات المستثمرين...');
         
-        // إضافة صفحة الموظفين إلى التطبيق
-        addEmployeesPage();
-        
-        // إضافة نوافذ إدارة الموظفين
-        addEmployeesModals();
-        
-        // إضافة أنماط CSS
-        addEmployeesStyles();
-        
-        // تهيئة مستمعي الأحداث
-        initEmployeesEventListeners();
-        
-        // تحميل بيانات الموظفين
-        loadEmployeesData();
-        
-        // إضافة تكامل مع النظام
-        setupIntegration();
-        
-        // توجيه الأحداث للتبويبات الداخلية
-        handleTabEvents();
+        try {
+            // أولاً: إضافة أنماط CSS
+            console.log('إضافة أنماط CSS...');
+            addCardStyles();
+            
+            // ثانياً: إضافة عنصر القائمة في الشريط الجانبي
+            console.log('إضافة عنصر القائمة في الشريط الجانبي...');
+            addSidebarMenuItem();
+            
+            // ثالثاً: إنشاء صفحة البطاقات
+            console.log('إنشاء صفحة البطاقات...');
+            createCardsPage();
+            
+            // رابعاً: إضافة النوافذ المنبثقة اللازمة
+            console.log('إضافة النوافذ المنبثقة...');
+            addCardModals();
+            
+            // خامساً: تحميل مكتبات الباركود
+            console.log('تحميل مكتبات الباركود...');
+            loadBarcodeDependencies()
+                .then(() => {
+                    // تهيئة قارئ الباركود
+                    console.log('تهيئة قارئ الباركود...');
+                    initBarcodeScanner();
+                    
+                    // تحديث الحالة وإكمال التهيئة
+                    isInitialized = true;
+                    console.log('تم تهيئة نظام بطاقات المستثمرين بنجاح');
+                    
+                    // عرض البطاقات وتحديث الإحصائيات
+                    console.log('عرض البطاقات وتحديث الإحصائيات...');
+                    renderInvestorCards();
+                    updateCardStatistics();
+                    
+                    // تحقق إضافي من وجود عنصر القائمة بعد اكتمال التهيئة
+                    console.log('التحقق من وجود عنصر القائمة...');
+                    verifyMenuItemExists();
+                    
+                    resolve(true);
+                })
+                .catch(error => {
+                    console.error('فشل في تحميل مكتبات الباركود:', error);
+                    // استمر رغم الفشل، ولكن بدون ميزة الباركود
+                    isInitialized = true;
+                    
+                    // عرض البطاقات وتحديث الإحصائيات
+                    console.log('عرض البطاقات وتحديث الإحصائيات (بدون ميزة الباركود)...');
+                    renderInvestorCards();
+                    updateCardStatistics();
+                    
+                    // تحقق إضافي من وجود عنصر القائمة بعد اكتمال التهيئة
+                    console.log('التحقق من وجود عنصر القائمة...');
+                    verifyMenuItemExists();
+                    
+                    resolve(true);
+                });
+        } catch (error) {
+            console.error('خطأ في تهيئة نظام بطاقات المستثمرين:', error);
+            reject(error);
+        }
     });
-
-    /**
-     * إضافة رابط صفحة الموظفين إلى القائمة الجانبية
-     */
-    function addEmployeesSidebarLink() {
-        const navList = document.querySelector('.nav-list');
-        if (!navList) return;
+}
+   /**
+ * إضافة عنصر القائمة في الشريط الجانبي
+ */
+function addSidebarMenuItem() {
+    console.log('محاولة إضافة عنصر القائمة في الشريط الجانبي...');
+    
+    const navList = document.querySelector('.nav-list');
+    if (!navList) {
+        console.error('لم يتم العثور على قائمة التنقل (.nav-list)');
         
-        // التحقق من عدم وجود الرابط مسبقاً
-        if (document.querySelector('a[data-page="employees"]')) return;
+        // محاولة إيجاد أي عنصر قائمة بديلة
+        const alternativeNavList = document.querySelector('.sidebar-menu') || 
+                                    document.querySelector('.main-menu') ||
+                                    document.querySelector('ul.nav');
         
-        // إنشاء عنصر الرابط
-        const navItem = document.createElement('li');
-        navItem.className = 'nav-item';
-        
-        navItem.innerHTML = `
-            <a class="nav-link" data-page="employees" href="#">
-                <div class="nav-icon">
-                    <i class="fas fa-user-tie"></i>
-                </div>
-                <span>الموظفين</span>
-            </a>
-        `;
-        
-        // إضافة الرابط قبل رابط الإعدادات
-        const settingsNavItem = document.querySelector('a[data-page="settings"]');
-        if (settingsNavItem && settingsNavItem.parentNode) {
-            navList.insertBefore(navItem, settingsNavItem.parentNode);
-        } else {
-            // إذا لم يتم العثور على رابط الإعدادات، أضف في نهاية القائمة
-            navList.appendChild(navItem);
+        if (alternativeNavList) {
+            console.log('تم العثور على قائمة تنقل بديلة:', alternativeNavList);
+            addMenuItemToNavList(alternativeNavList);
+            return;
         }
-
-        // إضافة مستمع حدث خاص للرابط
-        const employeesLink = navItem.querySelector('a[data-page="employees"]');
-        if (employeesLink) {
-            employeesLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                activateEmployeesPage();
-            });
-        }
+        
+        // محاولة أخيرة لإنشاء القائمة إذا لم تكن موجودة
+        setTimeout(() => {
+            const lateNavList = document.querySelector('.nav-list');
+            if (lateNavList) {
+                console.log('تم العثور على قائمة التنقل بعد تأخير');
+                addMenuItemToNavList(lateNavList);
+            } else {
+                console.error('فشل العثور على قائمة التنقل حتى بعد التأخير');
+            }
+        }, 1000);
+        
+        return;
     }
+    
+    addMenuItemToNavList(navList);
+}
 
-    /**
-     * تنشيط صفحة الموظفين
-     */
-    function activateEmployeesPage() {
-        // إخفاء جميع الصفحات
-        document.querySelectorAll('.page').forEach(page => {
-            page.classList.remove('active');
-        });
+/**
+ * إضافة عنصر القائمة إلى قائمة التنقل المحددة
+ * @param {HTMLElement} navList عنصر قائمة التنقل
+ */
+function addMenuItemToNavList(navList) {
+    // التحقق من وجود عنصر قائمة البطاقات مسبقاً
+    const existingMenuItem = navList.querySelector('a[data-page="investor-cards"]');
+    if (existingMenuItem) {
+        console.log('عنصر قائمة البطاقات موجود مسبقاً');
+        return;
+    }
+    
+    // إنشاء عنصر القائمة
+    const menuItem = document.createElement('li');
+    menuItem.className = 'nav-item';
+    menuItem.innerHTML = `
+        <a class="nav-link" data-page="investor-cards" href="#">
+            <div class="nav-icon">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <span>بطاقات المستثمرين</span>
+        </a>
+    `;
+    
+    // إضافة عنصر القائمة قبل عنصر الإعدادات أو في نهاية القائمة
+    const settingsItem = navList.querySelector('[data-page="settings"]')?.parentNode;
+    if (settingsItem) {
+        navList.insertBefore(menuItem, settingsItem);
+        console.log('تم إضافة عنصر القائمة قبل عنصر الإعدادات');
+    } else {
+        navList.appendChild(menuItem);
+        console.log('تم إضافة عنصر القائمة في نهاية القائمة');
+    }
+    
+    // إضافة مستمع الحدث للتنقل
+    const navLink = menuItem.querySelector('.nav-link');
+    navLink.addEventListener('click', function(e) {
+        e.preventDefault();
         
-        // إلغاء تنشيط جميع روابط القائمة
+        // إزالة الكلاس النشط من جميع الروابط
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
         
-        // تنشيط رابط الموظفين
-        const employeesLink = document.querySelector('a[data-page="employees"]');
-        if (employeesLink) {
-            employeesLink.classList.add('active');
-        }
+        // إضافة الكلاس النشط للرابط المحدد
+        this.classList.add('active');
         
-        // عرض صفحة الموظفين
-        const employeesPage = document.getElementById('employees-page');
-        if (employeesPage) {
-            employeesPage.classList.add('active');
-            
-            // حدث خاص لإخبار المكونات الأخرى بتنشيط صفحة الموظفين
-            const event = new CustomEvent('page:change', { 
-                detail: { page: 'employees' } 
-            });
-            document.dispatchEvent(event);
-            
-            // تحديث جدول الموظفين
-            renderEmployeesTable();
+        // إظهار صفحة البطاقات
+        if (typeof showPage === 'function') {
+            console.log('استدعاء دالة showPage...');
+            showPage('investor-cards');
         } else {
-            console.error('لم يتم العثور على صفحة الموظفين');
+            console.warn('دالة showPage غير متاحة، محاولة إظهار الصفحة مباشرة...');
+            
+            // محاولة إظهار الصفحة مباشرة
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            const cardsPage = document.getElementById('investor-cards-page');
+            if (cardsPage) {
+                cardsPage.style.display = 'block';
+                console.log('تم إظهار صفحة البطاقات مباشرة');
+            } else {
+                console.error('لم يتم العثور على صفحة البطاقات');
+            }
         }
-    }
-
+    });
+    
+    console.log('تم إضافة عنصر قائمة البطاقات بنجاح');
+}
     /**
-     * إضافة صفحة الموظفين إلى التطبيق
+     * إنشاء صفحة البطاقات
      */
-    function addEmployeesPage() {
+    function createCardsPage() {
         const mainContent = document.querySelector('.main-content');
-        if (!mainContent) return;
+        if (!mainContent) {
+            console.error('لم يتم العثور على عنصر المحتوى الرئيسي');
+            return;
+        }
         
-        // التحقق من عدم وجود الصفحة مسبقاً
-        if (document.getElementById('employees-page')) return;
+        // التحقق من وجود الصفحة مسبقاً
+        if (document.getElementById('investor-cards-page')) {
+            return;
+        }
         
         // إنشاء عنصر الصفحة
-        const employeesPage = document.createElement('div');
-        employeesPage.className = 'page';
-        employeesPage.id = 'employees-page';
+        const cardsPage = document.createElement('div');
+        cardsPage.className = 'page';
+        cardsPage.id = 'investor-cards-page';
         
-        employeesPage.innerHTML = `
+        cardsPage.innerHTML = `
             <div class="header">
                 <button class="toggle-sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="page-title">إدارة الموظفين</h1>
+                <h1 class="page-title">بطاقات المستثمرين</h1>
                 <div class="header-actions">
                     <div class="search-box">
-                        <input class="search-input" placeholder="بحث عن موظف..." type="text" />
+                        <input class="search-input" id="card-search-input" placeholder="بحث عن مستثمر..." type="text" />
                         <i class="fas fa-search search-icon"></i>
                     </div>
-                    <button class="btn btn-primary" id="add-employee-btn">
+                    <button class="btn btn-outline" id="scan-card-btn" title="مسح بطاقة">
+                        <i class="fas fa-qrcode"></i>
+                        <span>مسح بطاقة</span>
+                    </button>
+                    <button class="btn btn-primary" id="create-card-btn">
                         <i class="fas fa-plus"></i>
-                        <span>إضافة موظف</span>
+                        <span>إنشاء بطاقة</span>
                     </button>
                 </div>
             </div>
             
-            <div class="tabs">
-                <div class="tab-buttons">
-                    <button class="tab-btn active" data-tab="employees-list">قائمة الموظفين</button>
-                    <button class="tab-btn" data-tab="salary-transactions">سجل الرواتب</button>
-                    <button class="tab-btn" data-tab="employees-reports">تقارير</button>
-                </div>
-                
-                <div class="tab-content active" id="employees-list-tab">
-                    <div class="section">
-                        <div class="section-header">
-                            <h2 class="section-title">قائمة الموظفين</h2>
-                            <div class="section-actions">
-                                <div class="btn-group">
-                                    <button class="btn btn-outline btn-sm active" data-filter="all">الكل</button>
-                                    <button class="btn btn-outline btn-sm" data-filter="active">نشط</button>
-                                    <button class="btn btn-outline btn-sm" data-filter="inactive">غير نشط</button>
-                                </div>
-                                <button class="btn btn-outline btn-sm" title="تصدير" id="export-employees-btn">
-                                    <i class="fas fa-download"></i>
-                                    <span>تصدير</span>
-                                </button>
-                            </div>
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">بطاقات المستثمرين</h2>
+                    <div class="section-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-outline btn-sm active" data-card-filter="all">الكل</button>
+                            <button class="btn btn-outline btn-sm" data-card-filter="active">نشط</button>
+                            <button class="btn btn-outline btn-sm" data-card-filter="inactive">غير نشط</button>
                         </div>
-                        <div class="table-container">
-                            <table id="employees-table">
-                                <thead>
-                                    <tr>
-                                        <th>المعرف</th>
-                                        <th>الموظف</th>
-                                        <th>المسمى الوظيفي</th>
-                                        <th>رقم الهاتف</th>
-                                        <th>الراتب الأساسي</th>
-                                        <th>نسبة المبيعات</th>
-                                        <th>تاريخ التعيين</th>
-                                        <th>الحالة</th>
-                                        <th>الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <button class="btn btn-outline btn-sm" id="print-all-cards-btn" title="طباعة">
+                            <i class="fas fa-print"></i>
+                            <span>طباعة الكل</span>
+                        </button>
                     </div>
                 </div>
                 
-                <div class="tab-content" id="salary-transactions-tab">
-                    <div class="section">
-                        <div class="section-header">
-                            <h2 class="section-title">سجل الرواتب</h2>
-                            <div class="section-actions">
-                                <button class="btn btn-success" id="pay-salary-btn">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <span>صرف راتب</span>
-                                </button>
-                                <button class="btn btn-outline btn-sm" title="تصدير" id="export-salaries-btn">
-                                    <i class="fas fa-download"></i>
-                                    <span>تصدير</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table id="salary-transactions-table">
-                                <thead>
-                                    <tr>
-                                        <th>رقم العملية</th>
-                                        <th>الموظف</th>
-                                        <th>تاريخ الصرف</th>
-                                        <th>الراتب الأساسي</th>
-                                        <th>المبيعات</th>
-                                        <th>النسبة</th>
-                                        <th>مبلغ النسبة</th>
-                                        <th>العلاوات</th>
-                                        <th>الاستقطاعات</th>
-                                        <th>الراتب النهائي</th>
-                                        <th>الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="cards-container" id="investor-cards-container">
+                    <!-- سيتم ملؤها ديناميكيًا -->
+                    <div class="empty-cards-message">
+                        <i class="fas fa-credit-card"></i>
+                        <p>لم يتم إنشاء بطاقات بعد</p>
+                        <button class="btn btn-primary btn-sm" id="create-first-card-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>إنشاء بطاقة جديدة</span>
+                        </button>
                     </div>
                 </div>
                 
-                <div class="tab-content" id="employees-reports-tab">
-                    <div class="section">
-                        <div class="section-header">
-                            <h2 class="section-title">تقارير الموظفين</h2>
-                            <div class="section-actions">
-                                <div class="btn-group">
-                                    <button class="btn btn-outline btn-sm active">شهري</button>
-                                    <button class="btn btn-outline btn-sm">ربع سنوي</button>
-                                    <button class="btn btn-outline btn-sm">سنوي</button>
-                                </div>
+                <div class="pagination">
+                    <div class="page-item disabled">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="page-item active">1</div>
+                    <div class="page-item">2</div>
+                    <div class="page-item">3</div>
+                    <div class="page-item">
+                        <i class="fas fa-chevron-left"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">إحصائيات البطاقات</h2>
+                </div>
+                
+                <div class="dashboard-cards">
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">إجمالي البطاقات</div>
+                                <div class="card-value" id="total-cards-count">0</div>
+                            </div>
+                            <div class="card-icon primary">
+                                <i class="fas fa-credit-card"></i>
                             </div>
                         </div>
-                        <div class="grid-cols-2">
-                            <div class="chart-container">
-                                <canvas id="employees-salaries-chart"></canvas>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">البطاقات النشطة</div>
+                                <div class="card-value" id="active-cards-count">0</div>
                             </div>
-                            <div class="chart-container">
-                                <canvas id="employees-performance-chart"></canvas>
+                            <div class="card-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">بطاقات منتهية</div>
+                                <div class="card-value" id="expired-cards-count">0</div>
+                            </div>
+                            <div class="card-icon warning">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">آخر مسح</div>
+                                <div class="card-value" id="last-scan-date">-</div>
+                            </div>
+                            <div class="card-icon info">
+                                <i class="fas fa-qrcode"></i>
                             </div>
                         </div>
                     </div>
@@ -263,1161 +367,1081 @@
             </div>
         `;
         
-        // إضافة الصفحة إلى العنصر الرئيسي
-        mainContent.appendChild(employeesPage);
-
-        // تهيئة مستمع زر القائمة الجانبية
-        const sidebarToggle = employeesPage.querySelector('.toggle-sidebar');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                document.body.classList.toggle('sidebar-collapsed');
-            });
-        }
-    }
-
-    /**
-     * توجيه الأحداث للتبويبات الداخلية
-     */
-    function handleTabEvents() {
-        const tabButtons = document.querySelectorAll('#employees-page .tab-btn');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // إزالة الفئة النشطة من جميع الأزرار
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // إضافة الفئة النشطة للزر الحالي
-                this.classList.add('active');
-                
-                // تحديد معرف التبويب
-                const tabId = this.getAttribute('data-tab') + '-tab';
-                
-                // إخفاء جميع محتويات التبويبات
-                document.querySelectorAll('#employees-page .tab-content').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                // إظهار محتوى التبويب المطلوب
-                const tabContent = document.getElementById(tabId);
-                if (tabContent) {
-                    tabContent.classList.add('active');
-                    
-                    // تحديث البيانات حسب التبويب النشط
-                    if (tabId === 'employees-list-tab') {
-                        renderEmployeesTable();
-                    } else if (tabId === 'salary-transactions-tab') {
-                        renderSalaryTransactionsTable();
-                    } else if (tabId === 'employees-reports-tab') {
-                        renderEmployeesReports();
-                    }
-                }
-            });
-        });
-    }
-
-    /**
-     * إضافة نوافذ إدارة الموظفين
-     */
-    function addEmployeesModals() {
-        // التحقق من عدم وجود النوافذ مسبقاً
-        if (document.getElementById('add-employee-modal')) return;
+        // إضافة الصفحة إلى المحتوى الرئيسي
+        mainContent.appendChild(cardsPage);
         
-        // إنشاء عناصر النوافذ
-        const modalsHTML = `
-            <!-- نافذة إضافة موظف جديد -->
-            <div class="modal-overlay" id="add-employee-modal">
-                <div class="modal animate__animated animate__fadeInUp">
-                    <div class="modal-header">
-                        <h3 class="modal-title">إضافة موظف جديد</h3>
-                        <button class="modal-close">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="add-employee-form">
-                            <div class="form-tabs">
-                                <div class="form-tab-buttons">
-                                    <button type="button" class="form-tab-btn active" data-tab="personal-info">معلومات شخصية</button>
-                                    <button type="button" class="form-tab-btn" data-tab="job-info">معلومات وظيفية</button>
-                                    <button type="button" class="form-tab-btn" data-tab="documents">المستندات</button>
-                                </div>
-                                <div class="form-tab-content active" id="personal-info-tab">
-                                    <div class="grid-cols-2">
-                                        <div class="form-group">
-                                            <label class="form-label">اسم الموظف</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-name" required="" type="text" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-name" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">رقم الهاتف</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-phone" required="" type="tel" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-phone" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">العنوان</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-address" required="" type="text" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-address" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">البريد الإلكتروني</label>
-                                            <input class="form-input" id="employee-email" type="email" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">تاريخ الميلاد</label>
-                                            <input class="form-input" id="employee-birthdate" type="date" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">الجنس</label>
-                                            <select class="form-select" id="employee-gender">
-                                                <option value="male">ذكر</option>
-                                                <option value="female">أنثى</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-tab-content" id="job-info-tab">
-                                    <div class="grid-cols-2">
-                                        <div class="form-group">
-                                            <label class="form-label">المسمى الوظيفي</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-job-title" required="" type="text" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-job-title" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">القسم</label>
-                                            <select class="form-select" id="employee-department">
-                                                <option value="sales">المبيعات</option>
-                                                <option value="finance">المالية</option>
-                                                <option value="admin">الإدارة</option>
-                                                <option value="it">تكنولوجيا المعلومات</option>
-                                                <option value="operations">العمليات</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">الراتب الأساسي</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-base-salary" min="0" required="" type="number" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-base-salary" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">نسبة المبيعات (%)</label>
-                                            <input class="form-input" id="employee-commission-rate" max="30" min="0" required="" step="0.1" type="number" value="3" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">تاريخ التعيين</label>
-                                            <input class="form-input" id="employee-hire-date" required="" type="date" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">نوع العقد</label>
-                                            <select class="form-select" id="employee-contract-type">
-                                                <option value="full-time">دوام كامل</option>
-                                                <option value="part-time">دوام جزئي</option>
-                                                <option value="contract">عقد مؤقت</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-tab-content" id="documents-tab">
-                                    <div class="grid-cols-2">
-                                        <div class="form-group">
-                                            <label class="form-label">رقم البطاقة الموحدة</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-id-number" required="" type="text" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-id-number" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">رقم بطاقة السكن</label>
-                                            <div class="input-group">
-                                                <input class="form-input" id="employee-residence-card" type="text" />
-                                                <button class="btn btn-icon-sm mic-btn" data-input="employee-residence-card" type="button">
-                                                    <i class="fas fa-microphone"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">صورة البطاقة الموحدة</label>
-                                            <div class="file-upload-container">
-                                                <button type="button" class="btn btn-outline btn-sm file-upload-btn" id="id-card-upload-btn">
-                                                    <i class="fas fa-upload"></i>
-                                                    <span>تحميل الصورة</span>
-                                                </button>
-                                                <div class="file-preview" id="id-card-preview"></div>
-                                                <input type="file" id="id-card-upload" accept="image/*" hidden />
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">صورة بطاقة السكن</label>
-                                            <div class="file-upload-container">
-                                                <button type="button" class="btn btn-outline btn-sm file-upload-btn" id="residence-card-upload-btn">
-                                                    <i class="fas fa-upload"></i>
-                                                    <span>تحميل الصورة</span>
-                                                </button>
-                                                <div class="file-preview" id="residence-card-preview"></div>
-                                                <input type="file" id="residence-card-upload" accept="image/*" hidden />
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">صورة شخصية</label>
-                                            <div class="file-upload-container">
-                                                <button type="button" class="btn btn-outline btn-sm file-upload-btn" id="employee-photo-upload-btn">
-                                                    <i class="fas fa-upload"></i>
-                                                    <span>تحميل الصورة</span>
-                                                </button>
-                                                <div class="file-preview" id="employee-photo-preview"></div>
-                                                <input type="file" id="employee-photo-upload" accept="image/*" hidden />
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">ملاحظات إضافية</label>
-                                            <textarea class="form-input" id="employee-notes" rows="3"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline modal-close-btn">إلغاء</button>
-                        <button class="btn btn-primary" id="save-employee-btn">إضافة</button>
-                    </div>
+        // إضافة مستمعي الأحداث
+        setupCardsPageEventListeners();
+    }
+    
+    /**
+     * إضافة النوافذ المنبثقة اللازمة
+     */
+    function addCardModals() {
+        // التحقق من وجود النوافذ مسبقاً
+        if (document.getElementById('create-card-modal')) {
+            return;
+        }
+        
+        // إنشاء نافذة إنشاء البطاقة
+        const createCardModal = document.createElement('div');
+        createCardModal.className = 'modal-overlay';
+        createCardModal.id = 'create-card-modal';
+        
+        createCardModal.innerHTML = `
+            <div class="modal animate__animated animate__fadeInUp">
+                <div class="modal-header">
+                    <h3 class="modal-title">إنشاء بطاقة مستثمر</h3>
+                    <button class="modal-close">×</button>
                 </div>
-            </div>
-            
-            <!-- نافذة صرف راتب -->
-            <div class="modal-overlay" id="pay-salary-modal">
-                <div class="modal animate__animated animate__fadeInUp">
-                    <div class="modal-header">
-                        <h3 class="modal-title">صرف راتب</h3>
-                        <button class="modal-close">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="pay-salary-form">
-                            <div class="form-group">
-                                <label class="form-label">الموظف</label>
-                                <select class="form-select" id="salary-employee" required="">
-                                    <option value="">اختر الموظف</option>
-                                    <!-- سيتم ملؤها ديناميكياً -->
-                                </select>
-                            </div>
-                            <div id="employee-salary-info"></div>
-                            <div class="grid-cols-2">
-                                <div class="form-group">
-                                    <label class="form-label">تاريخ صرف الراتب</label>
-                                    <input class="form-input" id="salary-date" required="" type="date" />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">الشهر المستحق</label>
-                                    <select class="form-select" id="salary-month" required="">
-                                        <option value="">اختر الشهر</option>
-                                        <option value="1">كانون الثاني (يناير)</option>
-                                        <option value="2">شباط (فبراير)</option>
-                                        <option value="3">آذار (مارس)</option>
-                                        <option value="4">نيسان (أبريل)</option>
-                                        <option value="5">أيار (مايو)</option>
-                                        <option value="6">حزيران (يونيو)</option>
-                                        <option value="7">تموز (يوليو)</option>
-                                        <option value="8">آب (أغسطس)</option>
-                                        <option value="9">أيلول (سبتمبر)</option>
-                                        <option value="10">تشرين الأول (أكتوبر)</option>
-                                        <option value="11">تشرين الثاني (نوفمبر)</option>
-                                        <option value="12">كانون الأول (ديسمبر)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">الراتب الأساسي (دينار)</label>
-                                    <input class="form-input" id="salary-base" readonly type="text" />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">المبيعات الشهرية (دينار)</label>
-                                    <div class="input-group">
-                                        <input class="form-input" id="salary-sales" min="0" required="" step="1000" type="number" />
-                                        <button class="btn btn-icon-sm mic-btn" data-input="salary-sales" type="button">
-                                            <i class="fas fa-microphone"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">نسبة المبيعات (%)</label>
-                                    <input class="form-input" id="salary-commission-rate" readonly type="text" />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">مبلغ العمولة (دينار)</label>
-                                    <input class="form-input" id="salary-commission-amount" readonly type="text" />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">العلاوات (دينار)</label>
-                                    <div class="input-group">
-                                        <input class="form-input" id="salary-bonuses" min="0" type="number" value="0" />
-                                        <button class="btn btn-icon-sm mic-btn" data-input="salary-bonuses" type="button">
-                                            <i class="fas fa-microphone"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">الاستقطاعات (دينار)</label>
-                                    <div class="input-group">
-                                        <input class="form-input" id="salary-deductions" min="0" type="number" value="0" />
-                                        <button class="btn btn-icon-sm mic-btn" data-input="salary-deductions" type="button">
-                                            <i class="fas fa-microphone"></i>
-                                        </button>
-                                    </div
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">ملاحظات</label>
-                                <textarea class="form-input" id="salary-notes" rows="2"></textarea>
-                            </div>
-                            <div class="salary-summary">
-                                <h4>إجمالي الراتب</h4>
-                                <div class="salary-total" id="salary-total">0 دينار</div>
-                                <div class="salary-calculation" id="salary-calculation"></div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline modal-close-btn">إلغاء</button>
-                        <button class="btn btn-success" id="confirm-pay-salary-btn">صرف الراتب</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- نافذة عرض تفاصيل الموظف -->
-            <div class="modal-overlay" id="employee-details-modal">
-                <div class="modal animate__animated animate__fadeInUp">
-                    <div class="modal-header">
-                        <h3 class="modal-title">تفاصيل الموظف</h3>
-                        <button class="modal-close">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="employee-details-content">
-                            <!-- سيتم ملؤها ديناميكياً -->
+                <div class="modal-body">
+                    <form id="create-card-form">
+                        <div class="form-group">
+                            <label class="form-label">المستثمر</label>
+                            <select class="form-select" id="card-investor" required>
+                                <option value="">اختر المستثمر</option>
+                                <!-- سيتم ملؤها ديناميكيًا -->
+                            </select>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline modal-close-btn">إغلاق</button>
-                        <div class="btn-group">
-                            <button class="btn btn-primary" id="edit-employee-btn">
-                                <i class="fas fa-edit"></i>
-                                <span>تعديل</span>
-                            </button>
-                            <button class="btn btn-success" id="employee-pay-salary-btn">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>صرف راتب</span>
-                            </button>
-                            <button class="btn btn-danger" id="delete-employee-btn">
-                                <i class="fas fa-trash"></i>
-                                <span>حذف</span>
-                            </button>
+                        
+                        <div class="form-group">
+                            <label class="form-label">نوع البطاقة</label>
+                            <select class="form-select" id="card-type">
+                                <option value="default">قياسية</option>
+                                <option value="gold">ذهبية</option>
+                                <option value="platinum">بلاتينية</option>
+                                <option value="premium">بريميوم</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">رقم سري للبطاقة (4 أرقام)</label>
+                            <input class="form-input" id="card-pin" type="text" maxlength="4" pattern="[0-9]{4}" placeholder="****" required>
+                            <small class="form-hint">أدخل 4 أرقام فقط ليستخدمها المستثمر للتحقق</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">تاريخ الانتهاء</label>
+                            <input class="form-input" id="card-expiry" type="date" required>
+                        </div>
+                        
+                        <div class="card-preview-container">
+                            <h4>معاينة البطاقة</h4>
+                            <div class="card-preview" id="card-preview">
+                                <!-- سيتم ملؤها ديناميكيًا -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline modal-close-btn">إلغاء</button>
+                    <button class="btn btn-primary" id="save-card-btn">إنشاء البطاقة</button>
+                </div>
+            </div>
+        `;
+        
+        // إنشاء نافذة عرض البطاقة
+        const showCardModal = document.createElement('div');
+        showCardModal.className = 'modal-overlay';
+        showCardModal.id = 'show-card-modal';
+        
+        showCardModal.innerHTML = `
+            <div class="modal animate__animated animate__fadeInUp">
+                <div class="modal-header">
+                    <h3 class="modal-title">تفاصيل البطاقة</h3>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="card-detail-container">
+                        <div class="card-full-view" id="card-full-view">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </div>
+                        
+                        <div class="investor-card-details" id="investor-card-details">
+                            <!-- سيتم ملؤها ديناميكيًا -->
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- نافذة عرض تفاصيل الراتب -->
-            <div class="modal-overlay" id="salary-details-modal">
-                <div class="modal animate__animated animate__fadeInUp">
-                    <div class="modal-header">
-                        <h3 class="modal-title">تفاصيل الراتب</h3>
-                        <button class="modal-close">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="salary-details-content">
-                            <!-- سيتم ملؤها ديناميكياً -->
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline modal-close-btn">إغلاق</button>
-                        <button class="btn btn-primary" id="print-salary-details-btn">
+                <div class="modal-footer">
+                    <button class="btn btn-outline modal-close-btn">إغلاق</button>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="edit-card-btn">
+                            <i class="fas fa-edit"></i>
+                            <span>تعديل</span>
+                        </button>
+                        <button class="btn btn-warning" id="renew-card-btn">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>تجديد</span>
+                        </button>
+                        <button class="btn btn-success" id="print-card-btn">
                             <i class="fas fa-print"></i>
                             <span>طباعة</span>
+                        </button>
+                        <button class="btn btn-info" id="share-card-btn">
+                            <i class="fas fa-share-alt"></i>
+                            <span>مشاركة</span>
+                        </button>
+                        <button class="btn btn-danger" id="deactivate-card-btn">
+                            <i class="fas fa-ban"></i>
+                            <span>إيقاف</span>
                         </button>
                     </div>
                 </div>
             </div>
         `;
         
-        // إضافة النوافذ إلى نهاية الصفحة
-        document.body.insertAdjacentHTML('beforeend', modalsHTML);
+        // إنشاء نافذة مسح الباركود
+        const scanCardModal = document.createElement('div');
+        scanCardModal.className = 'modal-overlay';
+        scanCardModal.id = 'scan-card-modal';
+        
+        scanCardModal.innerHTML = `
+            <div class="modal animate__animated animate__fadeInUp">
+                <div class="modal-header">
+                    <h3 class="modal-title">مسح باركود البطاقة</h3>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="barcode-scanner-container">
+                        <div id="barcode-scanner-region">
+                            <div class="scanner-overlay">
+                                <div class="scanner-reticle"></div>
+                                <div class="scanner-instructions">ضع الباركود في هذه المنطقة</div>
+                            </div>
+                            <video id="scanner-video" class="scanner-video"></video>
+                        </div>
+                        <div class="scanner-controls">
+                            <button id="toggle-flash-btn" class="btn btn-sm btn-outline">
+                                <i class="fas fa-bolt"></i>
+                                <span>الفلاش</span>
+                            </button>
+                            <button id="toggle-camera-btn" class="btn btn-sm btn-outline">
+                                <i class="fas fa-camera"></i>
+                                <span>تبديل الكاميرا</span>
+                            </button>
+                        </div>
+                        <div id="scan-result" class="scan-result"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline modal-close-btn">إلغاء</button>
+                    <button class="btn btn-primary" id="manual-entry-btn">
+                        <i class="fas fa-keyboard"></i>
+                        <span>إدخال يدوي</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // إضافة النوافذ إلى الصفحة
+        document.body.appendChild(createCardModal);
+        document.body.appendChild(showCardModal);
+        document.body.appendChild(scanCardModal);
+        
+        // إضافة مستمعي الأحداث
+        setupCardModalsEventListeners();
     }
-
+    
     /**
-     * إضافة أنماط CSS الخاصة بإدارة الموظفين
+     * إضافة أنماط CSS
      */
-    function addEmployeesStyles() {
-        // التحقق من عدم وجود الأنماط مسبقاً
-        if (document.getElementById('employees-management-styles')) return;
+    function addCardStyles() {
+        // التحقق من وجود الأنماط مسبقاً
+        if (document.getElementById('investor-card-styles')) {
+            return;
+        }
         
-        // إنشاء عنصر نمط
+        // إنشاء عنصر النمط
         const styleElement = document.createElement('style');
-        styleElement.id = 'employees-management-styles';
+        styleElement.id = 'investor-card-styles';
         
-        // تعريف أنماط CSS
+        // تحديد الأنماط
         styleElement.textContent = `
-            /* أنماط تبويبات النموذج */
-            .form-tab-btn {
-                padding: 8px 16px;
-                background: none;
-                border: none;
-                border-bottom: 2px solid transparent;
-                cursor: pointer;
-                font-weight: 500;
-                color: #6c757d;
-                transition: all 0.3s ease;
+            /* أنماط صفحة البطاقات */
+            .cards-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
             }
             
-            .form-tab-btn.active {
-                color: #3b82f6;
-                border-bottom-color: #3b82f6;
-            }
-            
-            .form-tab-content {
-                display: none;
-                animation: fadeIn 0.3s ease;
-            }
-            
-            .form-tab-content.active {
-                display: block;
-            }
-            
-            /* أنماط تحميل الملفات */
-            .file-upload-container {
+            .empty-cards-message {
+                grid-column: 1 / -1;
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
-            }
-            
-            .file-preview {
-                min-height: 80px;
-                border: 1px dashed #ccc;
-                border-radius: 4px;
-                display: flex;
                 align-items: center;
                 justify-content: center;
-                overflow: hidden;
-            }
-            
-            .file-preview img {
-                max-width: 100%;
-                max-height: 100px;
-                object-fit: contain;
-            }
-            
-            /* أنماط ملخص الراتب */
-            .salary-summary {
-                margin-top: 20px;
-                padding: 16px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
+                padding: 40px;
+                background-color: rgba(0, 0, 0, 0.02);
+                border-radius: 10px;
                 text-align: center;
             }
             
-            .salary-total {
-                font-size: 2rem;
-                font-weight: 700;
-                color: #3b82f6;
-                margin: 10px 0;
+            .empty-cards-message i {
+                font-size: 48px;
+                margin-bottom: 16px;
+                color: var(--color-primary);
+                opacity: 0.5;
             }
             
-            .salary-calculation {
-                font-size: 0.9rem;
-                color: #6c757d;
+            .empty-cards-message p {
+                font-size: 16px;
+                margin-bottom: 16px;
+                color: #666;
             }
             
-            /* أنماط بطاقة الموظف */
-            .employee-profile {
-                display: flex;
-                align-items: center;
-                margin-bottom: 24px;
-            }
-            
-            .employee-photo {
-                width: 100px;
-                height: 100px;
-                border-radius: 50%;
+            /* أنماط البطاقة */
+            .investor-card {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 1.586;
+                border-radius: 10px;
                 overflow: hidden;
-                border: 3px solid #3b82f6;
-                margin-left: 20px;
-                background-color: #e9ecef;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                backface-visibility: hidden;
+                transform-style: preserve-3d;
             }
             
-            .employee-photo img {
+            .investor-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            }
+            
+            .investor-card-inner {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                transition: transform 0.8s;
+                transform-style: preserve-3d;
+            }
+            
+            .investor-card.flipped .investor-card-inner {
+                transform: rotateY(180deg);
+            }
+            
+            .investor-card-front, .investor-card-back {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                display: flex;
+                flex-direction: column;
+                padding: 16px;
+                box-sizing: border-box;
+            }
+            
+            .investor-card-back {
+                transform: rotateY(180deg);
+                background-color: #f0f0f0;
+                color: #333;
+            }
+            
+            /* الأنماط المختلفة للبطاقة */
+            .investor-card.default .investor-card-front {
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                color: #ffffff;
+            }
+            
+            .investor-card.gold .investor-card-front {
+                background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+                color: #000000;
+            }
+            
+            .investor-card.platinum .investor-card-front {
+                background: linear-gradient(135deg, #7a7a7a 0%, #c0c0c0 100%);
+                color: #000000;
+            }
+            
+            .investor-card.premium .investor-card-front {
+                background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+                color: #ffffff;
+            }
+            
+            /* أنماط عناصر البطاقة */
+            .card-chip {
+                position: absolute;
+                top: 70px;
+                right: 20px;
+                width: 40px;
+                height: 30px;
+                background-color: #ffd700;
+                border-radius: 5px;
+                background-image: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1) 75%, transparent 75%, transparent);
+                background-size: 8px 8px;
+            }
+            
+            .card-number {
+                font-size: 19px;
+                letter-spacing: 2px;
+                margin-top: 50px;
+                text-align: center;
+                font-family: 'Courier New', monospace;
+                font-weight: bold;
+            }
+            
+            .card-details {
+                margin-top: auto;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+            }
+            
+            .card-holder {
+                text-transform: uppercase;
+                font-weight: bold;
+            }
+            
+            .card-holder-name {
+                font-size: 14px;
+            }
+            
+            .card-expires {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            
+            .expires-label {
+                font-size: 9px;
+                text-transform: uppercase;
+            }
+            
+            .expires-date {
+                font-size: 14px;
+            }
+            
+            .card-logo {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .card-logo img {
+                height: 100%;
+            }
+            
+            .card-logo-text {
+                font-size: 14px;
+                font-weight: bold;
+                margin-left: 6px;
+                text-transform: uppercase;
+            }
+            
+            .card-type {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                font-size: 14px;
+                font-weight: bold;
+                color: rgba(255, 255, 255, 0.7);
+                text-transform: uppercase;
+            }
+            
+            .card-pattern {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0.05;
+                pointer-events: none;
+            }
+            
+            /* أنماط الوجه الخلفي للبطاقة */
+            .card-magnetic-stripe {
+                width: 100%;
+                height: 40px;
+                background-color: #111;
+                margin: 20px 0;
+            }
+            
+            .card-signature {
+                height: 40px;
+                background-color: #fff;
+                display: flex;
+                align-items: center;
+                padding: 0 10px;
+                margin-top: 15px;
+            }
+            
+            .card-signature-text {
+                font-family: 'Brush Script MT', cursive;
+                color: #555;
+                font-size: 20px;
+            }
+            
+            .card-cvv {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                font-size: 12px;
+                background-color: #fff;
+                color: #000;
+                padding: 2px 5px;
+                border-radius: 3px;
+            }
+            
+            .card-barcode-container {
+                margin-top: auto;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .card-barcode {
+                max-width: 90%;
+                margin: 0 auto;
+            }
+            
+            .card-barcode-number {
+                font-size: 10px;
+                margin-top: 2px;
+                font-family: 'Courier New', monospace;
+            }
+            
+            /* أنماط معاينة البطاقة */
+            .card-preview-container {
+                margin-top: 20px;
+                border-top: 1px solid #eee;
+                padding-top: 15px;
+            }
+            
+            .card-preview-container h4 {
+                margin-bottom: 10px;
+                font-size: 14px;
+                color: #666;
+            }
+            
+            .card-preview {
+                transform: scale(0.8);
+                transform-origin: center top;
+                margin-bottom: -40px;
+            }
+            
+            /* أنماط عرض البطاقة */
+            .card-detail-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            
+            .card-full-view {
+                width: 100%;
+            }
+            
+            .investor-card-details {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .investor-detail-section {
+                background-color: #f8f9fa;
+                border-radius: 10px;
+                padding: 15px;
+            }
+            
+            .investor-detail-section h4 {
+                margin-bottom: 10px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
+                color: var(--color-primary);
+            }
+            
+            .investor-detail-row {
+                display: flex;
+                margin-bottom: 8px;
+            }
+            
+            .investor-detail-label {
+                flex: 1;
+                font-weight: bold;
+                color: #666;
+            }
+            
+            .investor-detail-value {
+                flex: 2;
+                color: #333;
+            }
+            
+            /* أنماط نافذة المسح */
+            .barcode-scanner-container {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #barcode-scanner-region {
+                position: relative;
+                width: 100%;
+                max-width: 500px;
+                height: 300px;
+                overflow: hidden;
+                border-radius: 10px;
+                margin: 0 auto;
+                background-color: #000;
+            }
+            
+            .scanner-video {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
             }
             
-            .employee-photo-placeholder {
-                font-size: 2.5rem;
-                color: #adb5bd;
-            }
-            
-            .employee-info {
-                flex: 1;
-            }
-            
-            .employee-name {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 4px;
-            }
-            
-            .employee-job-title {
-                font-size: 1.1rem;
-                color: #6c757d;
-                margin-bottom: 8px;
-            }
-            
-            .employee-status {
-                display: inline-block;
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 0.85rem;
-                font-weight: 500;
-            }
-            
-            .employee-status.active {
-                background-color: rgba(16, 185, 129, 0.1);
-                color: #10b981;
-            }
-            
-            .employee-status.inactive {
-                background-color: rgba(239, 68, 68, 0.1);
-                color: #ef4444;
-            }
-            
-            /* أنماط بطاقة معلومات الموظف */
-            .employee-details-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 24px;
-                margin-bottom: 24px;
-            }
-            
-            .employee-detail-card {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 16px;
-            }
-            
-            .employee-detail-card h4 {
-                font-size: 1.1rem;
-                font-weight: 600;
-                margin-bottom: 16px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #e9ecef;
-                color: #3b82f6;
-            }
-            
-            .employee-detail-item {
+            .scanner-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
                 display: flex;
-                margin-bottom: 8px;
-            }
-            
-            .employee-detail-label {
-                min-width: 120px;
-                color: #6c757d;
-                font-weight: 500;
-            }
-            
-            .employee-detail-value {
-                flex: 1;
-                font-weight: 400;
-            }
-            
-            /* أنماط بطاقة التوثيق */
-            .documents-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-                margin-top: 16px;
-            }
-            
-            .document-card {
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                overflow: hidden;
-            }
-            
-            .document-card-header {
-                padding: 8px 12px;
-                background-color: #f8f9fa;
-                border-bottom: 1px solid #e9ecef;
-                font-weight: 500;
-            }
-            
-            .document-card-body {
-                padding: 12px;
-                display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                min-height: 150px;
+                z-index: 1;
+                pointer-events: none;
             }
             
-            .document-card-body img {
-                max-width: 100%;
-                max-height: 200px;
-                object-fit: contain;
+            .scanner-reticle {
+                width: 200px;
+                height: 200px;
+                border: 2px solid rgba(0, 255, 0, 0.5);
+                border-radius: 5px;
+                position: relative;
             }
             
-            /* أنماط معلومات الراتب */
-            #employee-salary-info {
-                margin-bottom: 20px;
-                padding: 15px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                border-right: 3px solid #3b82f6;
+            .scanner-reticle::before,
+            .scanner-reticle::after {
+                content: '';
+                position: absolute;
+                width: 50px;
+                height: 50px;
+                border-color: #00ff00;
+                border-style: solid;
+                border-width: 0;
+            }
+            
+            .scanner-reticle::before {
+                top: -2px;
+                left: -2px;
+                border-top-width: 2px;
+                border-left-width: 2px;
+            }
+            
+            .scanner-reticle::after {
+                bottom: -2px;
+                right: -2px;
+                border-bottom-width: 2px;
+                border-right-width: 2px;
+            }
+            
+            .scanner-instructions {
+                position: absolute;
+                bottom: 20px;
+                color: #fff;
+                text-align: center;
+                background-color: rgba(0, 0, 0, 0.6);
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 14px;
+            }
+            
+            .scanner-controls {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 15px;
+                width: 100%;
+            }
+            
+            .scan-result {
+                margin-top: 15px;
+                padding: 10px;
+                width: 100%;
+                max-width: 500px;
+                text-align: center;
                 display: none;
             }
             
-            .employee-salary-header {
-                display: flex;
-                align-items: center;
-                margin-bottom: 10px;
-            }
-            
-            .employee-salary-avatar {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                background-color: #3b82f6;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                margin-left: 10px;
-            }
-            
-            .employee-salary-details {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-            
-            .employee-salary-detail {
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .employee-salary-label {
-                font-size: 0.85rem;
-                color: #6c757d;
-            }
-            
-            .employee-salary-value {
-                font-weight: 600;
-            }
-            
-            /* أنماط طباعة تفاصيل الراتب */
-            .receipt-container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-            }
-            
-            .receipt-header {
-                text-align: center;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 2px solid #3b82f6;
-            }
-            
-            .receipt-title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 5px;
-                color: #3b82f6;
-            }
-            
-            .receipt-subtitle {
-                font-size: 1rem;
-                color: #6c757d;
-            }
-            
-            .receipt-employee {
-                display: flex;
-                margin-bottom: 20px;
-            }
-            
-            .receipt-employee-info {
-                flex: 1;
-            }
-            
-            .receipt-employee-name {
-                font-size: 1.2rem;
-                font-weight: 600;
-            }
-            
-            .receipt-employee-job {
-                color: #6c757d;
-            }
-            
-            .receipt-date {
-                text-align: left;
-            }
-            
-            .receipt-details {
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                overflow: hidden;
-                margin-bottom: 20px;
-            }
-            
-            .receipt-details table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            
-            .receipt-details th,
-            .receipt-details td {
-                padding: 12px 15px;
-                text-align: right;
-                border-bottom: 1px solid #e9ecef;
-            }
-            
-            .receipt-details th {
-                background-color: #f8f9fa;
-                font-weight: 600;
-            }
-            
-            .receipt-details tr:last-child td {
-                border-bottom: none;
-            }
-            
-            .receipt-total {
-                text-align: center;
-                margin-top: 20px;
-                padding: 15px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-            }
-            
-            .receipt-total-amount {
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #3b82f6;
-            }
-            
-            .receipt-signature {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 40px;
-            }
-            
-            .signature-box {
-                flex: 1;
-                max-width: 200px;
-                border-top: 1px solid #adb5bd;
-                padding-top: 10px;
-                text-align: center;
-            }
-
-            /* إضافة نمط للموظفين في الجدول */
-            .employee-avatar {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                background-color: #3b82f6;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                margin-left: 10px;
-            }
-
-            .employee-info {
-                display: flex;
-                align-items: center;
-            }
-
-            .employee-actions {
-                display: flex;
-                gap: 5px;
-            }
-
-            .employee-action-btn {
-                background: none;
-                border: none;
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .employee-action-btn:hover {
-                background-color: #f8f9fa;
-            }
-
-            .employee-action-btn.view {
-                color: #6c757d;
-            }
-
-            .employee-action-btn.edit {
-                color: #3b82f6;
-            }
-
-            .employee-action-btn.delete {
-                color: #ef4444;
-            }
-
-            /* أنماط الإشعارات */
-            .notification {
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                padding: 15px 20px;
+            .scan-result.success {
+                display: block;
+                color: #155724;
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
                 border-radius: 5px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                animation: slideIn 0.3s ease;
-                max-width: 350px;
             }
             
-            .notification.success {
-                background-color: rgba(16, 185, 129, 0.1);
-                border-right: 4px solid #10b981;
-                color: #10b981;
+            .scan-result.error {
+                display: block;
+                color: #721c24;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                border-radius: 5px;
             }
             
-            .notification.error {
-                background-color: rgba(239, 68, 68, 0.1);
-                border-right: 4px solid #ef4444;
-                color: #ef4444;
-            }
-            
-            .notification.warning {
-                background-color: rgba(245, 158, 11, 0.1);
-                border-right: 4px solid #f59e0b;
-                color: #f59e0b;
-            }
-            
-            .notification.info {
-                background-color: rgba(59, 130, 246, 0.1);
-                border-right: 4px solid #3b82f6;
-                color: #3b82f6;
-            }
-            
-            .notification-icon {
-                margin-left: 15px;
-                font-size: 1.25rem;
-            }
-            
-            .notification-content {
-                flex: 1;
-            }
-            
-            .notification-title {
-                font-weight: 600;
-                margin-bottom: 2px;
-            }
-            
-            .notification-message {
-                font-size: 0.9rem;
-            }
-            
-            .notification-close {
-                background: none;
-                border: none;
-                font-size: 1.25rem;
-                margin-right: 10px;
-                cursor: pointer;
-                opacity: 0.7;
-                transition: opacity 0.2s;
-            }
-            
-            .notification-close:hover {
-                opacity: 1;
-            }
-            
-            @keyframes slideIn {
-                from {
-                    transform: translateX(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            
+            /* أنماط البطاقات المطبوعة */
             @media print {
                 body * {
                     visibility: hidden;
                 }
                 
-                .printable-content,
-                .printable-content * {
+                .print-card, .print-card * {
                     visibility: visible;
                 }
                 
-                .printable-content {
+                .print-card {
                     position: absolute;
                     left: 0;
                     top: 0;
-                    width: 100%;
+                    width: 85.6mm;
+                    height: 53.98mm;
+                    box-shadow: none;
+                    page-break-after: always;
                 }
                 
-                .no-print {
-                    display: none !important;
+                /* تأكد من طباعة الباركود بشكل صحيح */
+                .card-barcode-container, .card-barcode, .card-barcode-number {
+                    visibility: visible !important;
+                    display: block !important;
+                }
+                
+                /* تأكد من طباعة جميع العناصر */
+                .investor-card-front *, .investor-card-back * {
+                    visibility: visible !important;
                 }
             }
-
-            /* أنماط توزيع المبيعات */
-            .sales-statistics .grid-cols-2 {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+            
+            /* تحسينات لمشكلة الباركود */
+            .card-barcode-container svg, 
+            .card-barcode svg, 
+            .card-barcode-container canvas, 
+            .card-barcode canvas {
+                max-width: 100%;
+                height: auto;
+                margin: 0 auto;
+                display: block;
+            }
+            
+            /* أنماط البطاقة غير النشطة */
+            .investor-card.inactive .investor-card-front:before {
+                content: "غير نشطة";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-30deg);
+                font-size: 2rem;
+                font-weight: bold;
+                color: rgba(255, 0, 0, 0.7);
+                border: 3px solid rgba(255, 0, 0, 0.7);
+                padding: 5px 15px;
+                border-radius: 5px;
+                z-index: 10;
+            }
+            
+            /* تنسيق نافذة مشاركة البطاقة */
+            .card-share-options {
+                display: flex;
+                flex-direction: column;
                 gap: 10px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 10px;
+            }
+            
+            .card-share-option {
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                background-color: #fff;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: 1px solid #ddd;
+            }
+            
+            .card-share-option:hover {
+                background-color: #f0f4ff;
+                transform: translateY(-2px);
+            }
+            
+            .card-share-option i {
+                font-size: 1.5rem;
+                margin-left: 10px;
+                width: 40px;
+                text-align: center;
+            }
+            
+            .card-share-option-details {
+                flex: 1;
+            }
+            
+            .card-share-option-title {
+                font-weight: bold;
+                color: #333;
+            }
+            
+            .card-share-option-desc {
+                font-size: 0.8rem;
+                color: #666;
+            }
+            
+            /* تأثيرات حركية للبطاقة */
+            .investor-card {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .investor-card::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.7s ease;
+            }
+            
+            .investor-card:hover::after {
+                left: 100%;
+            }
+            
+            .card-inactive-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: rgba(0, 0, 0, 0.5);
+                color: white;
+                font-size: 2rem;
+                font-weight: bold;
+                transform: rotate(-25deg);
+                z-index: 10;
+            }
+            
+            /* تحسين عرض صندوق النسخ */
+            .copy-text-box {
+                position: relative;
+                padding: 10px;
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 5px;
                 margin-bottom: 10px;
             }
             
-            .sales-statistics .stat-card {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 10px;
-                text-align: center;
+            .copy-text-box textarea {
+                width: 100%;
+                min-height: 120px;
+                border: none;
+                background: transparent;
+                font-family: monospace;
+                direction: ltr;
+                resize: none;
             }
             
-            .sales-statistics .stat-title {
-                font-size: 0.85rem;
-                color: #6c757d;
-                margin-bottom: 5px;
+            .copy-btn {
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+                border-radius: 3px;
+                padding: 3px 8px;
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
             }
             
-            .sales-statistics .stat-value {
-                font-size: 1.2rem;
-                font-weight: 600;
-                color: #3b82f6;
+            .copy-btn:hover {
+                background-color: #f0f4ff;
             }
             
-            .sales-performance {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 10px 15px;
-            }
-            
-            .sales-performance h5 {
-                color: #3b82f6;
-                font-weight: 600;
-                margin-top: 0;
-            }
-            
-            .performance-metric {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 5px;
-                font-size: 0.9rem;
-            }
-            
-            .metric-label {
-                color: #6c757d;
-            }
-            
-            .metric-value {
-                font-weight: 500;
-            }
-            
-            /* أنماط توزيع المبيعات */
-            .distribution-container {
-                margin-top: 20px;
-            }
-            
-            .employee-distribution-item {
-                display: flex;
-                align-items: center;
-                padding: 10px;
-                border-bottom: 1px solid #e9ecef;
-            }
-            
-            .employee-distribution-item:last-child {
-                border-bottom: none;
-            }
-            
-            .employee-distribution {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
-            
-            .distribution-controls {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
-            
-            .distribution-range {
-                flex: 1;
-                margin-left: 10px;
-            }
-            
-            .distribution-value {
-                display: flex;
-                align-items: center;
-                width: 80px;
-            }
-            
-            .distribution-percent {
-                width: 60px;
-                text-align: center;
-                padding: 4px;
-            }
-            
-            .distribution-amount {
-                width: 120px;
-                text-align: left;
-                font-weight: 500;
-            }
-            
-            .distribution-summary {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 15px;
-                padding-top: 10px;
-                border-top: 1px solid #e9ecef;
-            }
-            
-            .distribution-total {
-                font-weight: 700;
-            }
-            
-            .month-name {
-                display: block;
-                font-size: 0.8em;
-                color: #6c757d;
+            /* تحسينات للطباعة */
+            .print-card {
+                width: 85.6mm !important;
+                height: 53.98mm !important;
+                background-color: white;
+                position: relative;
+                margin: 20px auto;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
             }
         `;
         
-        // إضافة عنصر النمط إلى رأس الصفحة
+        // إضافة النمط إلى الصفحة
         document.head.appendChild(styleElement);
     }
-
+    
     /**
-     * تهيئة مستمعي الأحداث
+     * تحميل التبعيات اللازمة للباركود
+     * @returns {Promise} وعد بنجاح أو فشل التحميل
      */
-    function initEmployeesEventListeners() {
-        // مستمع زر إضافة موظف
-        const addEmployeeBtn = document.getElementById('add-employee-btn');
-        if (addEmployeeBtn) {
-            addEmployeeBtn.addEventListener('click', () => openModal('add-employee-modal'));
+    function loadBarcodeDependencies() {
+        return new Promise((resolve, reject) => {
+            // التحقق من وجود المكتبات مسبقاً
+            if (window.QRCode && window.JsBarcode && window.Quagga) {
+                console.log('مكتبات الباركود محملة مسبقاً');
+                resolve(true);
+                return;
+            }
+            
+            // تحميل مكتبة QR Code
+            const qrScript = document.createElement('script');
+            qrScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+            qrScript.onload = () => {
+                console.log('تم تحميل مكتبة QR Code بنجاح');
+                
+                // تحميل مكتبة JsBarcode
+                const barcodeScript = document.createElement('script');
+                barcodeScript.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+                barcodeScript.onload = () => {
+                    console.log('تم تحميل مكتبة JsBarcode بنجاح');
+                    
+                    // تحميل مكتبة QuaggaJS لقراءة الباركود
+                    const quaggaScript = document.createElement('script');
+                    quaggaScript.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.2/dist/quagga.min.js';
+                    quaggaScript.onload = () => {
+                        console.log('تم تحميل مكتبة QuaggaJS بنجاح');
+                        resolve(true);
+                    };
+                    quaggaScript.onerror = (error) => {
+                        console.error('فشل في تحميل مكتبة QuaggaJS:', error);
+                        // محاولة استخدام النسخة الأصلية إذا فشلت النسخة المُحدثة
+                        const fallbackQuaggaScript = document.createElement('script');
+                        fallbackQuaggaScript.src = 'https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js';
+                        fallbackQuaggaScript.onload = () => {
+                            console.log('تم تحميل النسخة البديلة من مكتبة Quagga بنجاح');
+                            resolve(true);
+                        };
+                        fallbackQuaggaScript.onerror = () => {
+                            console.error('فشل في تحميل النسخة البديلة من مكتبة Quagga');
+                            // نجاح رغم الفشل في تحميل مكتبة Quagga
+                            resolve(true);
+                        };
+                        document.head.appendChild(fallbackQuaggaScript);
+                    };
+                    document.head.appendChild(quaggaScript);
+                };
+                barcodeScript.onerror = (error) => {
+                    console.error('فشل في تحميل مكتبة JsBarcode:', error);
+                    reject(error);
+                };
+                document.head.appendChild(barcodeScript);
+            };
+            qrScript.onerror = (error) => {
+                console.error('فشل في تحميل مكتبة QR Code:', error);
+                reject(error);
+            };
+            document.head.appendChild(qrScript);
+        });
+    }
+    
+    /**
+     * تهيئة ماسح الباركود
+     */
+    function initBarcodeScanner() {
+        if (typeof Quagga === 'undefined') {
+            console.error('مكتبة Quagga غير متاحة');
+            return;
         }
         
-        // مستمع زر صرف راتب
-        const paySalaryBtn = document.getElementById('pay-salary-btn');
-        if (paySalaryBtn) {
-            paySalaryBtn.addEventListener('click', () => {
-                openModal('pay-salary-modal');
-                populateEmployeeSelect();
-            });
-        }
-        
-        // مستمعي أزرار تبويبات النموذج
-        const formTabButtons = document.querySelectorAll('.form-tab-btn');
-        if (formTabButtons.length > 0) {
-            formTabButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // إزالة الفئة النشطة من جميع الأزرار في نفس المجموعة
-                    const tabButtonsContainer = this.closest('.form-tab-buttons');
-                    if (tabButtonsContainer) {
-                        tabButtonsContainer.querySelectorAll('.form-tab-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
+        cardScanner = {
+            init: function(containerId) {
+                const config = {
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector(`#${containerId} video`),
+                        constraints: {
+                            facingMode: "environment"
+                        },
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 2,
+                    decoder: {
+                        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "qr_code_reader"]
+                    },
+                    locate: true
+                };
+                
+                Quagga.init(config, (err) => {
+                    if (err) {
+                        console.error('Error initializing Quagga:', err);
+                        document.querySelector('#scan-result').textContent = 'حدث خطأ في تهيئة الماسح الضوئي';
+                        document.querySelector('#scan-result').classList.add('error');
+                        return;
                     }
                     
-                    // إضافة الفئة النشطة للزر الحالي
-                    this.classList.add('active');
+                    Quagga.start();
                     
-                    // تحديد معرف التبويب
-                    const tabId = this.getAttribute('data-tab') + '-tab';
-                    
-                    // إخفاء جميع محتويات التبويبات في نفس المجموعة
-                    const formContainer = this.closest('.form-tabs');
-                    if (formContainer) {
-                        formContainer.querySelectorAll('.form-tab-content').forEach(tab => {
-                            tab.classList.remove('active');
-                        });
-                    }
-                    
-                    // إظهار محتوى التبويب المطلوب
-                    const tabContent = document.getElementById(tabId);
-                    if (tabContent) {
-                        tabContent.classList.add('active');
-                    }
+                    Quagga.onDetected((result) => {
+                        const code = result.codeResult.code;
+                        if (code) {
+                            this.onDetect(code);
+                        }
+                    });
                 });
+            },
+            
+            onDetect: function(code) {
+                const resultElement = document.querySelector('#scan-result');
+                resultElement.textContent = `تم العثور على الرمز: ${code}`;
+                resultElement.classList.add('success');
+                
+                // إيقاف المسح بعد اكتشاف الرمز
+                Quagga.stop();
+                
+                // البحث عن البطاقة بالرمز
+                const card = this.findCardByBarcode(code);
+                if (card) {
+                    // تحديث وقت آخر مسح
+                    updateLastScanDate();
+                    
+                    // إغلاق نافذة المسح
+                    closeModal('scan-card-modal');
+                    
+                    // عرض بيانات البطاقة
+                    showCardDetails(card.id);
+                } else {
+                    resultElement.textContent = `لم يتم العثور على بطاقة بالرمز: ${code}`;
+                    resultElement.classList.remove('success');
+                    resultElement.classList.add('error');
+                    
+                    // إعادة تشغيل المسح بعد فترة
+                    setTimeout(() => {
+                        resultElement.textContent = '';
+                        resultElement.classList.remove('error');
+                        Quagga.start();
+                    }, 3000);
+                }
+            },
+            
+            findCardByBarcode: function(code) {
+                // البحث في التخزين المحلي عن البطاقة
+                const cards = getInvestorCards();
+                return cards.find(card => card.barcode === code);
+            },
+            
+            toggleCamera: function() {
+                Quagga.stop();
+                
+                // تبديل الكاميرا الأمامية/الخلفية
+                const currentFacingMode = Quagga.CameraAccess.getActiveTrack().getSettings().facingMode;
+                const newFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+                
+                const config = {
+                    ...Quagga.getConfig(),
+                    inputStream: {
+                        ...Quagga.getConfig().inputStream,
+                        constraints: {
+                            ...Quagga.getConfig().inputStream.constraints,
+                            facingMode: newFacingMode
+                        }
+                    }
+                };
+                
+                Quagga.init(config, (err) => {
+                    if (err) {
+                        console.error('Error initializing Quagga with new camera:', err);
+                        return;
+                    }
+                    Quagga.start();
+                });
+            },
+            
+            toggleFlash: function() {
+                const track = Quagga.CameraAccess.getActiveTrack();
+                if (track && track.getCapabilities().torch) {
+                    track.applyConstraints({
+                        advanced: [{torch: !track.getConstraints().advanced?.[0]?.torch}]
+                    });
+                } else {
+                    console.log('الفلاش غير متاح في هذا الجهاز');
+                }
+            }
+        };
+    }
+    
+    /**
+     * إعداد مستمعي الأحداث لصفحة البطاقات
+     */
+    function setupCardsPageEventListeners() {
+        // زر إنشاء بطاقة
+        const createCardBtn = document.getElementById('create-card-btn');
+        if (createCardBtn) {
+            createCardBtn.addEventListener('click', () => {
+                openCreateCardModal();
             });
         }
         
-        // مستمعي أزرار تحميل الملفات
-        setupFileUploadListeners();
-        
-        // مستمع زر حفظ الموظف
-        const saveEmployeeBtn = document.getElementById('save-employee-btn');
-        if (saveEmployeeBtn) {
-            saveEmployeeBtn.addEventListener('click', addNewEmployee);
-        }
-        
-        // مستمع تغيير الموظف في نموذج صرف الراتب
-        const salaryEmployeeSelect = document.getElementById('salary-employee');
-        if (salaryEmployeeSelect) {
-            salaryEmployeeSelect.addEventListener('change', updateEmployeeSalaryInfo);
-        }
-        
-        // مستمعي حساب الراتب النهائي
-        const salaryInputs = document.querySelectorAll('#pay-salary-form input[type="number"]');
-        if (salaryInputs.length > 0) {
-            salaryInputs.forEach(input => {
-                input.addEventListener('change', calculateTotalSalary);
-                input.addEventListener('keyup', calculateTotalSalary);
+        // زر إنشاء البطاقة الأولى
+        const createFirstCardBtn = document.getElementById('create-first-card-btn');
+        if (createFirstCardBtn) {
+            createFirstCardBtn.addEventListener('click', () => {
+                openCreateCardModal();
             });
         }
         
-        // مستمع زر تأكيد صرف الراتب
-        const confirmPaySalaryBtn = document.getElementById('confirm-pay-salary-btn');
-        if (confirmPaySalaryBtn) {
-            confirmPaySalaryBtn.addEventListener('click', payEmployeeSalary);
-        }
-        
-        // مستمع زر طباعة تفاصيل الراتب
-        const printSalaryDetailsBtn = document.getElementById('print-salary-details-btn');
-        if (printSalaryDetailsBtn) {
-            printSalaryDetailsBtn.addEventListener('click', function() {
-                window.print();
+        // زر مسح البطاقة
+        const scanCardBtn = document.getElementById('scan-card-btn');
+        if (scanCardBtn) {
+            scanCardBtn.addEventListener('click', () => {
+                openScanCardModal();
             });
         }
         
-        // مستمعي أزرار إغلاق النوافذ المنبثقة
+        // زر طباعة جميع البطاقات
+        const printAllCardsBtn = document.getElementById('print-all-cards-btn');
+        if (printAllCardsBtn) {
+            printAllCardsBtn.addEventListener('click', () => {
+                printAllCards();
+            });
+        }
+        
+        // أزرار تصفية البطاقات
+        const cardFilterButtons = document.querySelectorAll('[data-card-filter]');
+        cardFilterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // إزالة الفئة النشطة من جميع الأزرار
+                cardFilterButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // إضافة الفئة النشطة للزر المحدد
+                button.classList.add('active');
+                
+                // تصفية البطاقات
+                const filterType = button.getAttribute('data-card-filter');
+                filterCards(filterType);
+            });
+        });
+        
+        // مربع البحث
+        const searchInput = document.getElementById('card-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                const searchText = searchInput.value.trim().toLowerCase();
+                searchCards(searchText);
+            });
+        }
+    }
+    
+    /**
+     * إعداد مستمعي الأحداث للنوافذ المنبثقة
+     */
+    function setupCardModalsEventListeners() {
+        // إغلاق النوافذ المنبثقة
         document.querySelectorAll('.modal-close, .modal-close-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const modal = this.closest('.modal-overlay');
@@ -1427,2613 +1451,1894 @@
             });
         });
         
-        // إضافة مستمعي أزرار فلترة جدول الموظفين
-        const filterButtons = document.querySelectorAll('#employees-page .btn-group [data-filter]');
-        if (filterButtons.length > 0) {
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // إزالة الفئة النشطة من جميع الأزرار
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    
-                    // إضافة الفئة النشطة للزر الحالي
-                    this.classList.add('active');
-                    
-                    // فلترة الجدول
-                    const filter = this.getAttribute('data-filter');
-                    filterEmployeesTable(filter);
-                });
+        // مستمعي أحداث نافذة إنشاء البطاقة
+        setupCreateCardModalListeners();
+        
+        // مستمعي أحداث نافذة عرض البطاقة
+        setupShowCardModalListeners();
+        
+        // مستمعي أحداث نافذة مسح الباركود
+        setupScanCardModalListeners();
+    }
+    
+    /**
+     * إعداد مستمعي الأحداث لنافذة إنشاء البطاقة
+     */
+    function setupCreateCardModalListeners() {
+        // اختيار المستثمر
+        const cardInvestorSelect = document.getElementById('card-investor');
+        if (cardInvestorSelect) {
+            cardInvestorSelect.addEventListener('change', () => {
+                updateCardPreview();
             });
         }
         
-        // مستمع زر تصدير بيانات الموظفين
-        const exportEmployeesBtn = document.getElementById('export-employees-btn');
-        if (exportEmployeesBtn) {
-            exportEmployeesBtn.addEventListener('click', exportEmployeesData);
+        // تغيير نوع البطاقة
+        const cardTypeSelect = document.getElementById('card-type');
+        if (cardTypeSelect) {
+            cardTypeSelect.addEventListener('change', () => {
+                updateCardPreview();
+            });
         }
         
-        // مستمع زر تصدير بيانات الرواتب
-        const exportSalariesBtn = document.getElementById('export-salaries-btn');
-        if (exportSalariesBtn) {
-            exportSalariesBtn.addEventListener('click', exportSalariesData);
-        }
-    }
-
-    /**
-     * إعداد مستمعي أحداث تحميل الملفات
-     */
-    function setupFileUploadListeners() {
-        // تحميل صورة البطاقة الموحدة
-        setupFileUpload('id-card-upload-btn', 'id-card-upload', 'id-card-preview');
-        
-        // تحميل صورة بطاقة السكن
-        setupFileUpload('residence-card-upload-btn', 'residence-card-upload', 'residence-card-preview');
-        
-        // تحميل الصورة الشخصية
-        setupFileUpload('employee-photo-upload-btn', 'employee-photo-upload', 'employee-photo-preview');
-    }
-
-    /**
-     * إعداد تحميل الملفات
-     * @param {string} buttonId - معرف زر التحميل
-     * @param {string} inputId - معرف حقل الإدخال
-     * @param {string} previewId - معرف عنصر المعاينة
-     */
-    function setupFileUpload(buttonId, inputId, previewId) {
-        const uploadBtn = document.getElementById(buttonId);
-        const fileInput = document.getElementById(inputId);
-        const preview = document.getElementById(previewId);
-        
-        if (!uploadBtn || !fileInput || !preview) return;
-        
-        uploadBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
+        // تغيير الرقم السري
+        const cardPinInput = document.getElementById('card-pin');
+        if (cardPinInput) {
+            cardPinInput.addEventListener('input', () => {
+                // التأكد من أن القيمة هي أرقام فقط
+                cardPinInput.value = cardPinInput.value.replace(/[^0-9]/g, '');
                 
-                reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview" />`;
-                };
-                
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-    }
-
-    /**
-     * تحميل بيانات الموظفين من التخزين المحلي
-     */
-    function loadEmployeesData() {
-        try {
-            const savedEmployees = localStorage.getItem('employees');
-            if (savedEmployees) {
-                employees = JSON.parse(savedEmployees);
-                console.log(`تم تحميل ${employees.length} موظف`);
-            } else {
-                // إضافة بعض البيانات للعرض إذا لم تكن هناك بيانات سابقة
-                addSampleEmployeesData();
-            }
+                // تحديث المعاينة
+                updateCardPreview();
+            });
+        }
+        
+        // تغيير تاريخ الانتهاء
+        const cardExpiryInput = document.getElementById('card-expiry');
+        if (cardExpiryInput) {
+            cardExpiryInput.addEventListener('change', () => {
+                updateCardPreview();
+            });
             
-            const savedSalaryTransactions = localStorage.getItem('salaryTransactions');
-            if (savedSalaryTransactions) {
-                salaryTransactions = JSON.parse(savedSalaryTransactions);
-                console.log(`تم تحميل ${salaryTransactions.length} عملية راتب`);
-            }
-            
-            // تهيئة الجداول
-            renderEmployeesTable();
-            renderSalaryTransactionsTable();
-        } catch (error) {
-            console.error('خطأ في تحميل بيانات الموظفين:', error);
-            showNotification('حدث خطأ أثناء تحميل بيانات الموظفين', 'error');
+            // تعيين التاريخ الافتراضي لتكون سنة من الآن
+            const defaultDate = new Date();
+            defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+            const defaultDateString = defaultDate.toISOString().split('T')[0];
+            cardExpiryInput.value = defaultDateString;
+        }
+        
+        // حفظ البطاقة
+        const saveCardBtn = document.getElementById('save-card-btn');
+        if (saveCardBtn) {
+            saveCardBtn.addEventListener('click', () => {
+                createCard();
+            });
         }
     }
-
+    
     /**
-     * إضافة بيانات عينة للموظفين
+     * إعداد مستمعي الأحداث لنافذة عرض البطاقة
      */
-    function addSampleEmployeesData() {
-        // إضافة بعض الموظفين للعرض
-        if (employees.length === 0) {
-            employees = [
-                {
-                    id: "1001",
-                    name: "أحمد محمد",
-                    phone: "07705551234",
-                    address: "بغداد - الكرادة",
-                    email: "ahmed@example.com",
-                    jobTitle: "مدير المبيعات",
-                    department: "sales",
-                    baseSalary: 1200000,
-                    commissionRate: 15,
-                    hireDate: "2023-01-10",
-                    contractType: "full-time",
-                    idNumber: "A12345678",
-                    status: "active",
-                    createdAt: "2023-01-10T08:30:00.000Z"
-                },
-                {
-                    id: "1002",
-                    name: "مريم علي",
-                    phone: "07706665555",
-                    address: "بغداد - المنصور",
-                    email: "mariam@example.com",
-                    jobTitle: "محاسب",
-                    department: "finance",
-                    baseSalary: 900000,
-                    commissionRate: 5,
-                    hireDate: "2023-02-15",
-                    contractType: "full-time",
-                    idNumber: "B98765432",
-                    status: "active",
-                    createdAt: "2023-02-15T10:15:00.000Z"
-                },
-                {
-                    id: "1003",
-                    name: "حسين جاسم",
-                    phone: "07707778888",
-                    address: "بغداد - الكاظمية",
-                    email: "hussein@example.com",
-                    jobTitle: "مندوب مبيعات",
-                    department: "sales",
-                    baseSalary: 750000,
-                    commissionRate: 10,
-                    hireDate: "2023-03-01",
-                    contractType: "full-time",
-                    idNumber: "C45678901",
-                    status: "active",
-                    createdAt: "2023-03-01T09:00:00.000Z"
+    function setupShowCardModalListeners() {
+        // زر تعديل البطاقة
+        const editCardBtn = document.getElementById('edit-card-btn');
+        if (editCardBtn) {
+            editCardBtn.addEventListener('click', () => {
+                editCurrentCard();
+            });
+        }
+        
+        // زر تجديد البطاقة
+        const renewCardBtn = document.getElementById('renew-card-btn');
+        if (renewCardBtn) {
+            renewCardBtn.addEventListener('click', () => {
+                renewCurrentCard();
+            });
+        }
+        
+        // زر طباعة البطاقة
+        const printCardBtn = document.getElementById('print-card-btn');
+        if (printCardBtn) {
+            printCardBtn.addEventListener('click', () => {
+                printCurrentCard();
+            });
+        }
+        
+        // زر مشاركة البطاقة
+        const shareCardBtn = document.getElementById('share-card-btn');
+        if (shareCardBtn) {
+            shareCardBtn.addEventListener('click', () => {
+                shareCurrentCard();
+            });
+        }
+        
+        // زر إيقاف البطاقة
+        const deactivateCardBtn = document.getElementById('deactivate-card-btn');
+        if (deactivateCardBtn) {
+            deactivateCardBtn.addEventListener('click', () => {
+                deactivateCurrentCard();
+            });
+        }
+    }
+    
+    /**
+     * إعداد مستمعي الأحداث لنافذة مسح الباركود
+     */
+    function setupScanCardModalListeners() {
+        // زر تبديل الكاميرا
+        const toggleCameraBtn = document.getElementById('toggle-camera-btn');
+        if (toggleCameraBtn) {
+            toggleCameraBtn.addEventListener('click', () => {
+                if (cardScanner) {
+                    cardScanner.toggleCamera();
                 }
-            ];
+            });
+        }
+        
+        // زر تشغيل/إيقاف الفلاش
+        const toggleFlashBtn = document.getElementById('toggle-flash-btn');
+        if (toggleFlashBtn) {
+            toggleFlashBtn.addEventListener('click', () => {
+                if (cardScanner) {
+                    cardScanner.toggleFlash();
+                }
+            });
+        }
+        
+        // زر الإدخال اليدوي
+        const manualEntryBtn = document.getElementById('manual-entry-btn');
+        if (manualEntryBtn) {
+            manualEntryBtn.addEventListener('click', () => {
+                // طلب الإدخال اليدوي للرمز
+                const code = prompt('يرجى إدخال رمز البطاقة يدويًا:');
+                if (code) {
+                    // البحث عن البطاقة بالرمز
+                    if (cardScanner) {
+                        cardScanner.onDetect(code);
+                    }
+                }
+            });
+        }
+    }
+    
+    /**
+     * فتح نافذة إنشاء البطاقة
+     */
+    function openCreateCardModal() {
+        const modal = document.getElementById('create-card-modal');
+        if (!modal) {
+            console.error('لم يتم العثور على النافذة');
+            return;
+        }
+        
+        // إعادة تعيين النموذج
+        const form = modal.querySelector('form');
+        if (form) {
+            form.reset();
+        }
+        
+        // تعيين القيم الافتراضية
+        const cardExpiryInput = document.getElementById('card-expiry');
+        if (cardExpiryInput) {
+            const defaultDate = new Date();
+            defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+            const defaultDateString = defaultDate.toISOString().split('T')[0];
+            cardExpiryInput.value = defaultDateString;
+        }
+        
+        // ملء قائمة المستثمرين
+        fillInvestorSelect();
+        
+        // تحديث معاينة البطاقة
+        updateCardPreview();
+        
+        // فتح النافذة
+        modal.classList.add('active');
+    }
+    
+    /**
+     * فتح نافذة عرض البطاقة
+     * @param {string} cardId معرف البطاقة
+     */
+    function openShowCardModal(cardId) {
+        const modal = document.getElementById('show-card-modal');
+        if (!modal) {
+            console.error('لم يتم العثور على النافذة');
+            return;
+        }
+        
+        // حفظ معرف البطاقة الحالية
+        currentCardId = cardId;
+        
+        // عرض تفاصيل البطاقة
+        showCardDetails(cardId);
+        
+        // فتح النافذة
+        modal.classList.add('active');
+    }
+    
+    /**
+     * فتح نافذة مسح الباركود
+     */
+    function openScanCardModal() {
+        const modal = document.getElementById('scan-card-modal');
+        if (!modal) {
+            console.error('لم يتم العثور على النافذة');
+            return;
+        }
+        
+        // إعادة تعيين نتيجة المسح
+        const resultElement = document.getElementById('scan-result');
+        if (resultElement) {
+            resultElement.textContent = '';
+            resultElement.className = 'scan-result';
+        }
+        
+        // فتح النافذة
+        modal.classList.add('active');
+        
+        // بدء المسح
+        if (cardScanner) {
+            setTimeout(() => {
+                cardScanner.init('barcode-scanner-region');
+            }, 500);
+        } else {
+            console.error('ماسح الباركود غير متاح');
             
-            // حفظ البيانات
-            saveEmployeesData();
+            // عرض رسالة خطأ
+            if (resultElement) {
+                resultElement.textContent = 'ماسح الباركود غير متاح، يرجى إعادة تحميل الصفحة';
+                resultElement.classList.add('error');
+            }
+        }
+    }
+    
+    /**
+     * إغلاق النافذة المنبثقة
+     * @param {string} modalId معرف النافذة
+     */
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            
+            // إيقاف الماسح إذا كانت نافذة المسح
+            if (modalId === 'scan-card-modal' && typeof Quagga !== 'undefined') {
+                Quagga.stop();
+            }
+        }
+    }
+    
+    /**
+     * ملء قائمة المستثمرين
+     */
+    function fillInvestorSelect() {
+        const select = document.getElementById('card-investor');
+        if (!select) return;
+        
+        // مسح الخيارات الحالية
+        select.innerHTML = '<option value="">اختر المستثمر</option>';
+        
+        // الحصول على المستثمرين
+        if (typeof investors === 'undefined' || !Array.isArray(investors)) {
+            console.error('مصفوفة المستثمرين غير متاحة');
+            return;
+        }
+        
+        // ترتيب المستثمرين حسب الاسم
+        const sortedInvestors = [...investors].sort((a, b) => 
+            a.name.localeCompare(b.name, 'ar')
+        );
+        
+        // إضافة الخيارات
+        sortedInvestors.forEach(investor => {
+            const option = document.createElement('option');
+            option.value = investor.id;
+            option.textContent = `${investor.name} (${investor.phone})`;
+            select.appendChild(option);
+        });
+    }
+    
+    /**
+     * تحديث معاينة البطاقة
+     */
+    function updateCardPreview() {
+        const previewContainer = document.getElementById('card-preview');
+        if (!previewContainer) return;
+        
+        // الحصول على قيم النموذج
+        const investorId = document.getElementById('card-investor').value;
+        const cardType = document.getElementById('card-type').value;
+        const cardPin = document.getElementById('card-pin').value;
+        const cardExpiry = document.getElementById('card-expiry').value;
+        
+        // التحقق من وجود مستثمر مختار
+        if (!investorId) {
+            previewContainer.innerHTML = '<div class="empty-preview">يرجى اختيار مستثمر لعرض المعاينة</div>';
+            return;
+        }
+        
+        // البحث عن المستثمر
+        const investor = investors.find(inv => inv.id === investorId);
+        if (!investor) {
+            console.error('لم يتم العثور على المستثمر');
+            return;
+        }
+        
+        // إنشاء رقم بطاقة فريد
+        const cardNumber = generateCardNumber(investor.id);
+        
+        // تحويل تاريخ الانتهاء إلى الصيغة المناسبة
+        let expMonth = '';
+        let expYear = '';
+        if (cardExpiry) {
+            const date = new Date(cardExpiry);
+            expMonth = (date.getMonth() + 1).toString().padStart(2, '0');
+            expYear = date.getFullYear().toString().substr(2);
+        }
+        
+        // إنشاء عنصر البطاقة
+        previewContainer.innerHTML = `
+            <div class="investor-card ${cardType}">
+                <div class="investor-card-inner">
+                    <div class="investor-card-front">
+                        <div class="card-logo">
+                            <i class="fas fa-university"></i>
+                            <span class="card-logo-text">InvestCard</span>
+                        </div>
+                        <div class="card-chip"></div>
+                        <div class="card-number">
+                            ${formatCardNumber(cardNumber)}
+                        </div>
+                        <div class="card-details">
+                            <div class="card-holder">
+                                <div class="card-holder-label">حامل البطاقة</div>
+                                <div class="card-holder-name">${investor.name}</div>
+                            </div>
+                            <div class="card-expires">
+                                <div class="expires-label">تنتهي في</div>
+                                <div class="expires-date">${expMonth}/${expYear}</div>
+                            </div>
+                        </div>
+                        <div class="card-type">
+                            ${getCardTypeArabic(cardType)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * إنشاء بطاقة جديدة
+     */
+    function createCard() {
+        // الحصول على قيم النموذج
+        const investorId = document.getElementById('card-investor').value;
+        const cardType = document.getElementById('card-type').value;
+        const cardPin = document.getElementById('card-pin').value;
+        const cardExpiry = document.getElementById('card-expiry').value;
+        
+        // التحقق من صحة البيانات
+        if (!investorId) {
+            showNotification('يرجى اختيار المستثمر', 'error');
+            return;
+        }
+        
+        if (!cardPin || cardPin.length !== 4 || !/^\d{4}$/.test(cardPin)) {
+            showNotification('يرجى إدخال رقم سري مكون من 4 أرقام', 'error');
+            return;
+        }
+        
+        if (!cardExpiry) {
+            showNotification('يرجى تحديد تاريخ انتهاء البطاقة', 'error');
+            return;
+        }
+        
+        // البحث عن المستثمر
+        const investor = investors.find(inv => inv.id === investorId);
+        if (!investor) {
+            showNotification('لم يتم العثور على المستثمر', 'error');
+            return;
+        }
+        
+        // التحقق مما إذا كان المستثمر لديه بطاقة بالفعل
+        const existingCards = getInvestorCards();
+        const existingCard = existingCards.find(card => card.investorId === investorId && card.status === 'active');
+        
+        if (existingCard) {
+            const confirm = window.confirm('هذا المستثمر لديه بطاقة نشطة بالفعل. هل تريد إنشاء بطاقة جديدة؟');
+            if (!confirm) {
+                return;
+            }
+            
+            // تعطيل البطاقة القديمة
+            existingCard.status = 'inactive';
+            existingCard.deactivatedAt = new Date().toISOString();
+            
+            // تحديث البطاقات
+            saveInvestorCards(existingCards);
+        }
+        
+        // إنشاء رقم بطاقة فريد
+        const cardNumber = generateCardNumber(investor.id);
+        
+        // إنشاء رمز الأمان CVV
+        const cvv = generateCVV();
+        
+        // إنشاء كود الباركود
+        const barcode = generateBarcode(investor.id);
+        
+        // إنشاء بيانات البطاقة
+        const newCard = {
+            id: 'card_' + Date.now().toString(),
+            investorId: investor.id,
+            cardNumber: cardNumber,
+            cardType: cardType,
+            pin: cardPin,
+            cvv: cvv,
+            barcode: barcode,
+            investorName: investor.name,
+            investorPhone: investor.phone,
+            createdAt: new Date().toISOString(),
+            expiryDate: cardExpiry,
+            status: 'active',
+            lastUsed: null
+        };
+        
+        // إضافة البطاقة إلى قائمة البطاقات
+        const cards = getInvestorCards();
+        cards.push(newCard);
+        saveInvestorCards(cards);
+
+        // إغلاق النافذة المنبثقة
+        closeModal('create-card-modal');
+
+        // تحديث عرض البطاقات
+        renderInvestorCards();
+
+        // تحديث الإحصائيات
+        updateCardStatistics();
+
+        // عرض رسالة نجاح
+        showNotification('تم إنشاء بطاقة المستثمر بنجاح', 'success');
+    }
+
+    /**
+     * عرض تفاصيل البطاقة
+     * @param {string} cardId معرف البطاقة
+     */
+    function showCardDetails(cardId) {
+        // البحث عن البطاقة
+        const cards = getInvestorCards();
+        const card = cards.find(c => c.id === cardId);
+        
+        if (!card) {
+            console.error('لم يتم العثور على البطاقة');
+            return;
+        }
+        
+        // البحث عن المستثمر
+        const investor = investors.find(inv => inv.id === card.investorId);
+        
+        // تحديث عنوان النافذة
+        const modalTitle = document.querySelector('#show-card-modal .modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = `بطاقة المستثمر - ${card.investorName}`;
+        }
+        
+        // عرض البطاقة
+        const cardView = document.getElementById('card-full-view');
+        if (cardView) {
+            renderCardHTML(cardView, card);
+        }
+        
+        // عرض تفاصيل المستثمر
+        const detailsView = document.getElementById('investor-card-details');
+        if (detailsView) {
+            let detailsHTML = `
+                <div class="investor-detail-section">
+                    <h4>معلومات المستثمر</h4>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">الاسم:</div>
+                        <div class="investor-detail-value">${card.investorName}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">رقم الهاتف:</div>
+                        <div class="investor-detail-value">${card.investorPhone}</div>
+                    </div>
+            `;
+            
+            // إضافة معلومات إضافية إذا كان المستثمر موجودًا
+            if (investor) {
+                detailsHTML += `
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">العنوان:</div>
+                        <div class="investor-detail-value">${investor.address || '-'}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">رقم البطاقة الشخصية:</div>
+                        <div class="investor-detail-value">${investor.cardNumber || '-'}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">تاريخ الانضمام:</div>
+                        <div class="investor-detail-value">${formatDate(investor.joinDate || investor.createdAt)}</div>
+                    </div>
+                `;
+            }
+            
+            detailsHTML += `
+                </div>
+                
+                <div class="investor-detail-section">
+                    <h4>معلومات البطاقة</h4>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">رقم البطاقة:</div>
+                        <div class="investor-detail-value">${formatCardNumber(card.cardNumber)}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">نوع البطاقة:</div>
+                        <div class="investor-detail-value">${getCardTypeArabic(card.cardType)}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">تاريخ الإصدار:</div>
+                        <div class="investor-detail-value">${formatDate(card.createdAt)}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">تاريخ الانتهاء:</div>
+                        <div class="investor-detail-value">${formatDate(card.expiryDate)}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">الحالة:</div>
+                        <div class="investor-detail-value">${getCardStatusArabic(card.status)}</div>
+                    </div>
+                    <div class="investor-detail-row">
+                        <div class="investor-detail-label">آخر استخدام:</div>
+                        <div class="investor-detail-value">${card.lastUsed ? formatDate(card.lastUsed) : 'لم تستخدم بعد'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // إضافة معلومات الاستثمار إذا كان المستثمر موجودًا
+            if (investor) {
+                const totalInvestment = investor.amount || 0;
+                
+                // حساب الربح المتوقع
+                let expectedProfit = 0;
+                if (investor.investments && Array.isArray(investor.investments)) {
+                    expectedProfit = investor.investments.reduce((total, inv) => {
+                        // استخدام دالة حساب الفائدة من النظام الأساسي إذا كانت متاحة
+                        if (typeof calculateInterest === 'function') {
+                            return total + calculateInterest(inv.amount, inv.date);
+                        } else {
+                            // حساب تقريبي إذا لم تكن الدالة متاحة
+                            const rate = settings && settings.interestRate ? settings.interestRate / 100 : 0.175;
+                            return total + (inv.amount * rate);
+                        }
+                    }, 0);
+                }
+                
+                detailsHTML += `
+                    <div class="investor-detail-section">
+                        <h4>معلومات الاستثمار</h4>
+                        <div class="investor-detail-row">
+                            <div class="investor-detail-label">إجمالي الاستثمار:</div>
+                            <div class="investor-detail-value">${formatCurrency(totalInvestment)}</div>
+                        </div>
+                        <div class="investor-detail-row">
+                            <div class="investor-detail-label">الربح المتوقع (شهرياً):</div>
+                            <div class="investor-detail-value">${formatCurrency(expectedProfit)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // عرض التفاصيل
+            detailsView.innerHTML = detailsHTML;
+        }
+        
+        // تحديث حالة أزرار الإجراءات
+        updateActionButtons(card);
+        
+        // تسجيل استخدام البطاقة
+        card.lastUsed = new Date().toISOString();
+        saveInvestorCards(cards);
+    }
+
+    /**
+     * تحديث حالة أزرار الإجراءات
+     * @param {Object} card بيانات البطاقة
+     */
+    function updateActionButtons(card) {
+        // زر تعديل البطاقة
+        const editBtn = document.getElementById('edit-card-btn');
+        if (editBtn) {
+            editBtn.disabled = card.status !== 'active';
+        }
+        
+        // زر تجديد البطاقة
+        const renewBtn = document.getElementById('renew-card-btn');
+        if (renewBtn) {
+            const expiryDate = new Date(card.expiryDate);
+            const now = new Date();
+            const daysToExpiry = Math.floor((expiryDate - now) / (1000 * 60 * 60 * 24));
+            
+            // تفعيل زر التجديد إذا كانت البطاقة نشطة وتنتهي قريبًا (خلال 30 يومًا)
+            renewBtn.disabled = card.status !== 'active' || daysToExpiry > 30;
+        }
+        
+        // زر إيقاف البطاقة
+        const deactivateBtn = document.getElementById('deactivate-card-btn');
+        if (deactivateBtn) {
+            deactivateBtn.disabled = card.status !== 'active';
+            
+            // تغيير النص حسب الحالة
+            if (card.status === 'active') {
+                deactivateBtn.innerHTML = '<i class="fas fa-ban"></i><span>إيقاف</span>';
+            } else {
+                deactivateBtn.innerHTML = '<i class="fas fa-trash"></i><span>حذف</span>';
+            }
         }
     }
 
-   /**
-     * حفظ بيانات الموظفين في التخزين المحلي
+    /**
+     * تعديل البطاقة الحالية
      */
-    function saveEmployeesData() {
+    function editCurrentCard() {
+        if (!currentCardId) {
+            console.error('لا توجد بطاقة محددة');
+            return;
+        }
+        
+        // البحث عن البطاقة
+        const cards = getInvestorCards();
+        const card = cards.find(c => c.id === currentCardId);
+        
+        if (!card) {
+            console.error('لم يتم العثور على البطاقة');
+            return;
+        }
+        
+        // طلب تغيير الرقم السري
+        const newPin = prompt('أدخل الرقم السري الجديد (4 أرقام):', card.pin);
+        
+        if (newPin === null) {
+            // تم الإلغاء
+            return;
+        }
+        
+        if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+            showNotification('يرجى إدخال رقم سري صحيح مكون من 4 أرقام', 'error');
+            return;
+        }
+        
+        // تحديث الرقم السري
+        card.pin = newPin;
+        
+        // حفظ التغييرات
+        saveInvestorCards(cards);
+        
+        // تحديث العرض
+        showCardDetails(currentCardId);
+        
+        // عرض رسالة نجاح
+        showNotification('تم تحديث الرقم السري بنجاح', 'success');
+    }
+
+    /**
+     * تجديد البطاقة الحالية
+     */
+    function renewCurrentCard() {
+        if (!currentCardId) {
+            console.error('لا توجد بطاقة محددة');
+            return;
+        }
+        
+        // البحث عن البطاقة
+        const cards = getInvestorCards();
+        const card = cards.find(c => c.id === currentCardId);
+        
+        if (!card) {
+            console.error('لم يتم العثور على البطاقة');
+            return;
+        }
+        
+        // تأكيد التجديد
+        const confirm = window.confirm('هل أنت متأكد من رغبتك في تجديد هذه البطاقة؟');
+        if (!confirm) {
+            return;
+        }
+        
+        // تحديد تاريخ انتهاء جديد (سنة من الآن)
+        const newExpiryDate = new Date();
+        newExpiryDate.setFullYear(newExpiryDate.getFullYear() + 1);
+        
+        // تحديث البطاقة
+        card.expiryDate = newExpiryDate.toISOString().split('T')[0];
+        
+        // حفظ التغييرات
+        saveInvestorCards(cards);
+        
+        // تحديث العرض
+        showCardDetails(currentCardId);
+        
+        // عرض رسالة نجاح
+        showNotification('تم تجديد البطاقة بنجاح', 'success');
+    }
+
+    /**
+     * مشاركة البطاقة الحالية
+     */
+    function shareCurrentCard() {
+        if (!currentCardId) {
+            console.error('لا توجد بطاقة محددة');
+            return;
+        }
+        
+        // البحث عن البطاقة
+        const cards = getInvestorCards();
+        const card = cards.find(c => c.id === currentCardId);
+        
+        if (!card) {
+            console.error('لم يتم العثور على البطاقة');
+            return;
+        }
+        
+        // إنشاء نص المشاركة
+        const shareText = `
+بطاقة المستثمر: ${card.investorName}
+رقم الهاتف: ${card.investorPhone}
+رقم البطاقة: ${formatCardNumber(card.cardNumber)}
+نوع البطاقة: ${getCardTypeArabic(card.cardType)}
+تاريخ الإصدار: ${formatDate(card.createdAt)}
+تاريخ الانتهاء: ${formatDate(card.expiryDate)}
+        `;
+        
+        // إنشاء محتوى النافذة المنبثقة
+        const modalContent = `
+            <div class="card-share-options">
+                <h4>مشاركة بيانات البطاقة</h4>
+                
+                <div class="copy-text-box">
+                    <textarea readonly>${shareText}</textarea>
+                    <button class="copy-btn" id="copy-card-text">نسخ</button>
+                </div>
+                
+                <div class="card-share-option" id="share-whatsapp">
+                    <i class="fab fa-whatsapp" style="color: #25D366;"></i>
+                    <div class="card-share-option-details">
+                        <div class="card-share-option-title">مشاركة عبر واتساب</div>
+                        <div class="card-share-option-desc">مشاركة بيانات البطاقة عبر تطبيق واتساب</div>
+                    </div>
+                </div>
+                
+                <div class="card-share-option" id="share-browser">
+                    <i class="fas fa-share-alt" style="color: #3B82F6;"></i>
+                    <div class="card-share-option-details">
+                        <div class="card-share-option-title">مشاركة عبر المتصفح</div>
+                        <div class="card-share-option-desc">استخدام واجهة المشاركة المدمجة في المتصفح</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // عرض النافذة المنبثقة
+        const modal = showModal('مشاركة البطاقة', modalContent);
+        
+        // إضافة مستمعي الأحداث لأزرار المشاركة
+        const copyBtn = modal.querySelector('#copy-card-text');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                const textarea = modal.querySelector('textarea');
+                textarea.select();
+                document.execCommand('copy');
+                this.textContent = 'تم النسخ!';
+                setTimeout(() => {
+                    this.textContent = 'نسخ';
+                }, 2000);
+            });
+        }
+        
+        const shareWhatsApp = modal.querySelector('#share-whatsapp');
+        if (shareWhatsApp) {
+            shareWhatsApp.addEventListener('click', function() {
+                const encodedText = encodeURIComponent(shareText);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            });
+        }
+        
+        const shareBrowser = modal.querySelector('#share-browser');
+        if (shareBrowser) {
+            shareBrowser.addEventListener('click', function() {
+                if (navigator.share) {
+                    navigator.share({
+                        title: `بطاقة المستثمر - ${card.investorName}`,
+                        text: shareText
+                    })
+                    .then(() => {
+                        console.log('تمت المشاركة بنجاح');
+                    })
+                    .catch(error => {
+                        console.error('فشل المشاركة:', error);
+                        // نسخ النص إلى الحافظة كخطة بديلة
+                        const textarea = modal.querySelector('textarea');
+                        textarea.select();
+                        document.execCommand('copy');
+                        showNotification('تم نسخ النص إلى الحافظة', 'success');
+                    });
+                } else {
+                    // نسخ النص إلى الحافظة إذا كانت واجهة المشاركة غير متاحة
+                    const textarea = modal.querySelector('textarea');
+                    textarea.select();
+                    document.execCommand('copy');
+                    showNotification('تم نسخ النص إلى الحافظة', 'success');
+                }
+            });
+        }
+    }
+
+    /**
+     * إظهار نافذة منبثقة مخصصة
+     * @param {string} title عنوان النافذة
+     * @param {string} content محتوى النافذة
+     * @returns {HTMLElement} عنصر النافذة
+     */
+    function showModal(title, content) {
+        // إنشاء النافذة المنبثقة
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.style.display = 'flex';
+        modalOverlay.style.zIndex = '9999';
+        
+        modalOverlay.innerHTML = `
+            <div class="modal animate__animated animate__fadeInUp">
+                <div class="modal-header">
+                    <h3 class="modal-title">${title}</h3>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline modal-close-btn">إغلاق</button>
+                </div>
+            </div>
+        `;
+        
+        // إضافة النافذة إلى الصفحة
+        document.body.appendChild(modalOverlay);
+        
+        // إضافة مستمعي الأحداث
+        const closeButtons = modalOverlay.querySelectorAll('.modal-close, .modal-close-btn');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                document.body.removeChild(modalOverlay);
+            });
+        });
+        
+        return modalOverlay;
+    }
+
+    /**
+     * طباعة البطاقة الحالية
+     */
+    function printCurrentCard() {
+        if (!currentCardId) {
+            console.error('لا توجد بطاقة محددة');
+            return;
+        }
+        
+        // البحث عن البطاقة
+        const cards = getInvestorCards();
+        const card = cards.find(c => c.id === currentCardId);
+        
+        if (!card) {
+            console.error('لم يتم العثور على البطاقة');
+            return;
+        }
+        
+        // إنشاء عنصر للطباعة
+        const printWindow = window.open('', '_blank');
+        
+        if (!printWindow) {
+            showNotification('يرجى السماح بفتح النوافذ المنبثقة للطباعة', 'error');
+            return;
+        }
+        
+        // إعداد محتوى صفحة الطباعة
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+                <head>
+                    <meta charset="utf-8">
+                    <title>طباعة بطاقة المستثمر - ${card.investorName}</title>
+                    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&amp;display=swap" rel="stylesheet" />
+                    <style>
+                        @page {
+                            size: 85.6mm 53.98mm;
+                            margin: 0;
+                        }
+                        
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                            font-family: 'Tajawal', sans-serif;
+                            direction: rtl;
+                        }
+                        
+                        .print-card {
+                            width: 85.6mm;
+                            height: 53.98mm;
+                            position: relative;
+                            margin: 0 auto;
+                            page-break-after: always;
+                            overflow: hidden;
+                        }
+                        
+                        /* نسخ أنماط البطاقة */
+                        .investor-card {
+                            position: relative;
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            backface-visibility: hidden;
+                            transform-style: preserve-3d;
+                        }
+                        
+                        .investor-card-inner {
+                            width: 100%;
+                            height: 100%;
+                            position: relative;
+                        }
+                        
+                        .investor-card-front, .investor-card-back {
+                            position: absolute;
+                            width: 100%;
+                            height: 100%;
+                            -webkit-backface-visibility: hidden;
+                            backface-visibility: hidden;
+                            display: flex;
+                            flex-direction: column;
+                            padding: 16px;
+                            box-sizing: border-box;
+                        }
+                        
+                        .investor-card-back {
+                            transform: rotateY(180deg);
+                            background-color: #f0f0f0;
+                            color: #333;
+                        }
+                        
+                        /* الأنماط المختلفة للبطاقة */
+                        .investor-card.default .investor-card-front {
+                            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                            color: #ffffff;
+                        }
+                        
+                        .investor-card.gold .investor-card-front {
+                            background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+                            color: #000000;
+                        }
+                        
+                        .investor-card.platinum .investor-card-front {
+                            background: linear-gradient(135deg, #7a7a7a 0%, #c0c0c0 100%);
+                            color: #000000;
+                        }
+                        
+                        .investor-card.premium .investor-card-front {
+                            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+                            color: #ffffff;
+                        }
+                        
+                        /* أنماط عناصر البطاقة */
+                        .card-chip {
+                            position: absolute;
+                            top: 70px;
+                            right: 20px;
+                            width: 40px;
+                            height: 30px;
+                            background-color: #ffd700;
+                            border-radius: 5px;
+                            background-image: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1) 75%, transparent 75%, transparent);
+                            background-size: 8px 8px;
+                        }
+                        
+                        .card-number {
+                            font-size: 19px;
+                            letter-spacing: 2px;
+                            margin-top: 50px;
+                            text-align: center;
+                            font-family: 'Courier New', monospace;
+                            font-weight: bold;
+                        }
+                        
+                        .card-details {
+                            margin-top: auto;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-end;
+                        }
+                        
+                        .card-holder {
+                            text-transform: uppercase;
+                            font-weight: bold;
+                        }
+                        
+                        .card-holder-name {
+                            font-size: 14px;
+                        }
+                        
+                        .card-expires {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                        }
+                        
+                        .expires-label {
+                            font-size: 9px;
+                            text-transform: uppercase;
+                        }
+                        
+                        .expires-date {
+                            font-size: 14px;
+                        }
+                        
+                        .card-logo {
+                            position: absolute;
+                            top: 20px;
+                            left: 20px;
+                            height: 40px;
+                            display: flex;
+                            align-items: center;
+                        }
+                        
+                        .card-logo-text {
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin-left: 6px;
+                            text-transform: uppercase;
+                        }
+                        
+                        .card-type {
+                            position: absolute;
+                            bottom: 20px;
+                            right: 20px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: rgba(255, 255, 255, 0.7);
+                            text-transform: uppercase;
+                        }
+                        
+                        /* أنماط الوجه الخلفي للبطاقة */
+                        .card-magnetic-stripe {
+                            width: 100%;
+                            height: 40px;
+                            background-color: #111;
+                            margin: 20px 0;
+                        }
+                        
+                        .card-signature {
+                            height: 40px;
+                            background-color: #fff;
+                            display: flex;
+                            align-items: center;
+                            padding: 0 10px;
+                            margin-top: 15px;
+                        }
+                        
+                        .card-signature-text {
+                            font-family: 'Brush Script MT', cursive;
+                            color: #555;
+                            font-size: 20px;
+                        }
+                        
+                        .card-cvv {
+                            position: absolute;
+                            bottom: 20px;
+                            right: 20px;
+                            font-size: 12px;
+                            background-color: #fff;
+                            color: #000;
+                            padding: 2px 5px;
+                            border-radius: 3px;
+                        }
+                        
+                        .card-barcode-container {
+                            margin-top: auto;
+                            width: 100%;
+                            text-align: center;
+                        }
+                        
+                        .card-barcode {
+                            max-width: 90%;
+                            margin: 0 auto;
+                        }
+                        
+                        .card-barcode img,
+                        .card-barcode svg,
+                        .card-barcode canvas {
+                            max-width: 100%;
+                            height: auto;
+                            display: block;
+                            margin: 0 auto;
+                        }
+                        
+                        .card-barcode-number {
+                            font-size: 10px;
+                            margin-top: 2px;
+                            font-family: 'Courier New', monospace;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-card" id="print-card-container">
+                        <!-- سيتم ملؤها بمحتوى البطاقة -->
+                    </div>
+                </body>
+            </html>
+        `);
+        
+        // الحصول على عنصر حاوية البطاقة
+        const printCardContainer = printWindow.document.getElementById('print-card-container');
+        
+        // إعداد الكود اللازم لإنشاء الباركود في صفحة الطباعة
+        printWindow.document.write(`
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        `);
+        
+        // تحويل تاريخ الانتهاء إلى الصيغة المناسبة
+        const expiryDate = new Date(card.expiryDate);
+        const expMonth = (expiryDate.getMonth() + 1).toString().padStart(2, '0');
+        const expYear = expiryDate.getFullYear().toString().substr(2);
+        
+        // إنشاء محتوى البطاقة
+        let cardHTML = `
+            <div class="investor-card ${card.cardType}">
+                <div class="investor-card-inner">
+                    <div class="investor-card-front">
+                        <div class="card-logo">
+                            <i class="fas fa-university"></i>
+                            <span class="card-logo-text">InvestCard</span>
+                        </div>
+                        <div class="card-chip"></div>
+                        <div class="card-number">
+                            ${formatCardNumber(card.cardNumber)}
+                        </div>
+                        <div class="card-details">
+                            <div class="card-holder">
+                                <div class="card-holder-label">حامل البطاقة</div>
+                                <div class="card-holder-name">${card.investorName}</div>
+                            </div>
+                            <div class="card-expires">
+                                <div class="expires-label">تنتهي في</div>
+                                <div class="expires-date">${expMonth}/${expYear}</div>
+                            </div>
+                        </div>
+                        <div class="card-type">
+                            ${getCardTypeArabic(card.cardType)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // إضافة محتوى البطاقة إلى حاوية الطباعة
+        printCardContainer.innerHTML = cardHTML;
+        
+        // إنشاء عنصر HTML جديد لظهر البطاقة (للطباعة على الوجه الثاني)
+        const backCardContainer = printWindow.document.createElement('div');
+        backCardContainer.className = 'print-card';
+        backCardContainer.innerHTML = `
+            <div class="investor-card ${card.cardType}">
+                <div class="investor-card-inner">
+                    <div class="investor-card-back">
+                        <div class="card-magnetic-stripe"></div>
+                        <div class="card-signature">
+                            <div class="card-signature-text">${card.investorName}</div>
+                        </div>
+                        <div class="card-cvv">CVV: ${card.cvv}</div>
+                        <div class="card-barcode-container">
+                            <div class="card-barcode" id="print-barcode-${card.id}"></div>
+                            <div class="card-barcode-number">${card.barcode}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        printWindow.document.body.appendChild(backCardContainer);
+        
+        // إنشاء الباركود بعد تحميل الصفحة
+        printWindow.onload = function() {
+            try {
+                // إنشاء الباركود في صفحة الطباعة
+                printWindow.JsBarcode(`#print-barcode-${card.id}`, card.barcode, {
+                    format: "CODE128",
+                    width: 1.5,
+                    height: 40,
+                    displayValue: false
+                });
+                
+                // تأخير الطباعة للتأكد من إنشاء الباركود
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.onafterprint = function() {
+                        printWindow.close();
+                    };
+                }, 500);
+            } catch (error) {
+                console.error('خطأ في إنشاء الباركود للطباعة:', error);
+                
+                // طباعة البطاقة حتى في حالة فشل إنشاء الباركود
+                printWindow.print();
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                };
+            }
+        };
+    }
+
+    /**
+     * الحصول على بطاقات المستثمرين
+     * @returns {Array} مصفوفة البطاقات
+     */
+    function getInvestorCards() {
+        // الحصول من التخزين المحلي
+        const cardsString = localStorage.getItem('investorCards');
+        
+        // التحقق من وجود بيانات
+        if (!cardsString) {
+            console.log('لا توجد بطاقات مخزنة حالياً');
+            return [];
+        }
+        
+        // تحويل البيانات إلى كائن
         try {
-            localStorage.setItem('employees', JSON.stringify(employees));
-            localStorage.setItem('salaryTransactions', JSON.stringify(salaryTransactions));
-            console.log('تم حفظ بيانات الموظفين بنجاح');
+            const cards = JSON.parse(cardsString);
+            console.log(`تم استرجاع ${cards.length} بطاقة من التخزين المحلي`);
+            return cards;
+        } catch (error) {
+            console.error('خطأ في تحليل بيانات البطاقات:', error);
+            return [];
+        }
+    }
+
+    /**
+     * حفظ بطاقات المستثمرين
+     * @param {Array} cards مصفوفة البطاقات
+     */
+    function saveInvestorCards(cards) {
+        // التحقق من صحة البيانات
+        if (!Array.isArray(cards)) {
+            console.error('البيانات المراد حفظها ليست مصفوفة');
+            return false;
+        }
+        
+        // حفظ البيانات في التخزين المحلي
+        try {
+            localStorage.setItem('investorCards', JSON.stringify(cards));
+            console.log(`تم حفظ ${cards.length} بطاقة في التخزين المحلي`);
             return true;
         } catch (error) {
-            console.error('خطأ في حفظ بيانات الموظفين:', error);
-            showNotification('حدث خطأ أثناء حفظ بيانات الموظفين', 'error');
+            console.error('خطأ في حفظ بيانات البطاقات:', error);
             return false;
         }
     }
 
     /**
-     * عرض جدول الموظفين
+     * إنشاء رقم بطاقة فريد
+     * @param {string} investorId معرف المستثمر
+     * @returns {string} رقم البطاقة
      */
-    function renderEmployeesTable() {
-        console.log('عرض جدول الموظفين...');
+    function generateCardNumber(investorId) {
+        // استخدام معرف المستثمر لإنشاء رقم فريد
+        const now = Date.now().toString();
+        const idPart = (investorId || '').replace(/\D/g, '').substr(0, 6).padStart(6, '0');
         
-        const tableBody = document.querySelector('#employees-table tbody');
-        if (!tableBody) return;
+        // إنشاء رقم مكون من 16 رقم
+        let cardNumber = '4' + idPart + now.substr(-9);
         
-        tableBody.innerHTML = '';
+        // التحقق من طول الرقم
+        if (cardNumber.length > 16) {
+            cardNumber = cardNumber.substr(0, 16);
+        } else if (cardNumber.length < 16) {
+            cardNumber = cardNumber.padEnd(16, '0');
+        }
         
-        // ترتيب الموظفين حسب تاريخ الإضافة (الأحدث أولاً)
-        const sortedEmployees = [...employees].sort((a, b) => {
-            return new Date(b.createdAt || b.hireDate) - new Date(a.createdAt || a.hireDate);
-        });
+        return cardNumber;
+    }
+
+    /**
+     * إنشاء رمز الأمان CVV
+     * @returns {string} رمز الأمان
+     */
+    function generateCVV() {
+        // إنشاء رقم عشوائي من 3 أرقام
+        return Math.floor(100 + Math.random() * 900).toString();
+    }
+
+    /**
+     * إنشاء رمز الباركود
+     * @param {string} investorId معرف المستثمر
+     * @returns {string} رمز الباركود
+     */
+    function generateBarcode(investorId) {
+        // إنشاء رمز مكون من 13 رقم
+        const prefix = '977'; // رمز تعريف
+        const idPart = (investorId || '').replace(/\D/g, '').substr(0, 5).padStart(5, '0');
+        const now = Date.now().toString().substr(-5);
         
-        sortedEmployees.forEach(employee => {
-            const row = document.createElement('tr');
-            
-            // تنسيق النسبة المئوية
-            const commissionRate = employee.commissionRate || 0;
-            
-            // تنسيق تاريخ التعيين
-            const hireDate = employee.hireDate || '';
-            
-            // حالة الموظف
-            const statusClass = employee.status === 'inactive' ? 'danger' : 'success';
-            const statusText = employee.status === 'inactive' ? 'غير نشط' : 'نشط';
-            
-            row.innerHTML = `
-                <td>${employee.id}</td>
-                <td>
-                    <div class="employee-info">
-                        <div class="employee-avatar">${employee.name.charAt(0)}</div>
-                        <div>
-                            <div class="employee-name">${employee.name}</div>
-                            <div class="employee-phone">${employee.phone}</div>
-                        </div>
-                    </div>
-                </td>
-                <td>${employee.jobTitle}</td>
-                <td>${employee.phone}</td>
-                <td>${formatCurrency(employee.baseSalary || 0)}</td>
-                <td>${commissionRate}%</td>
-                <td>${hireDate}</td>
-                <td><span class="badge badge-${statusClass}">${statusText}</span></td>
-                <td>
-                    <div class="employee-actions">
-                        <button class="employee-action-btn view-employee" data-id="${employee.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="employee-action-btn edit edit-employee" data-id="${employee.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="employee-action-btn delete delete-employee" data-id="${employee.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            tableBody.appendChild(row);
-            
-            // إضافة مستمعي الأحداث للأزرار
-            const viewButton = row.querySelector('.view-employee');
-            const editButton = row.querySelector('.edit-employee');
-            const deleteButton = row.querySelector('.delete-employee');
-            
-            if (viewButton) {
-                viewButton.addEventListener('click', () => {
-                    showEmployeeDetails(employee.id);
-                });
-            }
-            
-            if (editButton) {
-                editButton.addEventListener('click', () => {
-                    editEmployee(employee.id);
-                });
-            }
-            
-            if (deleteButton) {
-                deleteButton.addEventListener('click', () => {
-                    deleteEmployee(employee.id);
-                });
-            }
-        });
+        return prefix + idPart + now;
+    }
+
+    /**
+     * تنسيق رقم البطاقة للعرض
+     * @param {string} cardNumber رقم البطاقة
+     * @returns {string} رقم البطاقة المنسق
+     */
+    function formatCardNumber(cardNumber) {
+        // التحقق من صحة الرقم
+        if (!cardNumber || typeof cardNumber !== 'string') {
+            return '•••• •••• •••• ••••';
+        }
         
-        if (sortedEmployees.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = '<td colspan="9" class="text-center">لا يوجد موظفين</td>';
-            tableBody.appendChild(emptyRow);
+        // تقسيم الرقم إلى مجموعات من 4 أرقام
+        return cardNumber.replace(/(.{4})/g, '$1 ').trim();
+    }
+
+    /**
+     * الحصول على اسم نوع البطاقة بالعربية
+     * @param {string} cardType نوع البطاقة
+     * @returns {string} اسم النوع بالعربية
+     */
+    function getCardTypeArabic(cardType) {
+        switch (cardType) {
+            case 'default':
+                return 'قياسية';
+            case 'gold':
+                return 'ذهبية';
+            case 'platinum':
+                return 'بلاتينية';
+            case 'premium':
+                return 'بريميوم';
+            default:
+                return cardType;
         }
     }
 
     /**
-     * فلترة جدول الموظفين
-     * @param {string} filter - نوع الفلتر (all, active, inactive)
+     * الحصول على اسم حالة البطاقة بالعربية
+     * @param {string} status حالة البطاقة
+     * @returns {string} اسم الحالة بالعربية
      */
-    function filterEmployeesTable(filter) {
-        const rows = document.querySelectorAll('#employees-table tbody tr');
-        
-        rows.forEach(row => {
-            const statusCell = row.querySelector('td:nth-child(8)');
-            
-            if (!statusCell) return;
-            
-            const statusText = statusCell.textContent.trim();
-            
-            if (filter === 'all') {
-                row.style.display = '';
-            } else if (filter === 'active' && statusText === 'نشط') {
-                row.style.display = '';
-            } else if (filter === 'inactive' && statusText === 'غير نشط') {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    /**
-     * عرض جدول معاملات الرواتب
-     */
-    function renderSalaryTransactionsTable() {
-        console.log('عرض جدول معاملات الرواتب...');
-        
-        const tableBody = document.querySelector('#salary-transactions-table tbody');
-        if (!tableBody) return;
-        
-        tableBody.innerHTML = '';
-        
-        // ترتيب المعاملات حسب التاريخ (الأحدث أولاً)
-        const sortedTransactions = [...salaryTransactions].sort((a, b) => {
-            return new Date(b.date) - new Date(a.date);
-        });
-        
-        sortedTransactions.forEach(transaction => {
-            const row = document.createElement('tr');
-            
-            // تنسيق النسبة المئوية
-            const commissionRate = transaction.commissionRate || 0;
-            
-            row.innerHTML = `
-                <td>${transaction.id}</td>
-                <td>${transaction.employeeName}</td>
-                <td>
-                    ${transaction.date}
-                    <span class="month-name">${getArabicMonthName(parseInt(transaction.date.split('-')[1]))}</span>
-                </td>
-                <td>${formatCurrency(transaction.baseSalary || 0)}</td>
-                <td>${formatCurrency(transaction.sales || 0)}</td>
-                <td>${commissionRate}%</td>
-                <td>${formatCurrency(transaction.commissionAmount || 0)}</td>
-                <td>${formatCurrency(transaction.bonuses || 0)}</td>
-                <td>${formatCurrency(transaction.deductions || 0)}</td>
-                <td>${formatCurrency(transaction.totalSalary || 0)}</td>
-                <td>
-                    <div class="employee-actions">
-                        <button class="employee-action-btn view-salary" data-id="${transaction.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="employee-action-btn print-salary" data-id="${transaction.id}">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            tableBody.appendChild(row);
-            
-            // إضافة مستمعي الأحداث للأزرار
-            const viewButton = row.querySelector('.view-salary');
-            const printButton = row.querySelector('.print-salary');
-            
-            if (viewButton) {
-                viewButton.addEventListener('click', () => {
-                    showSalaryDetails(transaction.id);
-                });
-            }
-            
-            if (printButton) {
-                printButton.addEventListener('click', () => {
-                    showSalaryDetails(transaction.id, true);
-                });
-            }
-        });
-        
-        if (sortedTransactions.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = '<td colspan="11" class="text-center">لا يوجد معاملات رواتب</td>';
-            tableBody.appendChild(emptyRow);
+    function getCardStatusArabic(status) {
+        switch (status) {
+            case 'active':
+                return 'نشطة';
+            case 'inactive':
+                return 'متوقفة';
+            case 'expired':
+                return 'منتهية';
+            default:
+                return status;
         }
     }
 
     /**
-     * ملء قائمة الموظفين في نموذج صرف الراتب
+     * تنسيق التاريخ للعرض
+     * @param {string} dateString تاريخ
+     * @returns {string} التاريخ المنسق
      */
-    function populateEmployeeSelect() {
-        const employeeSelect = document.getElementById('salary-employee');
-        if (!employeeSelect) return;
+    function formatDate(dateString) {
+        if (!dateString) return '-';
         
-        // تفريغ القائمة
-        employeeSelect.innerHTML = '<option value="">اختر الموظف</option>';
+        const date = new Date(dateString);
         
-        // ترتيب الموظفين أبجدياً
-        const sortedEmployees = [...employees]
-            .filter(employee => employee.status !== 'inactive')
-            .sort((a, b) => a.name.localeCompare(b.name));
+        // التحقق من صحة التاريخ
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
         
-        // إضافة الموظفين إلى القائمة
-        sortedEmployees.forEach(employee => {
-            const option = document.createElement('option');
-            option.value = employee.id;
-            option.textContent = `${employee.name} (${employee.jobTitle})`;
-            employeeSelect.appendChild(option);
-        });
+        // تنسيق التاريخ بالصيغة المحلية
+        try {
+            return date.toLocaleDateString('ar-SA');
+        } catch (e) {
+            // إذا فشل التنسيق باللغة العربية
+            return date.toLocaleDateString();
+        }
     }
 
     /**
-     * تحديث معلومات راتب الموظف في نموذج صرف الراتب
+     * تنسيق المبلغ المالي للعرض
+     * @param {number} amount المبلغ
+     * @returns {string} المبلغ المنسق
      */
-    function updateEmployeeSalaryInfo() {
-        const employeeSelect = document.getElementById('salary-employee');
-        const salaryInfoContainer = document.getElementById('employee-salary-info');
-        
-        if (!employeeSelect || !salaryInfoContainer) return;
-        
-        const employeeId = employeeSelect.value;
-        
-        if (!employeeId) {
-            salaryInfoContainer.style.display = 'none';
-            return;
+    function formatCurrency(amount) {
+        if (typeof amount !== 'number') {
+            amount = parseFloat(amount) || 0;
         }
         
-        const employee = employees.find(emp => emp.id === employeeId);
-        if (!employee) {
-            salaryInfoContainer.style.display = 'none';
-            return;
+        // التحقق من وجود دالة التنسيق في النظام الأساسي
+        if (typeof window.formatCurrency === 'function') {
+            return window.formatCurrency(amount);
         }
         
-        // تحديث معلومات الموظف
-        salaryInfoContainer.innerHTML = `
-            <div class="employee-salary-header">
-                <div class="employee-salary-avatar">${employee.name.charAt(0)}</div>
-                <div>
-                    <h4>${employee.name}</h4>
-                    <span>${employee.jobTitle}</span>
-                </div>
-            </div>
-            <div class="employee-salary-details">
-                <div class="employee-salary-detail">
-                    <span class="employee-salary-label">الراتب الأساسي</span>
-                    <span class="employee-salary-value">${formatCurrency(employee.baseSalary || 0)}</span>
-                </div>
-                <div class="employee-salary-detail">
-                    <span class="employee-salary-label">نسبة المبيعات</span>
-                    <span class="employee-salary-value">${employee.commissionRate || 0}%</span>
-                </div>
-                <div class="employee-salary-detail">
-                    <span class="employee-salary-label">تاريخ التعيين</span>
-                    <span class="employee-salary-value">${employee.hireDate || ''}</span>
-                </div>
-                <div class="employee-salary-detail">
-                    <span class="employee-salary-label">القسم</span>
-                    <span class="employee-salary-value">${getArabicDepartment(employee.department)}</span>
-                </div>
-            </div>
-        `;
-        
-        // عرض معلومات الموظف
-        salaryInfoContainer.style.display = 'block';
-        
-        // تحديث قيم النموذج
-        document.getElementById('salary-base').value = employee.baseSalary || 0;
-        document.getElementById('salary-commission-rate').value = employee.commissionRate || 0;
-        
-        // تعيين التاريخ الحالي إذا لم يكن محدداً
-        const salaryDateInput = document.getElementById('salary-date');
-        if (salaryDateInput && !salaryDateInput.value) {
-            salaryDateInput.value = new Date().toISOString().split('T')[0];
-        }
-        
-        // تعيين الشهر الحالي
-        const salaryMonthSelect = document.getElementById('salary-month');
-        if (salaryMonthSelect && !salaryMonthSelect.value) {
-            const currentMonth = new Date().getMonth() + 1; // الأشهر تبدأ من 0
-            salaryMonthSelect.value = currentMonth.toString();
-        }
-        
-        // تحميل بيانات المبيعات للشهر إذا كانت متاحة
-        if (window.currentMonthSales && document.getElementById('salary-sales').value === '') {
-            document.getElementById('salary-sales').value = window.currentMonthSales;
-        }
-        
-        // إعادة حساب الراتب الإجمالي
-        calculateTotalSalary();
-    }
-
-    /**
-     * حساب إجمالي الراتب
-     */
-    function calculateTotalSalary() {
-        const baseSalary = parseFloat(document.getElementById('salary-base').value) || 0;
-        const sales = parseFloat(document.getElementById('salary-sales').value) || 0;
-        const commissionRate = parseFloat(document.getElementById('salary-commission-rate').value) || 0;
-        const bonuses = parseFloat(document.getElementById('salary-bonuses').value) || 0;
-        const deductions = parseFloat(document.getElementById('salary-deductions').value) || 0;
-        
-        // حساب مبلغ العمولة
-        const commissionAmount = sales * (commissionRate / 100);
-        
-        // حساب إجمالي الراتب
-        const totalSalary = baseSalary + commissionAmount + bonuses - deductions;
-        
-        // تحديث حقل مبلغ العمولة
-        document.getElementById('salary-commission-amount').value = commissionAmount.toFixed(0);
-        
-        // تحديث عرض إجمالي الراتب
-        document.getElementById('salary-total').textContent = formatCurrency(totalSalary);
-        
-        // تحديث تفاصيل حساب الراتب
-        document.getElementById('salary-calculation').innerHTML = `
-            الراتب الأساسي (${formatCurrency(baseSalary)}) + 
-            عمولة المبيعات (${formatCurrency(sales)} × ${commissionRate}% = ${formatCurrency(commissionAmount)}) + 
-            العلاوات (${formatCurrency(bonuses)}) - 
-            الاستقطاعات (${formatCurrency(deductions)})
-        `;
-    }
-
-    /**
-     * إضافة موظف جديد
-     */
-    function addNewEmployee() {
-        console.log('إضافة موظف جديد...');
-        
-        // جمع بيانات الموظف من النموذج
-        const employeeData = collectEmployeeFormData();
-        
-        if (!employeeData) {
-            showNotification('يرجى إدخال جميع البيانات المطلوبة بشكل صحيح', 'error');
-            return;
-        }
-        
-        // إضافة معرف فريد وتاريخ الإنشاء
-        employeeData.id = Date.now().toString();
-        employeeData.createdAt = new Date().toISOString();
-        employeeData.status = 'active';
-        
-        // إضافة الموظف إلى المصفوفة
-        employees.push(employeeData);
-        
-        // حفظ البيانات
-        saveEmployeesData();
-        
-        // تحديث الجدول
-        renderEmployeesTable();
-        
-        // إغلاق النافذة المنبثقة
-        closeModal('add-employee-modal');
-        
-        // عرض إشعار النجاح
-        showNotification(`تم إضافة الموظف ${employeeData.name} بنجاح!`, 'success');
-    }
-
-    /**
-     * جمع بيانات الموظف من النموذج
-     * @returns {Object|null} بيانات الموظف أو null إذا كانت البيانات غير صالحة
-     */
-    function collectEmployeeFormData() {
-        // البيانات الشخصية
-        const name = document.getElementById('employee-name')?.value.trim();
-        const phone = document.getElementById('employee-phone')?.value.trim();
-        const address = document.getElementById('employee-address')?.value.trim();
-        const email = document.getElementById('employee-email')?.value.trim();
-        const birthdate = document.getElementById('employee-birthdate')?.value;
-        const gender = document.getElementById('employee-gender')?.value;
-        
-        // البيانات الوظيفية
-        const jobTitle = document.getElementById('employee-job-title')?.value.trim();
-        const department = document.getElementById('employee-department')?.value;
-        const baseSalary = parseFloat(document.getElementById('employee-base-salary')?.value);
-        const commissionRate = parseFloat(document.getElementById('employee-commission-rate')?.value);
-        const hireDate = document.getElementById('employee-hire-date')?.value;
-        const contractType = document.getElementById('employee-contract-type')?.value;
-        
-        // بيانات المستندات
-        const idNumber = document.getElementById('employee-id-number')?.value.trim();
-        const residenceCard = document.getElementById('employee-residence-card')?.value.trim();
-        const notes = document.getElementById('employee-notes')?.value.trim();
-        
-        // التحقق من البيانات المطلوبة
-        if (!name || !phone || !address || !jobTitle || !baseSalary || isNaN(baseSalary) || 
-            !commissionRate || isNaN(commissionRate) || !hireDate || !idNumber) {
-            return null;
-        }
-        
-        // جمع بيانات الصور
-        const idCardPreview = document.getElementById('id-card-preview');
-        const residenceCardPreview = document.getElementById('residence-card-preview');
-        const employeePhotoPreview = document.getElementById('employee-photo-preview');
-        
-        // استخراج بيانات الصور إذا وجدت
-        const idCardImage = idCardPreview?.querySelector('img') ? 
-            idCardPreview.querySelector('img').src : '';
-        
-        const residenceCardImage = residenceCardPreview?.querySelector('img') ? 
-            residenceCardPreview.querySelector('img').src : '';
-        
-        const photoImage = employeePhotoPreview?.querySelector('img') ? 
-            employeePhotoPreview.querySelector('img').src : '';
-        
-        // إنشاء كائن الموظف
-        return {
-            name,
-            phone,
-            address,
-            email,
-            birthdate,
-            gender,
-            jobTitle,
-            department,
-            baseSalary,
-            commissionRate,
-            hireDate,
-            contractType,
-            idNumber,
-            residenceCard,
-            notes,
-            documents: {
-                idCard: idCardImage,
-                residenceCard: residenceCardImage,
-                photo: photoImage
-            }
-        };
-    }
-
-    /**
-     * عرض تفاصيل الموظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function showEmployeeDetails(employeeId) {
-        console.log(`عرض تفاصيل الموظف: ${employeeId}`);
-        
-        const employee = employees.find(emp => emp.id === employeeId);
-        if (!employee) {
-            showNotification('لم يتم العثور على الموظف', 'error');
-            return;
-        }
-        
-        // التحقق من وجود صورة للموظف
-        const hasPhoto = employee.documents && employee.documents.photo;
-        
-        // إنشاء محتوى النافذة المنبثقة
-        const content = `
-            <div class="employee-profile">
-                <div class="employee-photo">
-                    ${hasPhoto ? 
-                        `<img src="${employee.documents.photo}" alt="${employee.name}" />` : 
-                        `<div class="employee-photo-placeholder"><i class="fas fa-user"></i></div>`
-                    }
-                </div>
-                <div class="employee-info">
-                    <h2 class="employee-name">${employee.name}</h2>
-                    <p class="employee-job-title">${employee.jobTitle}</p>
-                    <span class="employee-status ${employee.status}">${employee.status === 'active' ? 'نشط' : 'غير نشط'}</span>
-                </div>
-            </div>
-            
-            <div class="employee-details-grid">
-                <div class="employee-detail-card">
-                    <h4><i class="fas fa-user"></i> معلومات شخصية</h4>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">رقم الهاتف</div>
-                        <div class="employee-detail-value">${employee.phone}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">العنوان</div>
-                        <div class="employee-detail-value">${employee.address || 'غير محدد'}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">البريد الإلكتروني</div>
-                        <div class="employee-detail-value">${employee.email || 'غير محدد'}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">تاريخ الميلاد</div>
-                        <div class="employee-detail-value">${employee.birthdate || 'غير محدد'}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">الجنس</div>
-                        <div class="employee-detail-value">${employee.gender === 'male' ? 'ذكر' : 'أنثى'}</div>
-                    </div>
-                </div>
-                
-                <div class="employee-detail-card">
-                    <h4><i class="fas fa-briefcase"></i> معلومات وظيفية</h4>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">المسمى الوظيفي</div>
-                        <div class="employee-detail-value">${employee.jobTitle}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">القسم</div>
-                        <div class="employee-detail-value">${getArabicDepartment(employee.department)}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">تاريخ التعيين</div>
-                        <div class="employee-detail-value">${employee.hireDate || 'غير محدد'}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">نوع العقد</div>
-                        <div class="employee-detail-value">${getArabicContractType(employee.contractType)}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">الراتب الأساسي</div>
-                        <div class="employee-detail-value">${formatCurrency(employee.baseSalary || 0)}</div>
-                    </div>
-                    <div class="employee-detail-item">
-                        <div class="employee-detail-label">نسبة المبيعات</div>
-                        <div class="employee-detail-value">${employee.commissionRate || 0}%</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="employee-detail-card">
-                <h4><i class="fas fa-id-card"></i> المستندات والوثائق</h4>
-                <div class="employee-detail-item">
-                    <div class="employee-detail-label">رقم البطاقة الموحدة</div>
-                    <div class="employee-detail-value">${employee.idNumber || 'غير محدد'}</div>
-                </div>
-                <div class="employee-detail-item">
-                    <div class="employee-detail-label">رقم بطاقة السكن</div>
-                    <div class="employee-detail-value">${employee.residenceCard || 'غير محدد'}</div>
-                </div>
-                
-                <div class="documents-container">
-                    ${employee.documents && employee.documents.idCard ? `
-                    <div class="document-card">
-                        <div class="document-card-header">البطاقة الموحدة</div>
-                        <div class="document-card-body">
-                            <img src="${employee.documents.idCard}" alt="بطاقة موحدة" />
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${employee.documents && employee.documents.residenceCard ? `
-                    <div class="document-card">
-                        <div class="document-card-header">بطاقة السكن</div>
-                        <div class="document-card-body">
-                            <img src="${employee.documents.residenceCard}" alt="بطاقة السكن" />
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                ${employee.notes ? `
-                <div class="employee-detail-item" style="margin-top: 15px;">
-                    <div class="employee-detail-label">ملاحظات</div>
-                    <div class="employee-detail-value">${employee.notes}</div>
-                </div>
-                ` : ''}
-            </div>
-            
-            <div class="employee-detail-card">
-                <h4><i class="fas fa-history"></i> سجل الرواتب</h4>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>التاريخ</th>
-                                <th>الشهر</th>
-                                <th>المبيعات</th>
-                                <th>العمولة</th>
-                                <th>الراتب النهائي</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${getSalaryHistoryForEmployee(employeeId)}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-        
-        // عرض النافذة المنبثقة
-        openModal('employee-details-modal');
-        
-        // تحديث محتوى النافذة
-        const contentContainer = document.getElementById('employee-details-content');
-        if (contentContainer) {
-            contentContainer.innerHTML = content;
-        }
-        
-        // تحديث عنوان النافذة
-        const modalTitle = document.querySelector('#employee-details-modal .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = `تفاصيل الموظف - ${employee.name}`;
-        }
-        
-        // إضافة مستمعي الأحداث للأزرار
-        const editButton = document.getElementById('edit-employee-btn');
-        const paySalaryButton = document.getElementById('employee-pay-salary-btn');
-        const deleteButton = document.getElementById('delete-employee-btn');
-        
-        if (editButton) {
-            editButton.setAttribute('data-id', employeeId);
-            editButton.addEventListener('click', function() {
-                closeModal('employee-details-modal');
-                editEmployee(employeeId);
+        // تنسيق افتراضي
+        let formattedAmount;
+        try {
+            formattedAmount = amount.toLocaleString('ar-SA', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 0
+            });
+        } catch (e) {
+            // إذا فشل التنسيق باللغة العربية
+            formattedAmount = amount.toLocaleString(undefined, {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 0
             });
         }
         
-        if (paySalaryButton) {
-            paySalaryButton.setAttribute('data-id', employeeId);
-            paySalaryButton.addEventListener('click', function() {
-                closeModal('employee-details-modal');
-                openPaySalaryModalForEmployee(employeeId);
-            });
-        }
-        
-        if (deleteButton) {
-            deleteButton.setAttribute('data-id', employeeId);
-            deleteButton.addEventListener('click', function() {
-                closeModal('employee-details-modal');
-                deleteEmployee(employeeId);
-            });
-        }
-    }
-
-    /**
-     * الحصول على سجل رواتب الموظف بتنسيق HTML
-     * @param {string} employeeId - معرف الموظف
-     * @returns {string} - سجل الرواتب بتنسيق HTML
-     */
-    function getSalaryHistoryForEmployee(employeeId) {
-        // تصفية المعاملات للموظف المحدد
-        const employeeSalaries = salaryTransactions.filter(transaction => 
-            transaction.employeeId === employeeId
-        );
-        
-        // ترتيب المعاملات حسب التاريخ (الأحدث أولاً)
-        employeeSalaries.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        // إذا لم تكن هناك معاملات، عرض رسالة فارغة
-        if (employeeSalaries.length === 0) {
-            return '<tr><td colspan="5" class="text-center">لا يوجد سجل رواتب</td></tr>';
-        }
-        
-        // إنشاء صفوف الجدول
-        return employeeSalaries.map(salary => `
-            <tr>
-                <td>${salary.date}</td>
-                <td>${getArabicMonthName(salary.month)}</td>
-                <td>${formatCurrency(salary.sales || 0)}</td>
-                <td>${formatCurrency(salary.commissionAmount || 0)}</td>
-                <td>${formatCurrency(salary.totalSalary || 0)}</td>
-            </tr>
-        `).join('');
-    }
-
-    /**
-     * فتح نافذة صرف راتب لموظف محدد
-     * @param {string} employeeId - معرف الموظف
-     */
-    function openPaySalaryModalForEmployee(employeeId) {
-        // فتح نافذة صرف الراتب
-        openModal('pay-salary-modal');
-        
-        // تعبئة قائمة الموظفين أولاً
-        populateEmployeeSelect();
-        
-        // تحديد الموظف في القائمة
-        const employeeSelect = document.getElementById('salary-employee');
-        if (employeeSelect) {
-            employeeSelect.value = employeeId;
-            
-            // تحديث معلومات الموظف
-            updateEmployeeSalaryInfo();
-        }
-    }
-
-    /**
-     * دفع راتب الموظف
-     */
-    function payEmployeeSalary() {
-        // جمع بيانات الراتب من النموذج
-        const employeeId = document.getElementById('salary-employee').value;
-        const salaryDate = document.getElementById('salary-date').value;
-        const salaryMonth = document.getElementById('salary-month').value;
-        const baseSalary = parseFloat(document.getElementById('salary-base').value) || 0;
-        const sales = parseFloat(document.getElementById('salary-sales').value) || 0;
-        const commissionRate = parseFloat(document.getElementById('salary-commission-rate').value) || 0;
-        const commissionAmount = parseFloat(document.getElementById('salary-commission-amount').value) || 0;
-        const bonuses = parseFloat(document.getElementById('salary-bonuses').value) || 0;
-        const deductions = parseFloat(document.getElementById('salary-deductions').value) || 0;
-        const notes = document.getElementById('salary-notes').value.trim();
-        
-        // التحقق من البيانات المطلوبة
-        if (!employeeId || !salaryDate || !salaryMonth || !baseSalary || isNaN(sales)) {
-            showNotification('يرجى إدخال جميع البيانات المطلوبة بشكل صحيح', 'error');
-            return;
-        }
-        
-        // الحصول على بيانات الموظف
-        const employee = employees.find(emp => emp.id === employeeId);
-        if (!employee) {
-            showNotification('لم يتم العثور على الموظف', 'error');
-            return;
-        }
-        
-        // حساب إجمالي الراتب
-        const totalSalary = baseSalary + commissionAmount + bonuses - deductions;
-        
-        // إنشاء معاملة الراتب
-        const salaryTransaction = {
-            id: Date.now().toString(),
-            employeeId,
-            employeeName: employee.name,
-            date: salaryDate,
-            month: salaryMonth,
-            baseSalary,
-            sales,
-            commissionRate,
-            commissionAmount,
-            bonuses,
-            deductions,
-            totalSalary,
-            notes,
-            createdAt: new Date().toISOString()
-        };
-        
-        // إضافة المعاملة إلى المصفوفة
-        salaryTransactions.push(salaryTransaction);
-        
-        // حفظ البيانات
-        saveEmployeesData();
-        
-        // تحديث جدول معاملات الرواتب
-        renderSalaryTransactionsTable();
-        
-        // إغلاق النافذة المنبثقة
-        closeModal('pay-salary-modal');
-        
-        // عرض إشعار النجاح
-        showNotification(`تم صرف راتب الموظف ${employee.name} بنجاح!`, 'success');
-        
-        // عرض تفاصيل الراتب
-        showSalaryDetails(salaryTransaction.id);
-    }
-
-    /**
-     * عرض تفاصيل الراتب
-     * @param {string} transactionId - معرف معاملة الراتب
-     * @param {boolean} printAfterShow - ما إذا كان يجب طباعة التفاصيل بعد العرض
-     */
-    function showSalaryDetails(transactionId, printAfterShow = false) {
-        console.log(`عرض تفاصيل الراتب: ${transactionId}`);
-        
-        const transaction = salaryTransactions.find(tr => tr.id === transactionId);
-        if (!transaction) {
-            showNotification('لم يتم العثور على معاملة الراتب', 'error');
-            return;
-        }
-        
-        // الحصول على بيانات الموظف
-        const employee = employees.find(emp => emp.id === transaction.employeeId);
-        
-        // إنشاء محتوى النافذة المنبثقة
-        const content = `
-            <div class="receipt-container printable-content">
-                <div class="receipt-header">
-                    <h1 class="receipt-title">إيصال صرف راتب</h1>
-                    <p class="receipt-subtitle">نظام الاستثمار المتكامل</p>
-                </div>
-                
-                <div class="receipt-employee">
-                    <div class="receipt-employee-info">
-                        <h3 class="receipt-employee-name">${transaction.employeeName}</h3>
-                        <p class="receipt-employee-job">${employee ? employee.jobTitle : 'موظف'}</p>
-                    </div>
-                    <div class="receipt-date">
-                        <p>تاريخ الصرف: ${transaction.date}</p>
-                        <p>الشهر: ${getArabicMonthName(transaction.month)}</p>
-                    </div>
-                </div>
-                
-                <div class="receipt-details">
-                    <table>
-                        <tr>
-                            <th>البند</th>
-                            <th>القيمة</th>
-                        </tr>
-                        <tr>
-                            <td>الراتب الأساسي</td>
-                            <td>${formatCurrency(transaction.baseSalary || 0)}</td>
-                        </tr>
-                        <tr>
-                            <td>المبيعات</td>
-                            <td>${formatCurrency(transaction.sales || 0)}</td>
-                        </tr>
-                        <tr>
-                            <td>نسبة العمولة</td>
-                            <td>${transaction.commissionRate || 0}%</td>
-                        </tr>
-                        <tr>
-                            <td>مبلغ العمولة</td>
-                            <td>${formatCurrency(transaction.commissionAmount || 0)}</td>
-                        </tr>
-                        <tr>
-                            <td>العلاوات</td>
-                            <td>${formatCurrency(transaction.bonuses || 0)}</td>
-                        </tr>
-                        <tr>
-                            <td>الاستقطاعات</td>
-                            <td>${formatCurrency(transaction.deductions || 0)}</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div class="receipt-total">
-                    <p>إجمالي الراتب</p>
-                    <h2 class="receipt-total-amount">${formatCurrency(transaction.totalSalary || 0)}</h2>
-                </div>
-                
-                ${transaction.notes ? `
-                <div class="receipt-notes" style="margin-top: 20px; padding: 10px; border: 1px dashed #e0e0e0; border-radius: 4px;">
-                    <p style="margin: 0;"><strong>ملاحظات:</strong> ${transaction.notes}</p>
-                </div>
-                ` : ''}
-                
-                <div class="receipt-signature">
-                    <div class="signature-box">
-                        <p>توقيع الموظف</p>
-                    </div>
-                    <div class="signature-box">
-                        <p>توقيع المدير</p>
-                    </div>
-                </div>
-                
-                <div class="receipt-footer">
-                    <p>تم إصدار هذا الإيصال بواسطة نظام الاستثمار المتكامل</p>
-                    <p>رقم المعاملة: ${transaction.id}</p>
-                </div>
-            </div>
-            
-            <div class="no-print" style="margin-top: 20px; text-align: center;">
-                <button class="btn btn-primary" id="print-this-salary-btn" style="min-width: 150px;">
-                    <i class="fas fa-print"></i>
-                    <span>طباعة الإيصال</span>
-                </button>
-            </div>
-        `;
-        
-        // عرض النافذة المنبثقة
-        openModal('salary-details-modal');
-        
-        // تحديث محتوى النافذة
-        const contentContainer = document.getElementById('salary-details-content');
-        if (contentContainer) {
-            contentContainer.innerHTML = content;
-        }
-        
-        // تحديث عنوان النافذة
-        const modalTitle = document.querySelector('#salary-details-modal .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = `تفاصيل راتب - ${transaction.employeeName}`;
-        }
-        
-        // إضافة مستمع حدث لزر الطباعة داخل التفاصيل
-        const printButton = document.getElementById('print-this-salary-btn');
-        if (printButton) {
-            printButton.addEventListener('click', function() {
-                window.print();
-            });
-        }
-        
-        // طباعة التفاصيل تلقائياً إذا كان مطلوباً
-        if (printAfterShow) {
-            setTimeout(() => {
-                window.print();
-            }, 500);
-        }
-    }
-
-    /**
-     * تعديل بيانات موظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function editEmployee(employeeId) {
-        console.log(`تعديل الموظف: ${employeeId}`);
-        
-        const employee = employees.find(emp => emp.id === employeeId);
-        if (!employee) {
-            showNotification('لم يتم العثور على الموظف', 'error');
-            return;
-        }
-        
-        // فتح نافذة إضافة موظف
-        openModal('add-employee-modal');
-        
-        // تعبئة النموذج ببيانات الموظف
-        document.getElementById('employee-name').value = employee.name || '';
-        document.getElementById('employee-phone').value = employee.phone || '';
-        document.getElementById('employee-address').value = employee.address || '';
-        document.getElementById('employee-email').value = employee.email || '';
-        document.getElementById('employee-birthdate').value = employee.birthdate || '';
-        document.getElementById('employee-gender').value = employee.gender || 'male';
-        document.getElementById('employee-job-title').value = employee.jobTitle || '';
-        document.getElementById('employee-department').value = employee.department || 'sales';
-        document.getElementById('employee-base-salary').value = employee.baseSalary || '';
-        document.getElementById('employee-commission-rate').value = employee.commissionRate || '';
-        document.getElementById('employee-hire-date').value = employee.hireDate || '';
-        document.getElementById('employee-contract-type').value = employee.contractType || 'full-time';
-        document.getElementById('employee-id-number').value = employee.idNumber || '';
-        document.getElementById('employee-residence-card').value = employee.residenceCard || '';
-        document.getElementById('employee-notes').value = employee.notes || '';
-        
-        // عرض الصور إذا كانت موجودة
-        if (employee.documents) {
-            if (employee.documents.idCard) {
-                document.getElementById('id-card-preview').innerHTML = `<img src="${employee.documents.idCard}" alt="بطاقة موحدة" />`;
-            }
-            
-            if (employee.documents.residenceCard) {
-                document.getElementById('residence-card-preview').innerHTML = `<img src="${employee.documents.residenceCard}" alt="بطاقة السكن" />`;
-            }
-            
-            if (employee.documents.photo) {
-                document.getElementById('employee-photo-preview').innerHTML = `<img src="${employee.documents.photo}" alt="صورة شخصية" />`;
-            }
-        }
-        
-        // تغيير عنوان النافذة
-        const modalTitle = document.querySelector('#add-employee-modal .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = 'تعديل بيانات الموظف';
-        }
-        
-        // تغيير نص زر الحفظ
-        const saveButton = document.getElementById('save-employee-btn');
-        if (saveButton) {
-            saveButton.textContent = 'حفظ التعديلات';
-            
-            // حفظ الوظيفة الأصلية
-            const originalClickHandler = saveButton.onclick;
-            
-            // تعيين وظيفة جديدة
-            saveButton.onclick = function() {
-                // جمع البيانات المحدثة
-                const updatedEmployeeData = collectEmployeeFormData();
-                
-                if (!updatedEmployeeData) {
-                    showNotification('يرجى إدخال جميع البيانات المطلوبة بشكل صحيح', 'error');
-                    return;
-                }
-                
-                // تحديث بيانات الموظف مع الاحتفاظ بالبيانات الأصلية
-                updatedEmployeeData.id = employee.id;
-                updatedEmployeeData.createdAt = employee.createdAt;
-                updatedEmployeeData.status = employee.status;
-                
-                // تحديث الموظف في المصفوفة
-                const employeeIndex = employees.findIndex(emp => emp.id === employeeId);
-                if (employeeIndex !== -1) {
-                    employees[employeeIndex] = updatedEmployeeData;
-                    
-                    // حفظ البيانات
-                    saveEmployeesData();
-                    
-                    // تحديث الجدول
-                    renderEmployeesTable();
-                    
-                    // إغلاق النافذة المنبثقة
-                    closeModal('add-employee-modal');
-                    
-                    // عرض إشعار النجاح
-                    showNotification(`تم تحديث بيانات الموظف ${updatedEmployeeData.name} بنجاح!`, 'success');
-                }
-                
-                // إعادة تعيين زر الحفظ إلى الوضع الأصلي
-                saveButton.textContent = 'إضافة';
-                saveButton.onclick = originalClickHandler;
-            };
-        }
-    }
-
-    /**
-     * حذف موظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function deleteEmployee(employeeId) {
-        console.log(`حذف الموظف: ${employeeId}`);
-        
-        const employee = employees.find(emp => emp.id === employeeId);
-        if (!employee) {
-            showNotification('لم يتم العثور على الموظف', 'error');
-            return;
-        }
-        
-        // تأكيد الحذف
-        if (!confirm(`هل أنت متأكد من رغبتك في حذف الموظف ${employee.name}؟\nسيتم حذف جميع بيانات الرواتب المرتبطة به.`)) {
-            return;
-        }
-        
-        // حذف الموظف
-        employees = employees.filter(emp => emp.id !== employeeId);
-        
-        // حذف سجلات الرواتب المرتبطة بالموظف
-        salaryTransactions = salaryTransactions.filter(transaction => transaction.employeeId !== employeeId);
-        
-        // حفظ البيانات
-        saveEmployeesData();
-        
-        // تحديث الجدول
-        renderEmployeesTable();
-        
-        // تحديث جدول معاملات الرواتب إذا كان معروضاً
-        if (document.querySelector('#salary-transactions-tab.active')) {
-            renderSalaryTransactionsTable();
-        }
-        
-        // عرض إشعار النجاح
-        showNotification(`تم حذف الموظف ${employee.name} بنجاح!`, 'success');
-    }
-
-    /**
-     * عرض تقارير الموظفين
-     */
-    function renderEmployeesReports() {
-        console.log('عرض تقارير الموظفين...');
-        
-        // تهيئة الرسوم البيانية
-        renderEmployeesSalariesChart();
-        renderEmployeesPerformanceChart();
-    }
-
-    /**
-     * عرض الرسم البياني لرواتب الموظفين
-     */
-    function renderEmployeesSalariesChart() {
-        const chartCanvas = document.getElementById('employees-salaries-chart');
-        if (!chartCanvas || typeof Chart === 'undefined') return;
-        
-        // حساب إجمالي الرواتب لكل موظف
-        const employeeTotals = {};
-        
-        // تجميع الرواتب حسب الموظف
-        salaryTransactions.forEach(transaction => {
-            if (!employeeTotals[transaction.employeeId]) {
-                employeeTotals[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    baseSalary: 0,
-                    commission: 0,
-                    total: 0
-                };
-            }
-            
-            employeeTotals[transaction.employeeId].baseSalary += transaction.baseSalary || 0;
-            employeeTotals[transaction.employeeId].commission += transaction.commissionAmount || 0;
-            employeeTotals[transaction.employeeId].total += transaction.totalSalary || 0;
-        });
-        
-        // تحويل البيانات إلى تنسيق الرسم البياني
-        const employeeNames = [];
-        const baseSalaryData = [];
-        const commissionData = [];
-        
-        Object.keys(employeeTotals).forEach(employeeId => {
-            const employeeData = employeeTotals[employeeId];
-            employeeNames.push(employeeData.name);
-            baseSalaryData.push(employeeData.baseSalary);
-            commissionData.push(employeeData.commission);
-        });
-        
-        // إنشاء الرسم البياني
-        const existingChart = Chart.getChart(chartCanvas);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-        
-        const salariesChart = new Chart(chartCanvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: employeeNames,
-                datasets: [
-                    {
-                        label: 'الراتب الأساسي',
-                        data: baseSalaryData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                        borderColor: '#3b82f6',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'العمولات',
-                        data: commissionData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                        borderColor: '#10b981',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'المبلغ (دينار)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'الموظف'
-                        }
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع الرواتب والعمولات للموظفين',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        position: 'top'
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * عرض الرسم البياني لأداء الموظفين
-     */
-    function renderEmployeesPerformanceChart() {
-        const chartCanvas = document.getElementById('employees-performance-chart');
-        if (!chartCanvas || typeof Chart === 'undefined') return;
-        
-        // حساب إجمالي المبيعات لكل موظف
-        const employeeSales = {};
-        
-        // تجميع المبيعات حسب الموظف
-        salaryTransactions.forEach(transaction => {
-            if (!employeeSales[transaction.employeeId]) {
-                employeeSales[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    sales: 0
-                };
-            }
-            
-            employeeSales[transaction.employeeId].sales += transaction.sales || 0;
-        });
-        
-        // تحويل البيانات إلى تنسيق الرسم البياني
-        const employeeNames = [];
-        const salesData = [];
-        const backgroundColors = [];
-        
-        // مجموعة من الألوان
-        const colors = [
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(239, 68, 68, 0.7)',
-            'rgba(139, 92, 246, 0.7)',
-            'rgba(236, 72, 153, 0.7)',
-            'rgba(248, 113, 113, 0.7)',
-            'rgba(52, 211, 153, 0.7)',
-            'rgba(251, 191, 36, 0.7)',
-            'rgba(167, 139, 250, 0.7)'
-        ];
-        
-        let colorIndex = 0;
-        Object.keys(employeeSales).forEach(employeeId => {
-            const employeeData = employeeSales[employeeId];
-            employeeNames.push(employeeData.name);
-            salesData.push(employeeData.sales);
-            backgroundColors.push(colors[colorIndex % colors.length]);
-            colorIndex++;
-        });
-        
-        // إنشاء الرسم البياني
-        const existingChart = Chart.getChart(chartCanvas);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-        
-        const performanceChart = new Chart(chartCanvas.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: employeeNames,
-                datasets: [{
-                    data: salesData,
-                    backgroundColor: backgroundColors,
-                    borderWidth: 1,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع المبيعات حسب الموظفين',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        position: 'right'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(2) + '%';
-                                return `${label}: ${formatCurrency(value)} (${percentage})`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * تصدير بيانات الموظفين إلى ملف CSV
-     */
-    function exportEmployeesData() {
-        if (employees.length === 0) {
-            showNotification('لا توجد بيانات للتصدير', 'warning');
-            return;
-        }
-        
-        // إنشاء محتوى CSV
-        let csvContent = 'المعرف,الاسم,الهاتف,العنوان,البريد الإلكتروني,المسمى الوظيفي,القسم,الراتب الأساسي,نسبة العمولة,تاريخ التعيين,الحالة\n';
-        
-        employees.forEach(employee => {
-            const row = [
-                employee.id,
-                employee.name,
-                employee.phone,
-                employee.address || '',
-                employee.email || '',
-                employee.jobTitle || '',
-                getArabicDepartment(employee.department) || '',
-                employee.baseSalary || 0,
-                employee.commissionRate || 0,
-                employee.hireDate || '',
-                employee.status === 'active' ? 'نشط' : 'غير نشط'
-            ];
-            
-            // تنظيف القيم وإضافتها إلى CSV
-            csvContent += row.map(value => {
-                const cleanValue = String(value).replace(/"/g, '""');
-                return `"${cleanValue}"`;
-            }).join(',') + '\n';
-        });
-        
-        // إنشاء رابط التنزيل
-        downloadCSV(csvContent, 'employees_data.csv');
-    }
-
-    /**
-     * تصدير بيانات الرواتب إلى ملف CSV
-     */
-    function exportSalariesData() {
-        if (salaryTransactions.length === 0) {
-            showNotification('لا توجد بيانات للتصدير', 'warning');
-            return;
-        }
-        
-        // إنشاء محتوى CSV
-        let csvContent = 'المعرف,الموظف,تاريخ الصرف,الشهر,الراتب الأساسي,المبيعات,النسبة,مبلغ العمولة,العلاوات,الاستقطاعات,الإجمالي\n';
-        
-        salaryTransactions.forEach(transaction => {
-            const row = [
-                transaction.id,
-                transaction.employeeName,
-                transaction.date,
-                getArabicMonthName(transaction.month),
-                transaction.baseSalary || 0,
-                transaction.sales || 0,
-                transaction.commissionRate || 0,
-                transaction.commissionAmount || 0,
-                transaction.bonuses || 0,
-                transaction.deductions || 0,
-                transaction.totalSalary || 0
-            ];
-            
-            // تنظيف القيم وإضافتها إلى CSV
-            csvContent += row.map(value => {
-                const cleanValue = String(value).replace(/"/g, '""');
-                return `"${cleanValue}"`;
-            }).join(',') + '\n';
-        });
-        
-        // إنشاء رابط التنزيل
-        downloadCSV(csvContent, 'salary_transactions.csv');
-    }
-
-    /**
-     * تنزيل ملف CSV
-     * @param {string} csvContent - محتوى ملف CSV
-     * @param {string} fileName - اسم الملف
-     */
-    function downloadCSV(csvContent, fileName) {
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        
-        if (navigator.msSaveBlob) { // دعم IE 10+
-            navigator.msSaveBlob(blob, fileName);
-        } else {
-            // للمتصفحات الأخرى
-            const url = URL.createObjectURL(blob);
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        showNotification(`تم تصدير البيانات بنجاح إلى ${fileName}`, 'success');
-    }
-
-    /**
-     * فتح نافذة منبثقة
-     * @param {string} modalId - معرف النافذة
-     */
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        modal.classList.add('active');
-        
-        // إجراءات خاصة حسب النافذة
-        if (modalId === 'add-employee-modal') {
-            // إعادة تعيين النموذج
-            const form = document.getElementById('add-employee-form');
-            if (form) {
-                form.reset();
-            }
-            
-            // إعادة تعيين معاينة الصور
-            document.getElementById('id-card-preview').innerHTML = '';
-            document.getElementById('residence-card-preview').innerHTML = '';
-            document.getElementById('employee-photo-preview').innerHTML = '';
-            
-            // إعادة تعيين تبويبات النموذج
-            document.querySelectorAll('.form-tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector('.form-tab-btn[data-tab="personal-info"]').classList.add('active');
-            
-            document.querySelectorAll('.form-tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.getElementById('personal-info-tab').classList.add('active');
-            
-            // إعادة تعيين عنوان النافذة
-            const modalTitle = document.querySelector('#add-employee-modal .modal-title');
-            if (modalTitle) {
-                modalTitle.textContent = 'إضافة موظف جديد';
-            }
-            
-            // إعادة تعيين نص زر الحفظ
-            const saveButton = document.getElementById('save-employee-btn');
-            if (saveButton) {
-                saveButton.textContent = 'إضافة';
-                saveButton.onclick = addNewEmployee;
-            }
-            
-            // تعيين تاريخ اليوم في حقل تاريخ التعيين
-            const hireDateInput = document.getElementById('employee-hire-date');
-            if (hireDateInput) {
-                hireDateInput.value = new Date().toISOString().split('T')[0];
-            }
-        } else if (modalId === 'pay-salary-modal') {
-            // إعادة تعيين النموذج
-            const form = document.getElementById('pay-salary-form');
-            if (form) {
-                form.reset();
-            }
-            
-            // إخفاء معلومات الموظف
-            const salaryInfoContainer = document.getElementById('employee-salary-info');
-            if (salaryInfoContainer) {
-                salaryInfoContainer.style.display = 'none';
-            }
-            
-            // تعبئة قائمة الموظفين
-            populateEmployeeSelect();
-            
-            // تعيين تاريخ اليوم في حقل تاريخ الصرف
-            const salaryDateInput = document.getElementById('salary-date');
-            if (salaryDateInput) {
-                salaryDateInput.value = new Date().toISOString().split('T')[0];
-            }
-            
-            // تعيين الشهر الحالي
-            const salaryMonthSelect = document.getElementById('salary-month');
-            if (salaryMonthSelect) {
-                const currentMonth = new Date().getMonth() + 1; // الأشهر تبدأ من 0
-                salaryMonthSelect.value = currentMonth.toString();
-            }
-        }
-    }
-
-    /**
-     * إغلاق نافذة منبثقة
-     * @param {string} modalId - معرف النافذة
-     */
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        modal.classList.remove('active');
+        // إضافة العملة
+        const currency = window.settings && window.settings.currency ? window.settings.currency : 'دينار';
+        return `${formattedAmount} ${currency}`;
     }
 
     /**
      * عرض إشعار للمستخدم
-     * @param {string} message - نص الإشعار
-     * @param {string} type - نوع الإشعار (success, error, warning, info)
+     * @param {string} message نص الإشعار
+     * @param {string} type نوع الإشعار
      */
-    function showNotification(message, type = 'success') {
-        try {
-            // استخدام دالة الإشعارات الموجودة في النظام
-            if (typeof window.showNotification === 'function') {
-                window.showNotification(message, type);
-                return;
-            }
-
-            // إنشاء عنصر الإشعار
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="notification-icon">
-                    <i class="fas ${getNotificationIcon(type)}"></i>
-                </div>
-                <div class="notification-content">
-                    <div class="notification-title">${getNotificationTitle(type)}</div>
-                    <div class="notification-message">${message}</div>
-                </div>
-                <button class="notification-close">×</button>
-            `;
-            
-            // إضافة الإشعار إلى الصفحة
-            document.body.appendChild(notification);
-            
-            // إضافة مستمع حدث للإغلاق
-            const closeButton = notification.querySelector('.notification-close');
-            if (closeButton) {
-                closeButton.addEventListener('click', () => {
-                    document.body.removeChild(notification);
-                });
-            }
-            
-            // إغلاق الإشعار تلقائياً بعد 5 ثوانٍ
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 5000);
-        } catch (error) {
-            console.error('خطأ في عرض الإشعار:', error);
-        }
-    }
-
-    /**
-     * الحصول على أيقونة الإشعار حسب النوع
-     * @param {string} type - نوع الإشعار
-     * @returns {string} - اسم الأيقونة
-     */
-    function getNotificationIcon(type) {
-        switch (type) {
-            case 'success':
-                return 'fa-check-circle';
-            case 'error':
-                return 'fa-times-circle';
-            case 'warning':
-                return 'fa-exclamation-triangle';
-            case 'info':
-            default:
-                return 'fa-info-circle';
-        }
-    }
-
-    /**
-     * الحصول على عنوان الإشعار حسب النوع
-     * @param {string} type - نوع الإشعار
-     * @returns {string} - عنوان الإشعار
-     */
-    function getNotificationTitle(type) {
-        switch (type) {
-            case 'success':
-                return 'نجاح';
-            case 'error':
-                return 'خطأ';
-            case 'warning':
-                return 'تنبيه';
-            case 'info':
-            default:
-                return 'معلومات';
-        }
-    }
-
-    /**
-     * تنسيق المبلغ المالي
-     * @param {number} amount - المبلغ
-     * @param {boolean} addCurrency - إضافة وحدة العملة
-     * @returns {string} - المبلغ المنسق
-     */
-    function formatCurrency(amount, addCurrency = true) {
-        // استخدام دالة تنسيق العملة الموجودة في التطبيق إذا كانت متاحة
-        if (typeof window.formatCurrency === 'function') {
-            return window.formatCurrency(amount, addCurrency);
-        }
-        
-        // التحقق من صحة المبلغ
-        if (amount === undefined || amount === null || isNaN(amount)) {
-            return addCurrency ? "0 دينار" : "0";
-        }
-        
-        // تقريب المبلغ إلى رقمين عشريين إذا كان يحتوي على كسور
-        amount = parseFloat(amount);
-        if (amount % 1 !== 0) {
-            amount = amount.toFixed(0);
-        }
-        
-        // تحويل المبلغ إلى نص وإضافة النقاط بين كل ثلاثة أرقام
-        const parts = amount.toString().split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        
-        // إعادة المبلغ مع إضافة العملة إذا تم طلب ذلك
-        const formattedAmount = parts.join('.');
-        
-        if (addCurrency) {
-            return formattedAmount + " دينار";
-        } else {
-            return formattedAmount;
-        }
-    }
-
-    /**
-     * الحصول على اسم القسم بالعربية
-     * @param {string} department - رمز القسم
-     * @returns {string} - اسم القسم بالعربية
-     */
-    function getArabicDepartment(department) {
-        const departments = {
-            'sales': 'المبيعات',
-            'finance': 'المالية',
-            'admin': 'الإدارة',
-            'it': 'تكنولوجيا المعلومات',
-            'operations': 'العمليات'
-        };
-        
-        return departments[department] || department;
-    }
-
-    /**
-     * الحصول على نوع العقد بالعربية
-     * @param {string} contractType - رمز نوع العقد
-     * @returns {string} - نوع العقد بالعربية
-     */
-    function getArabicContractType(contractType) {
-        const types = {
-            'full-time': 'دوام كامل',
-            'part-time': 'دوام جزئي',
-            'contract': 'عقد مؤقت'
-        };
-        
-        return types[contractType] || contractType;
-    }
-
-    /**
-     * الحصول على اسم الشهر بالعربية
-     * @param {string|number} month - رقم الشهر (1-12)
-     * @returns {string} - اسم الشهر بالعربية
-     */
-    function getArabicMonthName(month) {
-        const monthNumber = parseInt(month);
-        
-        const months = {
-            1: 'كانون الثاني (يناير)',
-            2: 'شباط (فبراير)',
-            3: 'آذار (مارس)',
-            4: 'نيسان (أبريل)',
-            5: 'أيار (مايو)',
-            6: 'حزيران (يونيو)',
-            7: 'تموز (يوليو)',
-            8: 'آب (أغسطس)',
-            9: 'أيلول (سبتمبر)',
-            10: 'تشرين الأول (أكتوبر)',
-            11: 'تشرين الثاني (نوفمبر)',
-            12: 'كانون الأول (ديسمبر)'
-        };
-        
-        return months[monthNumber] || `الشهر ${month}`;
-    }
-
-    /**
-     * إعداد التكامل مع النظام
-     */
-    function setupIntegration() {
-        // ربط دفع الرواتب بسجل العمليات المالية
-        setupSalaryTransactionIntegration();
-        
-        // إضافة تكامل مع نظام الإبلاغ عن المبيعات
-        setupSalesNotifications();
-        
-        // ربط بيانات المبيعات بسجلات الموظفين
-        linkSalesDataToEmployees();
-        
-        // إضافة تكامل مع النظام المالي
-        setupFinancialIntegration();
-        
-        // إضافة الربط مع نظام المصادقة
-        setupAuthIntegration();
-    }
-
-    /**
-     * ربط دفع الرواتب بسجل العمليات المالية
-     */
-    function setupSalaryTransactionIntegration() {
-        // التنصت على أحداث دفع الرواتب
-        document.body.addEventListener('click', function(e) {
-            // التحقق من أن الزر هو زر تأكيد دفع الراتب
-            const confirmButton = e.target.closest('#confirm-pay-salary-btn');
-            if (!confirmButton) return;
-            
-            // إضافة مستمع حدث لما بعد دفع الراتب
-            setTimeout(() => {
-                const salaryDetailsContent = document.getElementById('salary-details-content');
-                if (!salaryDetailsContent) return;
-                
-                // إضافة زر إضافة العملية للسجل المالي
-                if (!document.getElementById('add-to-transactions-btn')) {
-                    const addToTransactionsButton = document.createElement('button');
-                    addToTransactionsButton.id = 'add-to-transactions-btn';
-                    addToTransactionsButton.className = 'btn btn-primary no-print';
-                    addToTransactionsButton.style.marginRight = '10px';
-                    addToTransactionsButton.innerHTML = '<i class="fas fa-exchange-alt"></i> إضافة للسجل المالي';
-                    
-                    // إضافة الزر قبل زر الطباعة
-                    const printButton = document.getElementById('print-salary-details-btn');
-                    if (printButton && printButton.parentNode) {
-                        printButton.parentNode.insertBefore(addToTransactionsButton, printButton);
-                        
-                        // إضافة مستمع حدث للزر
-                        addToTransactionsButton.addEventListener('click', function() {
-                            // استخراج معرف معاملة الراتب من عنوان النافذة
-                            const modalTitle = document.querySelector('#salary-details-modal .modal-title').textContent;
-                            const employeeName = modalTitle.replace('تفاصيل راتب - ', '');
-                            
-                            // البحث عن معاملة الراتب الأخيرة للموظف
-                            const latestSalaryTransaction = salaryTransactions.find(tr => 
-                                tr.employeeName === employeeName
-                            );
-                            
-                            if (latestSalaryTransaction) {
-                                // إضافة العملية إلى سجل العمليات المالية
-                                addSalaryToFinancialTransactions(latestSalaryTransaction);
-                            } else {
-                                showNotification('لم يتم العثور على معاملة الراتب', 'error');
-                            }
-                        });
-                    }
-                }
-            }, 500);
-        });
-    }
-
-    /**
-     * إضافة معاملة راتب إلى سجل العمليات المالية
-     * @param {Object} salaryTransaction - معاملة الراتب
-     */
-    function addSalaryToFinancialTransactions(salaryTransaction) {
-        // التحقق من وجود دالة إضافة العمليات
-        if (typeof window.addTransaction !== 'function') {
-            showNotification('لا يمكن إضافة العملية للسجل المالي، النظام غير متاح', 'error');
+    function showNotification(message, type = 'info') {
+        // استخدام دالة النظام الأساسي إذا كانت متاحة
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(message, type);
             return;
         }
         
-        try {
-            // إضافة العملية للسجل المالي
-            window.addTransaction(
-                'سحب', // نوع العملية
-                'expenses-account', // حساب النفقات (يمكن تغييره)
-                salaryTransaction.totalSalary, // المبلغ
-                `دفع راتب للموظف ${salaryTransaction.employeeName} - ${getArabicMonthName(salaryTransaction.month)}` // ملاحظات
-            );
-            
-            showNotification('تم إضافة الراتب للسجل المالي بنجاح', 'success');
-            
-            // إغلاق النافذة المنبثقة
-            closeModal('salary-details-modal');
-            
-        } catch (error) {
-            console.error('خطأ في إضافة الراتب للسجل المالي:', error);
-            showNotification('حدث خطأ أثناء إضافة الراتب للسجل المالي', 'error');
-        }
-    }
-
-    /**
-     * إعداد تكامل مع نظام الإبلاغ عن المبيعات
-     */
-    function setupSalesNotifications() {
-        // الاستماع لأحداث إضافة/تعديل العمليات
-        document.addEventListener('transaction:update', function() {
-            // تحديث إحصائيات المبيعات
-            updateSalesStatistics();
-        });
-    }
-
-    /**
-     * تحديث إحصائيات المبيعات
-     */
-    function updateSalesStatistics() {
-        // لا يتم تنفيذ هذه الوظيفة إلا إذا كانت هناك مصفوفة معاملات
-        if (!window.transactions) return;
+        // إنشاء إشعار بديل
+        console.log(`[${type.toUpperCase()}] ${message}`);
         
-        try {
-            // حساب إجمالي المبيعات للشهر الحالي
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            // تصفية المعاملات للشهر الحالي
-            const currentMonthDeposits = window.transactions.filter(tx => {
-                if (tx.type !== 'إيداع') return false;
-                
-                const txDate = new Date(tx.date);
-                return txDate.getMonth() === currentMonth && 
-                       txDate.getFullYear() === currentYear;
+        // إنشاء إشعار مؤقت إذا لم تكن دالة الإشعارات متاحة
+        if (typeof swal === 'function') {
+            swal({
+                title: '',
+                text: message,
+                icon: type,
+                button: 'موافق',
+                timer: 3000
             });
-            
-            // حساب إجمالي المبيعات
-            const totalMonthSales = currentMonthDeposits.reduce((total, tx) => total + tx.amount, 0);
-            
-            console.log(`إجمالي المبيعات للشهر الحالي: ${totalMonthSales}`);
-            
-            // تخزين البيانات المؤقتة للاستخدام في نظام الموظفين
-            window.currentMonthSales = totalMonthSales;
-            
-            // إذا كانت صفحة الموظفين مفتوحة، تحديث القيم التلقائية للمبيعات
-            const salesInput = document.getElementById('salary-sales');
-            if (salesInput && salesInput.value === '') {
-                salesInput.value = totalMonthSales;
-                
-                // إعادة حساب إجمالي الراتب
-                calculateTotalSalary();
-            }
-        } catch (error) {
-            console.error('خطأ في تحديث إحصائيات المبيعات:', error);
-        }
-    }
-
-    /**
-     * ربط بيانات المبيعات بسجلات الموظفين
-     */
-    function linkSalesDataToEmployees() {
-        // التحقق من وجود بيانات المعاملات والموظفين
-        if (!window.transactions) return;
-        
-        // ربط المعاملات بالموظفين المسؤولين عنها
-        try {
-            // تحديث نموذج صرف الراتب
-            enhancePaySalaryForm();
-            
-            // إضافة عرض المبيعات في تفاصيل الموظف
-            enhanceEmployeeDetails();
-            
-        } catch (error) {
-            console.error('خطأ في ربط بيانات المبيعات بسجلات الموظفين:', error);
-        }
-    }
-
-    /**
-     * تحسين نموذج صرف الراتب
-     */
-    function enhancePaySalaryForm() {
-        // إضافة زر التحميل التلقائي للمبيعات
-        const salaryForm = document.getElementById('pay-salary-form');
-        if (!salaryForm) return;
-        
-        const salesInputGroup = document.querySelector('#salary-sales')?.parentNode;
-        if (!salesInputGroup) return;
-        
-        // إضافة زر التحميل التلقائي إذا لم يكن موجودًا
-        if (!document.getElementById('auto-load-sales-btn')) {
-            const autoLoadButton = document.createElement('button');
-            autoLoadButton.id = 'auto-load-sales-btn';
-            autoLoadButton.type = 'button';
-            autoLoadButton.className = 'btn btn-info btn-sm';
-            autoLoadButton.style.marginTop = '5px';
-            autoLoadButton.innerHTML = '<i class="fas fa-sync-alt"></i> تحميل المبيعات تلقائياً';
-            
-            autoLoadButton.addEventListener('click', function() {
-                // تحميل المبيعات للشهر الحالي
-                updateSalesStatistics();
-                
-                // استخدام القيمة المحسوبة
-                if (window.currentMonthSales) {
-                    document.getElementById('salary-sales').value = window.currentMonthSales;
-                    
-                    // إعادة حساب إجمالي الراتب
-                    calculateTotalSalary();
-                    
-                    showNotification('تم تحميل بيانات المبيعات للشهر الحالي', 'success');
-                } else {
-                    showNotification('لا توجد بيانات مبيعات للشهر الحالي', 'warning');
-                }
-            });
-            
-            // إضافة الزر بعد حقل المبيعات
-            salesInputGroup.appendChild(autoLoadButton);
-        }
-    }
-
-    /**
-     * تحسين عرض تفاصيل الموظف
-     */
-    function enhanceEmployeeDetails() {
-        // إضافة مستمع حدث لعرض تفاصيل الموظف
-        document.body.addEventListener('click', function(e) {
-            // التحقق من أن الزر هو زر عرض تفاصيل الموظف
-            const viewButton = e.target.closest('.view-employee');
-            if (!viewButton) return;
-            
-            // الحصول على معرف الموظف
-            const employeeId = viewButton.getAttribute('data-id');
-            if (!employeeId) return;
-            
-            // إضافة إحصائيات المبيعات لعرض تفاصيل الموظف
-            setTimeout(() => {
-                addSalesStatisticsToEmployeeDetails(employeeId);
-            }, 500);
-        });
-    }
-
-    /**
-     * إضافة إحصائيات المبيعات لعرض تفاصيل الموظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function addSalesStatisticsToEmployeeDetails(employeeId) {
-        const detailsContent = document.getElementById('employee-details-content');
-        if (!detailsContent) return;
-        
-        // البحث عن آخر قسم في التفاصيل (سجل الرواتب)
-        const lastCard = detailsContent.querySelector('.employee-detail-card:last-child');
-        if (!lastCard) return;
-        
-        // إنشاء قسم إحصائيات المبيعات إذا لم يكن موجوداً
-        if (!document.getElementById('employee-sales-stats-card')) {
-            const salesStatsCard = document.createElement('div');
-            salesStatsCard.id = 'employee-sales-stats-card';
-            salesStatsCard.className = 'employee-detail-card';
-            salesStatsCard.innerHTML = `
-                <h4><i class="fas fa-chart-line"></i> إحصائيات المبيعات</h4>
-                <div id="employee-sales-stats">
-                    <div class="loader" style="margin: 20px auto;"></div>
-                    <p class="text-center">جاري تحميل إحصائيات المبيعات...</p>
-                </div>
-            `;
-            
-            // إضافة القسم قبل سجل الرواتب
-            lastCard.parentNode.insertBefore(salesStatsCard, lastCard);
-            
-            // تحميل إحصائيات المبيعات
-            loadEmployeeSalesStatistics(employeeId);
-        }
-    }
-
-    /**
-     * تحميل إحصائيات المبيعات للموظف
-     * @param {string} employeeId - معرف الموظف
-     */
-    function loadEmployeeSalesStatistics(employeeId) {
-        const statsContainer = document.getElementById('employee-sales-stats');
-        if (!statsContainer) return;
-        
-        try {
-            // الحصول على إحصائيات المبيعات للموظف
-            const employee = employees.find(emp => emp.id === employeeId);
-            if (!employee) throw new Error('لم يتم العثور على الموظف');
-            
-            // حساب إحصائيات المبيعات للأشهر الستة الماضية
-            const months = [];
-            const monthlySales = [];
-            const monthlyCommissions = [];
-            
-            const today = new Date();
-            
-            for (let i = 5; i >= 0; i--) {
-                // حساب الشهر
-                const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                const monthName = month.toLocaleDateString('ar', { month: 'short' });
-                months.push(monthName);
-                
-                // إيجاد معاملات رواتب الموظف لهذا الشهر
-                const monthSalary = salaryTransactions.find(salary => {
-                    const salaryDate = new Date(salary.date);
-                    return salary.employeeId === employeeId && 
-                           salaryDate.getMonth() === month.getMonth() && 
-                           salaryDate.getFullYear() === month.getFullYear();
-                });
-                
-                // إضافة المبيعات والعمولات
-                monthlySales.push(monthSalary ? monthSalary.sales : 0);
-                monthlyCommissions.push(monthSalary ? monthSalary.commissionAmount : 0);
-            }
-            
-            // حساب المتوسط والإجماليات
-            const totalSales = monthlySales.reduce((a, b) => a + b, 0);
-            const totalCommissions = monthlyCommissions.reduce((a, b) => a + b, 0);
-            const avgMonthlySales = totalSales / (monthlySales.filter(s => s > 0).length || 1);
-            const avgMonthlyCommission = totalCommissions / (monthlyCommissions.filter(c => c > 0).length || 1);
-            
-            // إنشاء عرض الإحصائيات
-            let statsHTML = `
-                <div class="sales-statistics">
-                    <div class="grid-cols-2">
-                        <div class="stat-card">
-                            <div class="stat-title">إجمالي المبيعات (6 أشهر)</div>
-                            <div class="stat-value">${formatCurrency(totalSales)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">إجمالي العمولات (6 أشهر)</div>
-                            <div class="stat-value">${formatCurrency(totalCommissions)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">متوسط المبيعات الشهرية</div>
-                            <div class="stat-value">${formatCurrency(avgMonthlySales)}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">متوسط العمولة الشهرية</div>
-                            <div class="stat-value">${formatCurrency(avgMonthlyCommission)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container" style="height: 200px; margin-top: 20px;">
-                        <canvas id="employee-sales-chart"></canvas>
-                    </div>
-                    
-                    <div class="sales-performance" style="margin-top: 20px;">
-                        <h5 style="margin-bottom: 10px;">تحليل الأداء</h5>
-                        <div class="performance-metric">
-                            <div class="metric-label">نسبة العمولة:</div>
-                            <div class="metric-value">${employee.commissionRate}%</div>
-                        </div>
-                        <div class="performance-metric">
-                            <div class="metric-label">نسبة العمولة من إجمالي المبيعات:</div>
-                            <div class="metric-value">${totalSales > 0 ? ((totalCommissions / totalSales) * 100).toFixed(2) : 0}%</div>
-                        </div>
-                        <div class="performance-metric">
-                            <div class="metric-label">اتجاه المبيعات:</div>
-                            <div class="metric-value">
-                                ${getSalesTrend(monthlySales)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // تحديث المحتوى
-            statsContainer.innerHTML = statsHTML;
-            
-            // إنشاء الرسم البياني
-            if (window.Chart) {
-                const ctx = document.getElementById('employee-sales-chart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [
-                            {
-                                label: 'المبيعات',
-                                data: monthlySales,
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            },
-                            {
-                                label: 'العمولات',
-                                data: monthlyCommissions,
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-            
-        } catch (error) {
-            console.error('خطأ في تحميل إحصائيات المبيعات للموظف:', error);
-            statsContainer.innerHTML = '<p class="text-center">تعذر تحميل إحصائيات المبيعات</p>';
-        }
-    }
-
-    /**
-     * تحليل اتجاه المبيعات
-     * @param {Array} sales - مصفوفة المبيعات
-     * @returns {string} - وصف اتجاه المبيعات مع أيقونة
-     */
-    function getSalesTrend(sales) {
-        if (sales.length < 2) return 'غير متوفر';
-
-        // حساب متوسط التغير
-        let totalChange = 0;
-        let numChanges = 0;
-
-        for (let i = 1; i < sales.length; i++) {
-            if (sales[i-1] > 0 && sales[i] > 0) {
-                const change = sales[i] - sales[i-1];
-                totalChange += change;
-                numChanges++;
-            }
-        }
-
-        const avgChange = numChanges > 0 ? totalChange / numChanges : 0;
-
-        // تحديد الاتجاه
-        if (Math.abs(avgChange) < 1000) {
-            return '<i class="fas fa-equals" style="color: #6c757d;"></i> مستقر';
-        } else if (avgChange > 0) {
-            return '<i class="fas fa-arrow-up" style="color: #10b981;"></i> متزايد';
         } else {
-            return '<i class="fas fa-arrow-down" style="color: #ef4444;"></i> متناقص';
+            // استخدام alert كملاذ أخير
+            alert(message);
         }
     }
 
     /**
-     * إضافة تكامل مع النظام المالي
+     * إضافة ميزة مشاركة البطاقة
      */
-    function setupFinancialIntegration() {
-        // إضافة تقارير رواتب الموظفين إلى نظام التقارير
-        setupEmployeeReportsIntegration();
+    function addCardSharingFeature() {
+        console.log('إضافة ميزة مشاركة البطاقة...');
         
-        // ربط نظام الموظفين بنظام المصروفات
-        setupExpensesIntegration();
-    }
-
-    /**
-     * إضافة تقارير رواتب الموظفين إلى نظام التقارير
-     */
-    function setupEmployeeReportsIntegration() {
-        // إذا كان هناك صفحة تقارير، إضافة تبويب للموظفين
-        const reportsPage = document.getElementById('reports-page');
-        if (!reportsPage) return;
-        
-        // البحث عن أزرار التبويبات
-        const tabButtons = reportsPage.querySelector('.tab-buttons');
-        if (!tabButtons) return;
-        
-        // إضافة تبويب للموظفين إذا لم يكن موجوداً
-        if (!document.querySelector('button[data-tab="employees-reports"]')) {
-            const employeesTabButton = document.createElement('button');
-            employeesTabButton.className = 'tab-btn';
-            employeesTabButton.setAttribute('data-tab', 'employees-reports');
-            employeesTabButton.textContent = 'الموظفين';
+        // إضافة زر المشاركة إلى نافذة عرض البطاقة (إذا لم يكن موجوداً)
+        const modalFooter = document.querySelector('#show-card-modal .modal-footer');
+        if (modalFooter && !document.getElementById('share-card-btn')) {
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'btn btn-info';
+            shareBtn.id = 'share-card-btn';
+            shareBtn.innerHTML = '<i class="fas fa-share-alt"></i><span>مشاركة</span>';
             
-            // إضافة الزر إلى الأزرار
-            tabButtons.appendChild(employeesTabButton);
+            modalFooter.querySelector('.btn-group').appendChild(shareBtn);
             
-            // إضافة مستمع حدث للزر
-            employeesTabButton.addEventListener('click', function() {
-                // إزالة الفئة النشطة من جميع الأزرار
-                tabButtons.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // إضافة الفئة النشطة للزر الحالي
-                this.classList.add('active');
-                
-                // عرض تقارير الموظفين
-                showEmployeesInReports();
+            // إضافة مستمع الحدث
+            shareBtn.addEventListener('click', () => {
+                shareCurrentCard();
             });
         }
     }
 
     /**
-     * عرض تقارير الموظفين في صفحة التقارير
+     * إضافة ميزة تصدير واستيراد البطاقات
      */
-    function showEmployeesInReports() {
-        // العثور على حاوية المحتوى
-        const reportsContent = document.querySelector('#reports-page .tab-content');
-        if (!reportsContent) return;
+    function addCardImportExportFeature() {
+        console.log('إضافة ميزة تصدير واستيراد البطاقات...');
         
-        // إنشاء محتوى تقارير الموظفين
-        reportsContent.innerHTML = `
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">توزيع رواتب الموظفين</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="employees-salaries-report-chart"></canvas>
-                </div>
-            </div>
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">أداء الموظفين (المبيعات)</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="employees-performance-report-chart"></canvas>
-                </div>
-            </div>
+        // إضافة أزرار التصدير والاستيراد (إذا لم تكن موجودة)
+        const sectionActions = document.querySelector('#investor-cards-page .section-actions');
+        if (sectionActions && !document.getElementById('export-cards-btn')) {
+            // زر التصدير
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'btn btn-outline btn-sm';
+            exportBtn.id = 'export-cards-btn';
+            exportBtn.title = 'تصدير البطاقات';
+            exportBtn.innerHTML = '<i class="fas fa-file-export"></i><span>تصدير</span>';
+            
+            // زر الاستيراد
+            const importBtn = document.createElement('button');
+            importBtn.className = 'btn btn-outline btn-sm';
+            importBtn.id = 'import-cards-btn';
+            importBtn.title = 'استيراد البطاقات';
+            importBtn.innerHTML = '<i class="fas fa-file-import"></i><span>استيراد</span>';
+            
+            // إضافة الأزرار
+            sectionActions.appendChild(exportBtn);
+            sectionActions.appendChild(importBtn);
+            
+            // إضافة مستمعي الأحداث
+            exportBtn.addEventListener('click', exportCards);
+            importBtn.addEventListener('click', importCards);
+        }
+    }
+
+    /**
+     * تصدير بيانات البطاقات
+     */
+    function exportCards() {
+        console.log('تصدير بيانات البطاقات...');
+        
+        // الحصول على البطاقات
+        const cards = getInvestorCards();
+        
+        if (cards.length === 0) {
+            showNotification('لا توجد بطاقات للتصدير', 'warning');
+            return;
+        }
+        
+        // تحويل البيانات إلى نص JSON
+        const jsonData = JSON.stringify(cards, null, 2);
+        
+        // إنشاء ملف للتنزيل
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // إنشاء رابط التنزيل
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `investor_cards_${new Date().toISOString().split('T')[0]}.json`;
+        a.style.display = 'none';
+        
+        // إضافة الرابط للصفحة وتنفيذ النقر
+        document.body.appendChild(a);
+        a.click();
+        
+        // تنظيف
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+        
+        showNotification(`تم تصدير ${cards.length} بطاقة بنجاح`, 'success');
+    }
+
+    /**
+     * استيراد بيانات البطاقات
+     */
+    function importCards() {
+        console.log('استيراد بيانات البطاقات...');
+        
+        // إنشاء عنصر إدخال الملف
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'application/json';
+        fileInput.style.display = 'none';
+        
+        // إضافة مستمع الحدث
+        fileInput.addEventListener('change', (e) => {
+            if (!e.target.files || !e.target.files[0]) {
+                return;
+            }
+            
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                try {
+                    // تحليل البيانات
+                    const importedCards = JSON.parse(event.target.result);
+                    
+                    // التحقق من صحة البيانات
+                    if (!Array.isArray(importedCards)) {
+                        throw new Error('تنسيق البيانات غير صحيح');
+                    }
+                    
+                    // الحصول على البطاقات الحالية
+                    const currentCards = getInvestorCards();
+                    
+                    // تأكيد الاستيراد
+                    const confirmMsg = currentCards.length > 0 
+                        ? `سيتم دمج ${importedCards.length} بطاقة مستوردة مع ${currentCards.length} بطاقة حالية. هل تريد المتابعة؟`
+                        : `سيتم استيراد ${importedCards.length} بطاقة. هل تريد المتابعة؟`;
+                    
+                    if (!confirm(confirmMsg)) {
+                        return;
+                    }
+                    
+                    // دمج البطاقات (تجنب التكرار)
+                    const existingCardIds = new Set(currentCards.map(card => card.id));
+                    const newCards = importedCards.filter(card => !existingCardIds.has(card.id));
+                    
+                    // إضافة البطاقات الجديدة
+                    const mergedCards = [...currentCards, ...newCards];
+                    
+                    // حفظ البطاقات المدمجة
+                    saveInvestorCards(mergedCards);
+                    
+                    // تحديث العرض
+                    renderInvestorCards();
+                    
+                    // تحديث الإحصائيات
+                    updateCardStatistics();
+                    
+                    showNotification(`تم استيراد ${newCards.length} بطاقة جديدة بنجاح`, 'success');
+                } catch (error) {
+                    console.error('خطأ في استيراد البطاقات:', error);
+                    showNotification('حدث خطأ أثناء استيراد البطاقات: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = () => {
+                showNotification('حدث خطأ أثناء قراءة الملف', 'error');
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        // إضافة عنصر الإدخال للصفحة وتنفيذ النقر
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        
+        // تنظيف
+        setTimeout(() => {
+            document.body.removeChild(fileInput);
+        }, 100);
+    }
+
+    /**
+     * تحسين التعرف على الصوت بإضافة قواعد نحوية للكلمات المتوقعة
+     */
+    function setupSpeechGrammar() {
+        if (!window.SpeechGrammarList) {
+            return; // عدم دعم قوائم القواعد النحوية
+        }
+        
+        try {
+            // قائمة القواعد النحوية للأرقام والكلمات المتوقعة
+            const numbers = '0 1 2 3 4 5 6 7 8 9 صفر واحد اثنان ثلاثة أربعة خمسة ستة سبعة ثمانية تسعة عشرة عشرون ثلاثون أربعون خمسون ستون سبعون ثمانون تسعون مائة مئة ألف مليون';
+            const financialTerms = 'دينار ريال درهم دولار يورو إيداع سحب استثمار ربح أرباح فائدة رصيد مستثمر بطاقة كارت ماستر كارد';
+            
+            // إنشاء قواعد JSGF
+            const grammar = `#JSGF V1.0; grammar numbers; public <numbers> = ${numbers}; public <terms> = ${financialTerms};`;
+            
+            // إنشاء قائمة القواعد النحوية
+            const speechGrammarList = new window.SpeechGrammarList();
+            speechGrammarList.addFromString(grammar, 1);
+            
+            // حفظ القواعد النحوية
+            window.speechGrammarList = speechGrammarList;
+            
+            console.log('تم إعداد قواعد القواميس للتعرف على الصوت للبطاقات');
+        } catch (error) {
+            console.error('خطأ في إعداد قواعد القواميس:', error);
+        }
+    }
+
+    // إضافة تحسينات CSS لجعل البطاقات تبدو أكثر واقعية
+    function enhanceCardStyles() {
+        const styleElement = document.getElementById('investor-card-styles');
+        if (!styleElement) return;
+        
+        // إضافة أنماط محسنة
+        const enhancedStyles = `
+            /* تحسينات عامة للبطاقات */
+            .investor-card {
+                transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            }
+            
+            .investor-card:hover {
+                transform: translateY(-10px) rotateY(5deg);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            }
+            
+            /* تأثيرات بصرية للبطاقة */
+            .investor-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 70%);
+                z-index: 2;
+                transition: all 0.5s ease;
+                pointer-events: none;
+            }
+            
+            .investor-card:hover::before {
+                transform: translateX(100%);
+            }
+            
+            /* تحسين الشريحة */
+            .card-chip {
+                background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .card-chip::before {
+                content: '';
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                right: 5px;
+                bottom: 15px;
+                background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.2) 50%, transparent 75%);
+                background-size: 200% 100%;
+                border-radius: 2px;
+            }
+            
+            /* أنماط البطاقات المتوقفة */
+            .investor-card.inactive {
+                opacity: 0.7;
+                filter: grayscale(80%);
+            }
+            
+            .card-inactive-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: rgba(0, 0, 0, 0.5);
+                color: white;
+                font-size: 2rem;
+                font-weight: bold;
+                text-transform: uppercase;
+                transform: rotate(-25deg);
+                z-index: 10;
+            }
+            
+            /* تحسينات أنماط البطاقات */
+            .investor-card.gold {
+                background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
+                color: #000;
+            }
+            
+            .investor-card.platinum {
+                background: linear-gradient(135deg, #a8a9ad 0%, #e0e1e2 50%, #a8a9ad 100%);
+                color: #000;
+            }
+            
+            .investor-card.premium {
+                background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+                color: #fff;
+            }
+            
+            /* أنماط نمط الخلفية */
+            .card-pattern.circles {
+                background-image: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+            
+            .card-pattern.lines {
+                background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.05) 75%, transparent 75%, transparent);
+                background-size: 8px 8px;
+            }
+            
+            .card-pattern.dots {
+                background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+                background-size: 10px 10px;
+            }
+            
+            .card-pattern.waves {
+                background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 0, transparent 50%);
+                background-size: 10px 10px;
+            }
+            
+            /* تحسينات تأثير القلب */
+            .investor-card-inner {
+                transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            
+            /* تحسينات نتائج البحث الفارغة */
+            .empty-search-results {
+                grid-column: 1 / -1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
+                background-color: rgba(0, 0, 0, 0.02);
+                border-radius: 10px;
+                text-align: center;
+            }
+            
+            .empty-search-results i {
+                font-size: 48px;
+                margin-bottom: 16px;
+                color: #999;
+                opacity: 0.5;
+            }
+            
+            .empty-search-results p {
+                font-size: 16px;
+                color: #666;
+            }
         `;
         
-        // إنشاء الرسوم البيانية
-        if (window.Chart) {
-            // رسم توزيع الرواتب
-            renderEmployeesSalariesReportChart();
-            
-            // رسم أداء الموظفين
-            renderEmployeesPerformanceReportChart();
-        }
+        // إضافة الأنماط المحسنة
+        styleElement.textContent += enhancedStyles;
     }
 
-    /**
-     * رسم مخطط توزيع رواتب الموظفين في التقارير
-     */
-    function renderEmployeesSalariesReportChart() {
-        const canvas = document.getElementById('employees-salaries-report-chart');
-        if (!canvas) return;
+    // تصدير واجهة برمجة التطبيق
+    return {
+        initialize,
+        renderInvestorCards,
+        openCreateCardModal,
+        openScanCardModal,
+        showCardDetails,
+        printAllCards,
+        printCurrentCard,
+        shareCurrentCard,
         
-        // تجميع بيانات الرواتب
-        const employeeSalaries = {};
-        
-        salaryTransactions.forEach(transaction => {
-            if (!employeeSalaries[transaction.employeeId]) {
-                employeeSalaries[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    baseSalary: 0,
-                    commission: 0,
-                    total: 0
-                };
-            }
-            
-            employeeSalaries[transaction.employeeId].baseSalary += transaction.baseSalary || 0;
-            employeeSalaries[transaction.employeeId].commission += transaction.commissionAmount || 0;
-            employeeSalaries[transaction.employeeId].total += transaction.totalSalary || 0;
-        });
-        
-        // تحويل البيانات إلى مصفوفات
-        const labels = [];
-        const baseSalaryData = [];
-        const commissionData = [];
-        
-        Object.values(employeeSalaries).forEach(salary => {
-            labels.push(salary.name);
-            baseSalaryData.push(salary.baseSalary);
-            commissionData.push(salary.commission);
-        });
-        
-        // إنشاء الرسم البياني
-        new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'الراتب الأساسي',
-                        data: baseSalaryData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)'
-                    },
-                    {
-                        label: 'العمولات',
-                        data: commissionData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.7)'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع رواتب الموظفين'
-                    }
-                },
-                scales: {
-                    x: {
-                        stacked: true
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * رسم مخطط أداء الموظفين في التقارير
-     */
-    function renderEmployeesPerformanceReportChart() {
-        const canvas = document.getElementById('employees-performance-report-chart');
-        if (!canvas) return;
-        
-        // تجميع بيانات المبيعات
-        const employeeSales = {};
-        
-        salaryTransactions.forEach(transaction => {
-            if (!employeeSales[transaction.employeeId]) {
-                employeeSales[transaction.employeeId] = {
-                    name: transaction.employeeName,
-                    sales: 0
-                };
-            }
-            
-            employeeSales[transaction.employeeId].sales += transaction.sales || 0;
-        });
-        
-        // تحويل البيانات إلى مصفوفات
-        const data = Object.values(employeeSales).map(sale => ({
-            name: sale.name,
-            sales: sale.sales
-        }));
-        
-        // ترتيب البيانات تنازلياً حسب المبيعات
-        data.sort((a, b) => b.sales - a.sales);
-        
-        // إنشاء الرسم البياني
-        new Chart(canvas.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: data.map(item => item.name),
-                datasets: [{
-                    data: data.map(item => item.sales),
-                    backgroundColor: [
-                        'rgba(59, 130, 246, 0.7)',
-                        'rgba(16, 185, 129, 0.7)',
-                        'rgba(245, 158, 11, 0.7)',
-                        'rgba(239, 68, 68, 0.7)',
-                        'rgba(139, 92, 246, 0.7)',
-                        'rgba(236, 72, 153, 0.7)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'توزيع المبيعات حسب الموظفين'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = formatCurrency(context.raw);
-                                const percentage = ((context.raw / data.reduce((sum, item) => sum + item.sales, 0)) * 100).toFixed(1) + '%';
-                                return `${label}: ${value} (${percentage})`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * ربط نظام الموظفين بنظام المصروفات
-     */
-    function setupExpensesIntegration() {
-        // إذا كان هناك صفحة لوحة تحكم، إضافة قسم لمصروفات الموظفين
-        const dashboard = document.getElementById('dashboard-page');
-        if (!dashboard) return;
-        
-        // البحث عن قسم الإحصائيات
-        const statisticsSection = dashboard.querySelector('.dashboard-cards');
-        if (!statisticsSection) return;
-        
-        // إضافة بطاقة مصروفات الموظفين إذا لم تكن موجودة
-        if (!document.getElementById('employee-expenses-card')) {
-            const employeeExpensesCard = document.createElement('div');
-            employeeExpensesCard.id = 'employee-expenses-card';
-            employeeExpensesCard.className = 'card';
-            employeeExpensesCard.innerHTML = `
-                <div class="card-pattern">
-                    <i class="fas fa-user-tie"></i>
-                </div>
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">مصروفات الموظفين</div>
-                        <div class="card-value" id="employee-expenses">0 دينار</div>
-                        <div class="card-change">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>الشهر الحالي</span>
-                        </div>
-                    </div>
-                    <div class="card-icon warning">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                </div>
-            `;
-            
-            // إضافة البطاقة إلى قسم الإحصائيات
-            statisticsSection.appendChild(employeeExpensesCard);
-            
-            // تحديث البطاقة
-            updateEmployeeExpensesCard();
-        }
-    }
-
-    /**
-     * تحديث بطاقة مصروفات الموظفين
-     */
-    function updateEmployeeExpensesCard() {
-        // البحث عن معاملات رواتب الموظفين للشهر الحالي
-        if (!salaryTransactions) return;
-        
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        
-        // تصفية معاملات الرواتب للشهر الحالي
-        const currentMonthSalaries = salaryTransactions.filter(salary => {
-            const salaryDate = new Date(salary.date);
-            return salaryDate.getMonth() === currentMonth && 
-                   salaryDate.getFullYear() === currentYear;
-        });
-        
-        // حساب إجمالي مصروفات الموظفين
-        const totalExpenses = currentMonthSalaries.reduce((total, salary) => 
-            total + (salary.totalSalary || 0), 0);
-        
-        // تحديث القيمة في البطاقة
-        const expensesElement = document.getElementById('employee-expenses');
-        if (expensesElement) {
-            expensesElement.textContent = formatCurrency(totalExpenses);
-        }
-    }
-
-    /**
-     * إضافة الربط مع نظام المصادقة
-     */
-    function setupAuthIntegration() {
-        // تعيين الصلاحيات للصفحات
-        addPagePermissions();
-        
-        // ربط صلاحيات المستخدمين
-        linkUserPermissions();
-    }
-
-    /**
-     * إضافة صلاحيات الصفحات
-     */
-    function addPagePermissions() {
-        // إذا كان هناك نظام صلاحيات، إضافة صلاحيات للصفحة
-        if (typeof window.PermissionsSystem !== 'undefined') {
-            // إضافة صفحة الموظفين إلى قائمة الصفحات المحمية
-            if (window.PermissionsSystem.addProtectedPage) {
-                window.PermissionsSystem.addProtectedPage('employees', ['admin', 'manager']);
-            }
-        }
-    }
-
-    /**
-     * ربط صلاحيات المستخدمين
-     */
-    function linkUserPermissions() {
-        // إضافة مستمع حدث للتحقق من صلاحيات الوصول
-        document.addEventListener('page:change', function(e) {
-            if (e.detail && e.detail.page === 'employees') {
-                // التحقق من صلاحيات المستخدم للوصول إلى صفحة الموظفين
-                checkEmployeesPageAccess();
-            }
-        });
-    }
-
-    /**
-     * التحقق من صلاحيات الوصول لصفحة الموظفين
-     */
-    function checkEmployeesPageAccess() {
-        // التحقق من وجود نظام صلاحيات
-        if (typeof window.AuthSystem !== 'undefined' && window.AuthSystem.hasPermission) {
-            if (!window.AuthSystem.hasPermission('employees')) {
-                // عرض رسالة خطأ وإعادة التوجيه
-                showNotification('ليس لديك صلاحية للوصول إلى صفحة الموظفين', 'error');
-                
-                // العودة إلى الصفحة الرئيسية
-                const dashboardLink = document.querySelector('a[data-page="dashboard"]');
-                if (dashboardLink) {
-                    dashboardLink.click();
-                }
-            }
-        }
-    }
-
-    // تصدير دوال النظام للاستخدام العام
-    window.EmployeesModule = {
-        activate: activateEmployeesPage,
-        addEmployee: addNewEmployee,
-        editEmployee: editEmployee,
-        deleteEmployee: deleteEmployee,
-        paySalary: payEmployeeSalary,
-        loadEmployees: loadEmployeesData,
-        renderEmployeesTable: renderEmployeesTable,
-        renderSalaryTransactionsTable: renderSalaryTransactionsTable,
-        showEmployeeDetails: showEmployeeDetails,
-        showSalaryDetails: showSalaryDetails,
-        exportEmployeesData: exportEmployeesData,
-        exportSalariesData: exportSalariesData,
-        getArabicMonthName: getArabicMonthName
+        // للاستخدام الداخلي
+        _getInvestorCards: getInvestorCards
     };
-
-    console.log('تم تهيئة نظام إدارة الموظفين ذوي النسبة والرواتب بنجاح');
 })();
+// تفعيل التحسينات الإضافية
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('تحميل الصفحة اكتمل، بدء تهيئة نظام بطاقات المستثمرين...');
+    
+    // محاولة إضافة عنصر القائمة قبل التهيئة
+    verifyMenuItemExists();
+    
+    // البدء بتهيئة النظام الأساسي
+    InvestorCardSystem.initialize()
+        .then(() => {
+            // فحص آخر للتأكد من وجود عنصر القائمة
+            setTimeout(() => {
+                verifyMenuItemExists();
+            }, 500);
+            
+            // تفعيل التحسينات الإضافية
+            enhanceCardStyles();
+            addCardSharingFeature();
+            addCardImportExportFeature();
+            setupSpeechGrammar();
+            
+            console.log('تم تفعيل جميع ميزات نظام بطاقات المستثمرين');
+            
+            // إضافة مستمع الحدث لتحديث البطاقات عند تغيير المستثمرين
+            document.addEventListener('investor:update', () => {
+                InvestorCardSystem.renderInvestorCards();
+            });
+        })
+        .catch(error => {
+            console.error('حدث خطأ أثناء تهيئة نظام بطاقات المستثمرين:', error);
+            
+            // محاولة أخيرة للتأكد من وجود عنصر القائمة
+            setTimeout(() => {
+                verifyMenuItemExists();
+            }, 1000);
+        });
+});
+
+/**
+ * التحقق من وجود عنصر القائمة وإضافته إذا لم يكن موجودًا
+ */
+function verifyMenuItemExists() {
+    // التحقق من وجود عنصر قائمة البطاقات
+    const menuItem = document.querySelector('a[data-page="investor-cards"]');
+    if (!menuItem) {
+        console.warn('تحذير: عنصر قائمة البطاقات غير موجود بعد التهيئة، إعادة المحاولة...');
+        // إعادة محاولة إضافة عنصر القائمة
+        addSidebarMenuItem();
+    } else {
+        console.log('تم التحقق من وجود عنصر قائمة البطاقات');
+    }
+}
