@@ -41,3 +41,11 @@ ipcMain.on('window-maximize', () => {
 ipcMain.on('window-close', () => {
   BrowserWindow.getFocusedWindow()?.close();
 });
+
+// إضافة آلية لإعادة تحميل الصفحة عند اكتشاف تجمد
+ipcMain.on('force-reload', () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) {
+    win.reload();
+  }
+});

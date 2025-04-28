@@ -151,6 +151,7 @@ function addEmployeesPage() {
                                 <i class="fas fa-download"></i>
                                 <span>تصدير</span>
                             </button>
+                            
                         </div>
                     </div>
                     <div class="table-container">
@@ -4396,81 +4397,86 @@ function setupEmployeeReportsIntegration() {
 * ربط نظام الموظفين بنظام المصروفات
 */
 function setupExpensesIntegration() {
-   // إذا كان هناك صفحة مصروفات، إضافة قسم لمصروفات الموظفين
-   const dashboard = document.getElementById('dashboard-page');
-   if (!dashboard) return;
-   
-   // البحث عن قسم الإحصائيات
-   const statisticsSection = dashboard.querySelector('.dashboard-cards');
-   if (!statisticsSection) return;
-   
-   // إضافة بطاقة مصروفات الموظفين
-   const employeeExpensesCard = document.createElement('div');
-   employeeExpensesCard.className = 'card';
-   employeeExpensesCard.innerHTML = `
-       <div class="card-pattern">
-           <i class="fas fa-user-tie"></i>
-       </div>
-       <div class="card-header">
-           <div>
-               <div class="card-title">مصروفات الموظفين</div>
-               <div class="card-value" id="employee-expenses">0 دينار</div>
-               <div class="card-change">
-                   <i class="fas fa-calendar-check"></i>
-                   <span>الشهر الحالي</span>
-               </div>
-           </div>
-           <div class="card-icon warning">
-               <i class="fas fa-money-bill-wave"></i>
-           </div>
-       </div>
-   `;
-   
-   // إضافة البطاقة إلى قسم الإحصائيات
-   statisticsSection.appendChild(employeeExpensesCard);
-   
-   // تحديث البطاقة
-   updateEmployeeExpensesCard();
-   
-   // تحديث البطاقة عند تحديث لوحة التحكم
-   const originalUpdateDashboard = window.updateDashboard;
-   if (typeof originalUpdateDashboard === 'function') {
-       window.updateDashboard = function() {
-           // استدعاء الدالة الأصلية
-           originalUpdateDashboard.apply(this, arguments);
-           
-           // تحديث بطاقة مصروفات الموظفين
-           updateEmployeeExpensesCard();
-       };
-   }
+    // إذا كان هناك صفحة مصروفات، إضافة قسم لمصروفات الموظفين
+    const dashboard = document.getElementById('dashboard-page');
+    if (!dashboard) return;
+    
+    // البحث عن قسم الإحصائيات
+    const statisticsSection = dashboard.querySelector('.dashboard-cards');
+    if (!statisticsSection) return;
+    
+    // إضافة بطاقة مصروفات الموظفين
+    const employeeExpensesCard = document.createElement('div');
+    employeeExpensesCard.className = 'card';
+    employeeExpensesCard.innerHTML = `
+         <div class="card-pattern">
+              <i class="fas fa-user-tie"></i>
+         </div>
+         <div class="card-header">
+              <div>
+                    <div class="card-title">مصروفات الموظفين</div>
+                    <div class="card-value" id="employee-expenses">0 دينار</div>
+                    <div class="card-change">
+                         <i class="fas fa-calendar-check"></i>
+                         <span>الشهر الحالي</span>
+                    </div>
+              </div>
+              <div class="card-icon warning">
+                    <i class="fas fa-money-bill-wave"></i>
+              </div>
+         </div>
+    `;
+    
+    // إضافة البطاقة إلى قسم الإحصائيات
+    statisticsSection.appendChild(employeeExpensesCard);
+    
+    // تحديث البطاقة
+    updateEmployeeExpensesCard();
+    
+    // تحديث البطاقة عند تحديث لوحة التحكم
+    const originalUpdateDashboard = window.updateDashboard;
+    if (typeof originalUpdateDashboard === 'function') {
+         window.updateDashboard = function() {
+              // استدعاء الدالة الأصلية
+              originalUpdateDashboard.apply(this, arguments);
+              
+              // تحديث بطاقة مصروفات الموظفين
+              updateEmployeeExpensesCard();
+         };
+    }
+
+    // إضافة مستمع أحداث لتحديث البطاقة عند صرف الرواتب
+    document.addEventListener('salary:paid', function() {
+         updateEmployeeExpensesCard();
+    });
 }
 
 /**
 * تحديث بطاقة مصروفات الموظفين
 */
 function updateEmployeeExpensesCard() {
-   // البحث عن معاملات رواتب الموظفين للشهر الحالي
-   if (!window.salaryTransactions) return;
-   
-   const currentMonth = new Date().getMonth();
-   const currentYear = new Date().getFullYear();
-   
-   // تصفية معاملات الرواتب للشهر الحالي
-   const currentMonthSalaries = window.salaryTransactions.filter(salary => {
-       const salaryDate = new Date(salary.date);
-       return salaryDate.getMonth() === currentMonth && 
-              salaryDate.getFullYear() === currentYear;
-   });
-   
-   // حساب إجمالي مصروفات الموظفين
-   const totalExpenses = currentMonthSalaries.reduce((total, salary) => 
-       total + (salary.totalSalary || 0), 0);
-   
-   // تحديث القيمة في البطاقة
-   const expensesElement = document.getElementById('employee-expenses');
-   if (expensesElement) {
-       expensesElement.textContent = formatCurrency(totalExpenses);
-   }
+    // البحث عن معاملات رواتب الموظفين للشهر الحالي
+    if (!window.salaryTransactions) return;
+    
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    // تصفية معاملات الرواتب للشهر الحالي
+    const currentMonthSalaries = window.salaryTransactions.filter(salary => {
+         const salaryDate = new Date(salary.date);
+         return salaryDate.getMonth() === currentMonth && 
+                  salaryDate.getFullYear() === currentYear;
+    });
+    
+    // حساب إجمالي مصروفات الموظفين
+    const totalExpenses = currentMonthSalaries.reduce((total, salary) => 
+         total + (salary.totalSalary || 0), 0);
+    
+    // تحديث القيمة في البطاقة
+    const expensesElement = document.getElementById('employee-expenses');
+    if (expensesElement) {
+         expensesElement.textContent = formatCurrency(totalExpenses);
+    }
 }
 
 /**
@@ -6113,4 +6119,219 @@ console.log('تم تهيئة تكامل نظام إدارة الموظفين ب�
             }
         });
     }
+
+
+
+/**
+ * نظام الاستثمار المتكامل - الشريط الجانبي والتنقل
+ * يتحكم في وظائف الشريط الجانبي والتنقل بين الصفحات المختلفة
+ */
+
+class Navigation {
+    constructor() {
+        // عناصر واجهة المستخدم
+        this.sidebar = document.querySelector('.sidebar');
+        this.mainContent = document.querySelector('.main-content');
+        this.toggleButtons = document.querySelectorAll('.toggle-sidebar');
+        this.navLinks = document.querySelectorAll('.nav-link');
+        this.pages = document.querySelectorAll('.page');
+        
+        // تعيين الصفحة النشطة
+        this.activePage = 'dashboard';
+        
+        // معدلات التغيير
+        this.transitionDuration = 300; // مللي ثانية
+        
+        // تهيئة الأحداث
+        this.initEvents();
+        
+        // تطبيق حالة الشريط الجانبي المحفوظة
+        this.applySavedSidebarState();
+    }
+    
+    // تهيئة الأحداث
+    initEvents() {
+        // أحداث أزرار طي/فتح الشريط الجانبي
+        this.toggleButtons.forEach(button => {
+            button.addEventListener('click', () => this.toggleSidebar());
+        });
+        
+        // أحداث روابط التنقل
+        this.navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                if (page) {
+                    this.navigateTo(page);
+                }
+            });
+        });
+        
+        // الاستجابة لتغير حجم النافذة
+        window.addEventListener('resize', () => this.handleResize());
+    }
+    
+    // طي/فتح الشريط الجانبي
+    toggleSidebar() {
+        const layout = document.querySelector('.layout');
+        layout.classList.toggle('sidebar-collapsed');
+        
+        // حفظ حالة الشريط الجانبي
+        this.saveSidebarState(layout.classList.contains('sidebar-collapsed'));
+        
+        // إرسال حدث تغيير حجم الشريط الجانبي
+        this.dispatchSidebarEvent(layout.classList.contains('sidebar-collapsed'));
+    }
+    
+    // التنقل إلى صفحة معينة
+    navigateTo(page) {
+        // لا نفعل شيئًا إذا كانت الصفحة هي نفسها النشطة حاليًا
+        if (page === this.activePage) {
+            return;
+        }
+        
+        // تحديث الروابط النشطة
+        this.navLinks.forEach(link => {
+            if (link.getAttribute('data-page') === page) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+        
+        // تحديث الصفحات النشطة مع تأثير التلاشي
+        this.pages.forEach(pageEl => {
+            const pageId = pageEl.id.replace('-page', '');
+            
+            if (pageId === page) {
+                // نضيف تأثير الظهور للصفحة الجديدة
+                pageEl.style.opacity = '0';
+                pageEl.classList.add('active');
+                
+                // تأثير ظهور تدريجي
+                setTimeout(() => {
+                    pageEl.style.opacity = '1';
+                    pageEl.style.transition = `opacity ${this.transitionDuration}ms ease`;
+                }, 50);
+            } else {
+                if (pageEl.classList.contains('active')) {
+                    // إخفاء الصفحة السابقة بتلاشي تدريجي
+                    pageEl.style.opacity = '0';
+                    pageEl.style.transition = `opacity ${this.transitionDuration}ms ease`;
+                    
+                    setTimeout(() => {
+                        pageEl.classList.remove('active');
+                    }, this.transitionDuration);
+                } else {
+                    pageEl.classList.remove('active');
+                }
+            }
+        });
+        
+        // تحديث الصفحة النشطة
+        this.activePage = page;
+        
+        // حفظ الصفحة النشطة في التخزين المحلي
+        localStorage.setItem('activePage', page);
+        
+        // إرسال حدث تغيير الصفحة
+        this.dispatchPageChangeEvent(page);
+        
+        // تمرير للأعلى
+        window.scrollTo(0, 0);
+    }
+    
+    // التعامل مع تغيير حجم النافذة
+    handleResize() {
+        // إغلاق الشريط الجانبي تلقائيًا في الشاشات الصغيرة
+        if (window.innerWidth < 768) {
+            document.querySelector('.layout').classList.add('sidebar-collapsed');
+            this.saveSidebarState(true);
+        }
+    }
+    
+    // حفظ حالة الشريط الجانبي
+    saveSidebarState(isCollapsed) {
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    }
+    
+    // تطبيق حالة الشريط الجانبي المحفوظة
+    applySavedSidebarState() {
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        
+        if (isCollapsed) {
+            document.querySelector('.layout').classList.add('sidebar-collapsed');
+        } else {
+            document.querySelector('.layout').classList.remove('sidebar-collapsed');
+        }
+        
+        // تطبيق الصفحة المحفوظة
+        const savedPage = localStorage.getItem('activePage');
+        if (savedPage) {
+            this.navigateTo(savedPage);
+        }
+        
+        // للشاشات الصغيرة، نغلق الشريط الجانبي تلقائيًا
+        this.handleResize();
+    }
+    
+    // إرسال حدث تغيير حجم الشريط الجانبي
+    dispatchSidebarEvent(isCollapsed) {
+        const event = new CustomEvent('sidebar:toggle', {
+            detail: { isCollapsed }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    // إرسال حدث تغيير الصفحة
+    dispatchPageChangeEvent(page) {
+        const event = new CustomEvent('page:change', {
+            detail: { page }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    // فتح الشريط الجانبي
+    openSidebar() {
+        document.querySelector('.layout').classList.remove('sidebar-collapsed');
+        this.saveSidebarState(false);
+        this.dispatchSidebarEvent(false);
+    }
+    
+    // إغلاق الشريط الجانبي
+    closeSidebar() {
+        document.querySelector('.layout').classList.add('sidebar-collapsed');
+        this.saveSidebarState(true);
+        this.dispatchSidebarEvent(true);
+    }
+    
+    // إضافة سلوك التمرير عند التنقل السريع
+    enableSmoothScrolling() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href').substring(1);
+                if (!targetId) return;
+                
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    }
+}
+
+// إنشاء كائن التنقل عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    window.navigation = new Navigation();
+});
+
+
+
+
+
 })();

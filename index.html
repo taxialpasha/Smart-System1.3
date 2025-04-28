@@ -72,11 +72,60 @@
         </button>
     </div>
     <div class="window-controls">
+        <!-- إضافة زر جديد لإعادة ضبط المصنع -->
+        <button class="btn-control" id="factory-reset-btn" title="إعادة ضبط المصنع">
+            <i class="fas fa-undo-alt"></i>
+        </button>
+        <button class="btn-control" id="refresh-toggle-btn" title="تحديد تحديث الصفحة">
+            <i class="fas fa-redo"></i>
+        </button>
         <button class="btn-control" id="minimize-btn">—</button>
         <button class="btn-control" id="maximize-btn">☐</button>
         <button class="btn-control close" id="close-btn">✕</button>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const factoryResetButton = document.getElementById('factory-reset-btn');
+
+        if (factoryResetButton) {
+            factoryResetButton.addEventListener('click', function () {
+                const confirmReset = confirm('هل أنت متأكد أنك تريد إعادة ضبط المصنع؟ سيتم حذف جميع البيانات والإعدادات.');
+                if (confirmReset) {
+                    // تنفيذ عملية إعادة ضبط المصنع
+                    try {
+                        // حذف البيانات من التخزين المحلي
+                        localStorage.clear();
+                        sessionStorage.clear();
+
+                        // إعادة تحميل الصفحة لإعادة التهيئة
+                        alert('تمت إعادة ضبط المصنع بنجاح. سيتم إعادة تشغيل البرنامج الآن.');
+                        location.reload();
+                    } catch (error) {
+                        console.error('حدث خطأ أثناء إعادة ضبط المصنع:', error);
+                        alert('حدث خطأ أثناء إعادة ضبط المصنع. يرجى المحاولة مرة أخرى.');
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const refreshToggleButton = document.getElementById('refresh-toggle-btn');
+
+        if (refreshToggleButton) {
+            refreshToggleButton.addEventListener('click', function () {
+                const shouldRefresh = confirm('هل تريد تحديث الصفحة بالكامل؟');
+                if (shouldRefresh) {
+                    location.reload();
+                }
+            });
+        }
+    });
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -247,7 +296,7 @@
                     <h1 class="page-title">لوحة التحكم</h1>
                     <div class="header-actions">
                         <div class="search-box">
-                            <input class="search-input" placeholder="بحث..." type="text" />
+                            <input class="search-input" placeholder="بحث..." type="text" data-smart-search="true" autocomplete="off" data-search-type="all" id="smart-search-input" />
                             <i class="fas fa-search search-icon"></i>
                         </div>
                         <!-- هذا نموذج لما يجب تعديله في ملف index.html -->
@@ -1221,7 +1270,7 @@
 
     <!-- Scripts -->
     <!-- ملفات الأصلية (غير أساسية للتشغيل الجديد) -->
-
+    <script src="smart-search-assistant.js"></script>
     <script src="firebase-sync.js"></script>
     <!-- <script src="notifications.js"></script>
     <script src="sidebar.js"></script>
@@ -1236,6 +1285,8 @@
     <!--  -->
     <!-- ملف يحتوي على إصلاحات عامة للتطبيق -->
     <script src="app-fixed.js"></script>
+
+
 
     <!-- مكتبة لتنسيق العملات -->
     <script src="currency-formatter.js"></script>
@@ -1263,6 +1314,10 @@
     <script src="fix-permissions-loading.js"></script>
     <script src="permissions-enforcement.js"></script>
     <script src="permissions-monitor.js"></script>
+   
+   
+   
+    
 
     <!-- نظام إعادة تعيين الأرباح -->
     <script src="profit-reset.js"></script>
@@ -1271,6 +1326,7 @@
     <script src="installment-5system-loader.js"></script>
     
     <script src="profit-installment-fix.js"></script>
+    <script src="installment-6system.js"></script>
 
     <!-- إصلاحات تخزين الأقساط -->
 
@@ -1283,9 +1339,10 @@
     <script src="employee-function-fix.js"></script>
     <script src="employee-functions-complete-fix.js"></script>
     
-    <script src="smart-search-assistant.js"></script>
+    
     
     <script src="print-salaries.js"></script>
+    <script src="improved-integration.js"></script>
     
     <!-- نظام إدارة الأقساط باستخدام Firebase -->
    
