@@ -1574,7 +1574,7 @@ const InvestorCardSystem = (function() {
         // إنشاء كود الباركود
         const barcode = generateBarcode(investor.id);
         
-       // إنشاء بيانات البطاقة
+      // إنشاء بيانات البطاقة
 const newCard = {
     id: 'card_' + Date.now().toString(),
     investorId: investor.id,
@@ -1607,6 +1607,7 @@ updateCardStatistics();
 
 // عرض رسالة نجاح
 showNotification('تم إنشاء بطاقة المستثمر بنجاح', 'success');
+}
 
 /**
  * عرض تفاصيل البطاقة
@@ -2281,8 +2282,7 @@ function filterCards(filterType) {
     // تصفية حسب النوع
     cardElements.forEach(element => {
         const card = element.querySelector('.investor-card');
-        if (!card) return;
-        
+        if (!card) return
         const isActive = !card.classList.contains('inactive');
         
         switch (filterType) {
@@ -2315,669 +2315,670 @@ function searchCards(searchText) {
         }
         return;
     }
-    
- // البحث في البطاقات
-    const cards = getInvestorCards();
-    const filteredCards = cards.filter(card => {
-        return (
-            card.investorName.toLowerCase().includes(searchText.toLowerCase()) ||
-            card.investorPhone.includes(searchText) ||
-            card.cardNumber.replace(/\s/g, '').includes(searchText.replace(/\s/g, '')) ||
-            card.barcode.includes(searchText)
-        );
-    });
-    
-    // عرض البطاقات المطابقة فقط
-    const container = document.getElementById('investor-cards-container');
-    if (!container) return;
-    
-    // التحقق من وجود بطاقات مطابقة
-    if (filteredCards.length === 0) {
-        container.innerHTML = `
-            <div class="empty-search-results">
-                <i class="fas fa-search"></i>
-                <p>لم يتم العثور على نتائج للبحث: "${searchText}"</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // إخفاء جميع البطاقات أولاً
-    const cardElements = container.querySelectorAll('.investor-card-container');
-    cardElements.forEach(element => {
-        element.style.display = 'none';
-    });
-    
-    // إظهار البطاقات المطابقة
-    filteredCards.forEach(card => {
-        const cardElement = container.querySelector(`.investor-card[data-id="${card.id}"]`);
-        if (cardElement) {
-            cardElement.parentElement.style.display = 'block';
-        }
-    });
+   // البحث في البطاقات
+   const cards = getInvestorCards();
+   const filteredCards = cards.filter(card => {
+       return (
+           card.investorName.toLowerCase().includes(searchText.toLowerCase()) ||
+           card.investorPhone.includes(searchText) ||
+           card.cardNumber.replace(/\s/g, '').includes(searchText.replace(/\s/g, '')) ||
+           card.barcode.includes(searchText)
+       );
+   });
+   
+   // عرض البطاقات المطابقة فقط
+   const container = document.getElementById('investor-cards-container');
+   if (!container) return;
+   
+   // التحقق من وجود بطاقات مطابقة
+   if (filteredCards.length === 0) {
+       container.innerHTML = `
+           <div class="empty-search-results">
+               <i class="fas fa-search"></i>
+               <p>لم يتم العثور على نتائج للبحث: "${searchText}"</p>
+           </div>
+       `;
+       return;
+   }
+   
+   // إخفاء جميع البطاقات أولاً
+   const cardElements = container.querySelectorAll('.investor-card-container');
+   cardElements.forEach(element => {
+       element.style.display = 'none';
+   });
+   
+   // إظهار البطاقات المطابقة
+   filteredCards.forEach(card => {
+       const cardElement = container.querySelector(`.investor-card[data-id="${card.id}"]`);
+       if (cardElement) {
+           cardElement.parentElement.style.display = 'block';
+       }
+   });
 }
 
 /**
- * الحصول على بطاقات المستثمرين
- * @returns {Array} مصفوفة البطاقات
- */
+* الحصول على بطاقات المستثمرين
+* @returns {Array} مصفوفة البطاقات
+*/
 function getInvestorCards() {
-    // الحصول من التخزين المحلي
-    const cardsString = localStorage.getItem('investorCards');
-    
-    // التحقق من وجود بيانات
-    if (!cardsString) {
-        return [];
-    }
-    
-    // تحويل البيانات إلى كائن
-    try {
-        return JSON.parse(cardsString);
-    } catch (error) {
-        console.error('خطأ في تحليل بيانات البطاقات:', error);
-        return [];
-    }
+   // الحصول من التخزين المحلي
+   const cardsString = localStorage.getItem('investorCards');
+   
+   // التحقق من وجود بيانات
+   if (!cardsString) {
+       return [];
+   }
+   
+   // تحويل البيانات إلى كائن
+   try {
+       return JSON.parse(cardsString);
+   } catch (error) {
+       console.error('خطأ في تحليل بيانات البطاقات:', error);
+       return [];
+   }
 }
 
 /**
- * حفظ بطاقات المستثمرين
- * @param {Array} cards مصفوفة البطاقات
- */
+* حفظ بطاقات المستثمرين
+* @param {Array} cards مصفوفة البطاقات
+*/
 function saveInvestorCards(cards) {
-    // التحقق من صحة البيانات
-    if (!Array.isArray(cards)) {
-        console.error('البيانات المراد حفظها ليست مصفوفة');
-        return false;
-    }
-    
-    // حفظ البيانات في التخزين المحلي
-    try {
-        localStorage.setItem('investorCards', JSON.stringify(cards));
-        return true;
-    } catch (error) {
-        console.error('خطأ في حفظ بيانات البطاقات:', error);
-        return false;
-    }
+   // التحقق من صحة البيانات
+   if (!Array.isArray(cards)) {
+       console.error('البيانات المراد حفظها ليست مصفوفة');
+       return false;
+   }
+   
+   // حفظ البيانات في التخزين المحلي
+   try {
+       localStorage.setItem('investorCards', JSON.stringify(cards));
+       return true;
+   } catch (error) {
+       console.error('خطأ في حفظ بيانات البطاقات:', error);
+       return false;
+   }
 }
 
 /**
- * إنشاء رقم بطاقة فريد
- * @param {string} investorId معرف المستثمر
- * @returns {string} رقم البطاقة
- */
+* إنشاء رقم بطاقة فريد
+* @param {string} investorId معرف المستثمر
+* @returns {string} رقم البطاقة
+*/
 function generateCardNumber(investorId) {
-    // استخدام معرف المستثمر لإنشاء رقم فريد
-    const now = Date.now().toString();
-    const idPart = investorId.replace(/\D/g, '').substr(0, 6).padStart(6, '0');
-    
-    // إنشاء رقم مكون من 16 رقم
-    let cardNumber = '4' + idPart + now.substr(-9);
-    
-    // التحقق من طول الرقم
-    if (cardNumber.length > 16) {
-        cardNumber = cardNumber.substr(0, 16);
-    } else if (cardNumber.length < 16) {
-        cardNumber = cardNumber.padEnd(16, '0');
-    }
-    
-    return cardNumber;
+   // استخدام معرف المستثمر لإنشاء رقم فريد
+   const now = Date.now().toString();
+   const idPart = investorId.replace(/\D/g, '').substr(0, 6).padStart(6, '0');
+   
+   // إنشاء رقم مكون من 16 رقم
+   let cardNumber = '4' + idPart + now.substr(-9);
+   
+   // التحقق من طول الرقم
+   if (cardNumber.length > 16) {
+       cardNumber = cardNumber.substr(0, 16);
+   } else if (cardNumber.length < 16) {
+       cardNumber = cardNumber.padEnd(16, '0');
+   }
+   
+   return cardNumber;
 }
 
 /**
- * إنشاء رمز الأمان CVV
- * @returns {string} رمز الأمان
- */
+* إنشاء رمز الأمان CVV
+* @returns {string} رمز الأمان
+*/
 function generateCVV() {
-    // إنشاء رقم عشوائي من 3 أرقام
-    return Math.floor(100 + Math.random() * 900).toString();
+   // إنشاء رقم عشوائي من 3 أرقام
+   return Math.floor(100 + Math.random() * 900).toString();
 }
 
 /**
- * إنشاء رمز الباركود
- * @param {string} investorId معرف المستثمر
- * @returns {string} رمز الباركود
- */
+* إنشاء رمز الباركود
+* @param {string} investorId معرف المستثمر
+* @returns {string} رمز الباركود
+*/
 function generateBarcode(investorId) {
-    // إنشاء رمز مكون من 13 رقم
-    const prefix = '977'; // رمز تعريف
-    const idPart = investorId.replace(/\D/g, '').substr(0, 5).padStart(5, '0');
-    const now = Date.now().toString().substr(-5);
-    
-    return prefix + idPart + now;
+   // إنشاء رمز مكون من 13 رقم
+   const prefix = '977'; // رمز تعريف
+   const idPart = investorId.replace(/\D/g, '').substr(0, 5).padStart(5, '0');
+   const now = Date.now().toString().substr(-5);
+   
+   return prefix + idPart + now;
 }
 
 /**
- * تنسيق رقم البطاقة للعرض
- * @param {string} cardNumber رقم البطاقة
- * @returns {string} رقم البطاقة المنسق
- */
+* تنسيق رقم البطاقة للعرض
+* @param {string} cardNumber رقم البطاقة
+* @returns {string} رقم البطاقة المنسق
+*/
 function formatCardNumber(cardNumber) {
-    // التحقق من صحة الرقم
-    if (!cardNumber || typeof cardNumber !== 'string') {
-        return '•••• •••• •••• ••••';
-    }
-    
-    // تقسيم الرقم إلى مجموعات من 4 أرقام
-    return cardNumber.replace(/(.{4})/g, '$1 ').trim();
+   // التحقق من صحة الرقم
+   if (!cardNumber || typeof cardNumber !== 'string') {
+       return '•••• •••• •••• ••••';
+   }
+   
+   // تقسيم الرقم إلى مجموعات من 4 أرقام
+   return cardNumber.replace(/(.{4})/g, '$1 ').trim();
 }
 
 /**
- * الحصول على اسم نوع البطاقة بالعربية
- * @param {string} cardType نوع البطاقة
- * @returns {string} اسم النوع بالعربية
- */
+* الحصول على اسم نوع البطاقة بالعربية
+* @param {string} cardType نوع البطاقة
+* @returns {string} اسم النوع بالعربية
+*/
 function getCardTypeArabic(cardType) {
-    switch (cardType) {
-        case 'default':
-            return 'قياسية';
-        case 'gold':
-            return 'ذهبية';
-        case 'platinum':
-            return 'بلاتينية';
-        case 'premium':
-            return 'بريميوم';
-        default:
-            return cardType;
-    }
+   switch (cardType) {
+       case 'default':
+           return 'قياسية';
+       case 'gold':
+           return 'ذهبية';
+       case 'platinum':
+           return 'بلاتينية';
+       case 'premium':
+           return 'بريميوم';
+       default:
+           return cardType;
+   }
 }
 
 /**
- * الحصول على اسم حالة البطاقة بالعربية
- * @param {string} status حالة البطاقة
- * @returns {string} اسم الحالة بالعربية
- */
+* الحصول على اسم حالة البطاقة بالعربية
+* @param {string} status حالة البطاقة
+* @returns {string} اسم الحالة بالعربية
+*/
 function getCardStatusArabic(status) {
-    switch (status) {
-        case 'active':
-            return 'نشطة';
-        case 'inactive':
-            return 'متوقفة';
-        case 'expired':
-            return 'منتهية';
-        default:
-            return status;
-    }
+   switch (status) {
+       case 'active':
+           return 'نشطة';
+       case 'inactive':
+           return 'متوقفة';
+       case 'expired':
+           return 'منتهية';
+       default:
+           return status;
+   }
 }
 
 /**
- * تنسيق التاريخ للعرض
- * @param {string} dateString تاريخ
- * @returns {string} التاريخ المنسق
- */
+* تنسيق التاريخ للعرض
+* @param {string} dateString تاريخ
+* @returns {string} التاريخ المنسق
+*/
 function formatDate(dateString) {
-    if (!dateString) return '-';
-    
-    const date = new Date(dateString);
-    
-    // التحقق من صحة التاريخ
-    if (isNaN(date.getTime())) {
-        return dateString;
-    }
-    
-    // تنسيق التاريخ بالصيغة المحلية
-    return date.toLocaleDateString('ar-SA');
+   if (!dateString) return '-';
+   
+   const date = new Date(dateString);
+   
+   // التحقق من صحة التاريخ
+   if (isNaN(date.getTime())) {
+       return dateString;
+   }
+   
+   // تنسيق التاريخ بالصيغة المحلية
+   return date.toLocaleDateString('ar-SA');
 }
 
 /**
- * تنسيق المبلغ المالي للعرض
- * @param {number} amount المبلغ
- * @returns {string} المبلغ المنسق
- */
+* تنسيق المبلغ المالي للعرض
+* @param {number} amount المبلغ
+* @returns {string} المبلغ المنسق
+*/
 function formatCurrency(amount) {
-    if (typeof amount !== 'number') {
-        amount = parseFloat(amount) || 0;
-    }
-    
-    // التحقق من وجود دالة التنسيق في النظام الأساسي
-    if (typeof window.formatCurrency === 'function') {
-        return window.formatCurrency(amount);
-    }
-    
-    // تنسيق افتراضي
-    const formattedAmount = amount.toLocaleString('ar-SA', {
-        maximumFractionDigits: 2,
-        minimumFractionDigits: 0
-    });
-    
-    // إضافة العملة
-    const currency = window.settings && window.settings.currency ? window.settings.currency : 'دينار';
-    return `${formattedAmount} ${currency}`;
+   if (typeof amount !== 'number') {
+       amount = parseFloat(amount) || 0;
+   }
+   
+   // التحقق من وجود دالة التنسيق في النظام الأساسي
+   if (typeof window.formatCurrency === 'function') {
+       return window.formatCurrency(amount);
+   }
+   
+   // تنسيق افتراضي
+   const formattedAmount = amount.toLocaleString('ar-SA', {
+       maximumFractionDigits: 2,
+       minimumFractionDigits: 0
+   });
+   
+   // إضافة العملة
+   const currency = window.settings && window.settings.currency ? window.settings.currency : 'دينار';
+   return `${formattedAmount} ${currency}`;
 }
 
 /**
- * عرض إشعار للمستخدم
- * @param {string} message نص الإشعار
- * @param {string} type نوع الإشعار
- */
+* عرض إشعار للمستخدم
+* @param {string} message نص الإشعار
+* @param {string} type نوع الإشعار
+*/
 function showNotification(message, type = 'info') {
-    // استخدام دالة النظام الأساسي إذا كانت متاحة
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
-        return;
-    }
-    
-    // إنشاء إشعار بديل
-    console.log(`[${type.toUpperCase()}] ${message}`);
-    
-    alert(message);
+   // استخدام دالة النظام الأساسي إذا كانت متاحة
+   if (typeof window.showNotification === 'function') {
+       window.showNotification(message, type);
+       return;
+   }
+   
+   // إنشاء إشعار بديل
+   console.log(`[${type.toUpperCase()}] ${message}`);
+   
+   alert(message);
 }
 
 // تصدير واجهة برمجة التطبيقات
 return {
-    initialize,
-    renderInvestorCards,
-    openCreateCardModal,
-    openScanCardModal,
-    showCardDetails,
-    printAllCards,
-    
-    // للاستخدام الداخلي
-    _getInvestorCards: getInvestorCards
+   initialize,
+   renderInvestorCards,
+   openCreateCardModal,
+   openScanCardModal,
+   showCardDetails,
+   printAllCards,
+   
+   // للاستخدام الداخلي
+   _getInvestorCards: getInvestorCards
 };
 })();
 
 /**
- * المزيد من التحسينات على نظام بطاقات المستثمرين
- */
+* المزيد من التحسينات على نظام بطاقات المستثمرين
+*/
 
 // إضافة تحسينات CSS لجعل البطاقات تبدو أكثر واقعية
 function enhanceCardStyles() {
-    const styleElement = document.getElementById('investor-card-styles');
-    if (!styleElement) return;
-    
-    // إضافة أنماط محسنة
-    const enhancedStyles = `
-        /* تحسينات عامة للبطاقات */
-        .investor-card {
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-        
-        .investor-card:hover {
-            transform: translateY(-10px) rotateY(5deg);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* تأثيرات بصرية للبطاقة */
-        .investor-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 70%);
-            z-index: 2;
-            transition: all 0.5s ease;
-            pointer-events: none;
-        }
-        
-        .investor-card:hover::before {
-            transform: translateX(100%);
-        }
-        
-        /* تحسين الشريحة */
-        .card-chip {
-            background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .card-chip::before {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            right: 5px;
-            bottom: 15px;
-            background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.2) 50%, transparent 75%);
-            background-size: 200% 100%;
-            border-radius: 2px;
-        }
-        
-        /* أنماط البطاقات المتوقفة */
-        .investor-card.inactive {
-            opacity: 0.7;
-            filter: grayscale(80%);
-        }
-        
-        .card-inactive-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            transform: rotate(-25deg);
-            z-index: 10;
-        }
-        
-        /* تحسينات أنماط البطاقات */
-        .investor-card.gold {
-            background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
-            color: #000;
-        }
-        
-        .investor-card.platinum {
-            background: linear-gradient(135deg, #a8a9ad 0%, #e0e1e2 50%, #a8a9ad 100%);
-            color: #000;
-        }
-        
-        .investor-card.premium {
-            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
-            color: #fff;
-        }
-        
-        /* أنماط نمط الخلفية */
-        .card-pattern.circles {
-            background-image: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        
-        .card-pattern.lines {
-            background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.05) 75%, transparent 75%, transparent);
-            background-size: 8px 8px;
-        }
-        
-        .card-pattern.dots {
-            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 10px 10px;
-        }
-        
-        .card-pattern.waves {
-            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 0, transparent 50%);
-            background-size: 10px 10px;
-        }
-        
-        /* تحسينات تأثير القلب */
-        .investor-card-inner {
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        /* تحسينات نتائج البحث الفارغة */
-        .empty-search-results {
-            grid-column: 1 / -1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            background-color: rgba(0, 0, 0, 0.02);
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .empty-search-results i {
-            font-size: 48px;
-            margin-bottom: 16px;
-            color: #999;
-            opacity: 0.5;
-        }
-        
-        .empty-search-results p {
-            font-size: 16px;
-            color: #666;
-        }
-    `;
-    
-    // إضافة الأنماط المحسنة
-    styleElement.textContent += enhancedStyles;
+   const styleElement = document.getElementById('investor-card-styles');
+   if (!styleElement) return;
+   
+   // إضافة أنماط محسنة
+   const enhancedStyles = `
+       /* تحسينات عامة للبطاقات */
+       .investor-card {
+           transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+       }
+       
+       .investor-card:hover {
+           transform: translateY(-10px) rotateY(5deg);
+           box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+       }
+       
+       /* تأثيرات بصرية للبطاقة */
+       .investor-card::before {
+           content: '';
+           position: absolute;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 70%);
+           z-index: 2;
+           transition: all 0.5s ease;
+           pointer-events: none;
+       }
+       
+       .investor-card:hover::before {
+           transform: translateX(100%);
+       }
+       
+       /* تحسين الشريحة */
+       .card-chip {
+           background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
+           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+           border-radius: 4px;
+           overflow: hidden;
+       }
+       
+       .card-chip::before {
+           content: '';
+           position: absolute;
+           top: 5px;
+           left: 5px;
+           right: 5px;
+           bottom: 15px;
+           background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.2) 50%, transparent 75%);
+           background-size: 200% 100%;
+           border-radius: 2px;
+       }
+       
+       /* أنماط البطاقات المتوقفة */
+       .investor-card.inactive {
+           opacity: 0.7;
+           filter: grayscale(80%);
+       }
+       
+       .card-inactive-overlay {
+           position: absolute;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           background-color: rgba(0, 0, 0, 0.5);
+           color: white;
+           font-size: 2rem;
+           font-weight: bold;
+           text-transform: uppercase;
+           transform: rotate(-25deg);
+           z-index: 10;
+       }
+       
+       /* تحسينات أنماط البطاقات */
+       .investor-card.gold {
+           background: linear-gradient(135deg, #d4af37 0%, #f5cc7f 50%, #d4af37 100%);
+           color: #000;
+       }
+       
+       .investor-card.platinum {
+           background: linear-gradient(135deg, #a8a9ad 0%, #e0e1e2 50%, #a8a9ad 100%);
+           color: #000;
+       }
+       
+       .investor-card.premium {
+           background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+           color: #fff;
+       }
+       
+       /* أنماط نمط الخلفية */
+       .card-pattern.circles {
+           background-image: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+           background-size: 20px 20px;
+       }
+       
+       .card-pattern.lines {
+           background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.05) 75%, transparent 75%, transparent);
+           background-size: 8px 8px;
+       }
+       
+       .card-pattern.dots {
+           background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+           background-size: 10px 10px;
+       }
+       
+       .card-pattern.waves {
+           background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px, transparent 0, transparent 50%);
+           background-size: 10px 10px;
+       }
+       
+       /* تحسينات تأثير القلب */
+       .investor-card-inner {
+           transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+       }
+       
+       /* تحسينات نتائج البحث الفارغة */
+       .empty-search-results {
+           grid-column: 1 / -1;
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           justify-content: center;
+           padding: 40px;
+           background-color: rgba(0, 0, 0, 0.02);
+           border-radius: 10px;
+           text-align: center;
+       }
+       
+       .empty-search-results i {
+           font-size: 48px;
+           margin-bottom: 16px;
+           color: #999;
+           opacity: 0.5;
+       }
+       
+       .empty-search-results p {
+           font-size: 16px;
+           color: #666;
+       }
+   `;
+   
+   // إضافة الأنماط المحسنة
+   styleElement.textContent += enhancedStyles;
 }
 
 // إضافة ميزة مشاركة البطاقة
 function addCardSharingFeature() {
-    /**
-     * مشاركة البطاقة
-     * @param {string} cardId معرف البطاقة
-     */
-    function shareCard(cardId) {
-        // البحث عن البطاقة
-        const cards = InvestorCardSystem._getInvestorCards();
-        const card = cards.find(c => c.id === cardId);
-        
-        if (!card) {
-            showNotification('لم يتم العثور على البطاقة', 'error');
-            return;
-        }
-        
-        // إنشاء نص المشاركة
-        const shareText = `بطاقة المستثمر: ${card.investorName}
+   /**
+    * مشاركة البطاقة
+    * @param {string} cardId معرف البطاقة
+    */
+   function shareCard(cardId) {
+       // البحث عن البطاقة
+       const cards = InvestorCardSystem._getInvestorCards();
+       const card = cards.find(c => c.id === cardId);
+       
+       if (!card) {
+           showNotification('لم يتم العثور على البطاقة', 'error');
+           return;
+       }
+       
+       // إنشاء نص المشاركة
+       const shareText = `بطاقة المستثمر: ${card.investorName}
 رقم البطاقة: ${formatCardNumber(card.cardNumber)}
 تاريخ الانتهاء: ${formatDate(card.expiryDate)}
 نوع البطاقة: ${getCardTypeArabic(card.cardType)}`;
-        
-        // مشاركة عبر واجهة مشاركة المتصفح إذا كانت متاحة
-        if (navigator.share) {
-            navigator.share({
-                title: `بطاقة المستثمر - ${card.investorName}`,
-                text: shareText
-            })
-            .then(() => {
-                showNotification('تمت المشاركة بنجاح', 'success');
-            })
-            .catch((error) => {
-                console.error('خطأ في مشاركة البطاقة:', error);
-                showNotification('حدث خطأ أثناء المشاركة', 'error');
-                
-                // استخدام النسخ إلى الحافظة كحل بديل
-                copyToClipboard(shareText);
-            });
-        } else {
-            // استخدام النسخ إلى الحافظة
-            copyToClipboard(shareText);
-        }
-    }
-    
-    /**
-     * نسخ النص إلى الحافظة
-     * @param {string} text النص المراد نسخه
-     */
-    function copyToClipboard(text) {
-        // إنشاء عنصر نصي مؤقت
-        const el = document.createElement('textarea');
-        el.value = text;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
-        document.body.appendChild(el);
-        
-        // تحديد النص ونسخه
-        el.select();
-        document.execCommand('copy');
-        
-        // إزالة العنصر المؤقت
-        document.body.removeChild(el);
-        
-        showNotification('تم نسخ معلومات البطاقة إلى الحافظة', 'success');
-    }
-    
-    // إضافة زر المشاركة إلى نافذة عرض البطاقة
-    const modalFooter = document.querySelector('#show-card-modal .modal-footer');
-    if (modalFooter) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-info';
-        shareBtn.id = 'share-card-btn';
-        shareBtn.innerHTML = '<i class="fas fa-share-alt"></i><span>مشاركة</span>';
-        
-        modalFooter.querySelector('.btn-group').appendChild(shareBtn);
-        
-        // إضافة مستمع الحدث
-        shareBtn.addEventListener('click', () => {
-            if (InvestorCardSystem.currentCardId) {
-                shareCard(InvestorCardSystem.currentCardId);
-            }
-        });
-    }
+       
+       // مشاركة عبر واجهة مشاركة المتصفح إذا كانت متاحة
+       if (navigator.share) {
+           navigator.share({
+               title: `بطاقة المستثمر - ${card.investorName}`,
+               text: shareText
+           })
+           .then(() => {
+               showNotification('تمت المشاركة بنجاح', 'success');
+           })
+           .catch((error) => {
+               console.error('خطأ في مشاركة البطاقة:', error);
+               showNotification('حدث خطأ أثناء المشاركة', 'error');
+               
+               // استخدام النسخ إلى الحافظة كحل بديل
+               copyToClipboard(shareText);
+           });
+       } else {
+           // استخدام النسخ إلى الحافظة
+           copyToClipboard(shareText);
+       }
+   }
+   
+   /**
+    * نسخ النص إلى الحافظة
+    * @param {string} text النص المراد نسخه
+    */
+   function copyToClipboard(text) {
+       // إنشاء عنصر نصي مؤقت
+       const el = document.createElement('textarea');
+       el.value = text;
+       el.setAttribute('readonly', '');
+       el.style.position = 'absolute';
+       el.style.left = '-9999px';
+       document.body.appendChild(el);
+       
+       // تحديد النص ونسخه
+       el.select();
+       document.execCommand('copy');
+       
+       // إزالة العنصر المؤقت
+       document.body.removeChild(el);
+       
+       showNotification('تم نسخ معلومات البطاقة إلى الحافظة', 'success');
+   }
+   
+   // إضافة زر المشاركة إلى نافذة عرض البطاقة
+   const modalFooter = document.querySelector('#show-card-modal .modal-footer');
+   if (modalFooter) {
+       const shareBtn = document.createElement('button');
+       shareBtn.className = 'btn btn-info';
+       shareBtn.id = 'share-card-btn';
+       shareBtn.innerHTML = '<i class="fas fa-share-alt"></i><span>مشاركة</span>';
+       
+       modalFooter.querySelector('.btn-group').appendChild(shareBtn);
+       
+       // إضافة مستمع الحدث
+       shareBtn.addEventListener('click', () => {
+           if (InvestorCardSystem.currentCardId) {
+               shareCard(InvestorCardSystem.currentCardId);
+           }
+       });
+   }
 }
 
 // إضافة ميزة تصدير واستيراد البطاقات
 function addCardImportExportFeature() {
-    /**
-     * تصدير بيانات البطاقات
-     */
-    function exportCards() {
-        // الحصول على البطاقات
-        const cards = InvestorCardSystem._getInvestorCards();
-        
-        if (cards.length === 0) {
-            showNotification('لا توجد بطاقات للتصدير', 'warning');
-            return;
-        }
-        
-        // تحويل البيانات إلى نص JSON
-        const jsonData = JSON.stringify(cards, null, 2);
-        
-        // إنشاء ملف للتنزيل
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        // إنشاء رابط التنزيل
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `investor_cards_${new Date().toISOString().split('T')[0]}.json`;
-        a.style.display = 'none';
-        
-        // إضافة الرابط للصفحة وتنفيذ النقر
-        document.body.appendChild(a);
-        a.click();
-        
-        // تنظيف
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-        
-        showNotification(`تم تصدير ${cards.length} بطاقة بنجاح`, 'success');
-    }
-    
-    /**
-     * استيراد بيانات البطاقات
-     */
-    function importCards() {
-        // إنشاء عنصر إدخال الملف
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'application/json';
-        fileInput.style.display = 'none';
-        
-        // إضافة مستمع الحدث
-        fileInput.addEventListener('change', (e) => {
-            if (!e.target.files || !e.target.files[0]) {
-                return;
-            }
-            
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                try {
-                    // تحليل البيانات
-                    const importedCards = JSON.parse(event.target.result);
-                    
-                    // التحقق من صحة البيانات
-                    if (!Array.isArray(importedCards)) {
-                        throw new Error('تنسيق البيانات غير صحيح');
-                    }
-                    
-                    // الحصول على البطاقات الحالية
-                    const currentCards = InvestorCardSystem._getInvestorCards();
-                    
-                    // تأكيد الاستيراد
-                    const confirmMsg = currentCards.length > 0 
-                        ? `سيتم دمج ${importedCards.length} بطاقة مستوردة مع ${currentCards.length} بطاقة حالية. هل تريد المتابعة؟`
-                        : `سيتم استيراد ${importedCards.length} بطاقة. هل تريد المتابعة؟`;
-                    
-                    if (!confirm(confirmMsg)) {
-                        return;
-                    }
-                    
-                    // دمج البطاقات (تجنب التكرار)
-                    const existingCardIds = new Set(currentCards.map(card => card.id));
-                    const newCards = importedCards.filter(card => !existingCardIds.has(card.id));
-                    
-                    // إضافة البطاقات الجديدة
-                    const mergedCards = [...currentCards, ...newCards];
-                    
-                    // حفظ البطاقات المدمجة
-                    localStorage.setItem('investorCards', JSON.stringify(mergedCards));
-                    
-                    // تحديث العرض
-                    if (typeof InvestorCardSystem.renderInvestorCards === 'function') {
-                        InvestorCardSystem.renderInvestorCards();
-                    }
-                    
-                    showNotification(`تم استيراد ${newCards.length} بطاقة جديدة بنجاح`, 'success');
-                } catch (error) {
-                    console.error('خطأ في استيراد البطاقات:', error);
-                    showNotification('حدث خطأ أثناء استيراد البطاقات: ' + error.message, 'error');
-                }
-            };
-            
-            reader.onerror = () => {
-                showNotification('حدث خطأ أثناء قراءة الملف', 'error');
-            };
-            
-            reader.readAsText(file);
-        });
-        
-        // إضافة عنصر الإدخال للصفحة وتنفيذ النقر
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        
-        // تنظيف
-        setTimeout(() => {
-            document.body.removeChild(fileInput);
-        }, 100);
-    }
-    
-    // إضافة أزرار التصدير والاستيراد
-    const sectionActions = document.querySelector('#investor-cards-page .section-actions');
-    if (sectionActions) {
-        // زر التصدير
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'btn btn-outline btn-sm';
-        exportBtn.id = 'export-cards-btn';
-        exportBtn.title = 'تصدير البطاقات';
-        exportBtn.innerHTML = '<i class="fas fa-file-export"></i><span>تصدير</span>';
-        
-        // زر الاستيراد
-        const importBtn = document.createElement('button');
-        importBtn.className = 'btn btn-outline btn-sm';
-        importBtn.id = 'import-cards-btn';
-        importBtn.title = 'استيراد البطاقات';
-        importBtn.innerHTML = '<i class="fas fa-file-import"></i><span>استيراد</span>';
-        
-        // إضافة الأزرار
-        sectionActions.appendChild(exportBtn);
-        sectionActions.appendChild(importBtn);
-        
-        // إضافة مستمعي الأحداث
-        exportBtn.addEventListener('click', exportCards);
-        importBtn.addEventListener('click', importCards);
-    }
+   /**
+    * تصدير بيانات البطاقات
+    */
+   function exportCards() {
+       // الحصول على البطاقات
+       const cards = InvestorCardSystem._getInvestorCards();
+       
+       if (cards.length === 0) {
+           showNotification('لا توجد بطاقات للتصدير', 'warning');
+           return;
+       }
+       
+       // تحويل البيانات إلى نص JSON
+       const jsonData = JSON.stringify(cards, null, 2);
+       
+       // إنشاء ملف للتنزيل
+       const blob = new Blob([jsonData], { type: 'application/json' });
+       const url = URL.createObjectURL(blob);
+       
+       // إنشاء رابط التنزيل
+       const a = document.createElement('a');
+       a.href = url;
+       a.download = `investor_cards_${new Date().toISOString().split('T')[0]}.json`;
+       a.style.display = 'none';
+       
+       // إضافة الرابط للصفحة وتنفيذ النقر
+       document.body.appendChild(a);
+       a.click();
+       
+       // تنظيف
+       setTimeout(() => {
+           document.body.removeChild(a);
+           URL.revokeObjectURL(url);
+       }, 100);
+       
+       showNotification(`تم تصدير ${cards.length} بطاقة بنجاح`, 'success');
+   }
+   
+   /**
+    * استيراد بيانات البطاقات
+    */
+   function importCards() {
+       // إنشاء عنصر إدخال الملف
+       const fileInput = document.createElement('input');
+       fileInput.type = 'file';
+       fileInput.accept = 'application/json';
+       fileInput.style.display = 'none';
+       
+       // إضافة مستمع الحدث
+       fileInput.addEventListener('change', (e) => {
+           if (!e.target.files || !e.target.files[0]) {
+               return;
+           }
+           
+           const file = e.target.files[0];
+           const reader = new FileReader();
+           
+           reader.onload = (event) => {
+               try {
+                   // تحليل البيانات
+                   const importedCards = JSON.parse(event.target.result);
+                   
+                   // التحقق من صحة البيانات
+                   if (!Array.isArray(importedCards)) {
+                       throw new Error('تنسيق البيانات غير صحيح');
+                   }
+                   
+                   // الحصول على البطاقات الحالية
+                   const currentCards = InvestorCardSystem._getInvestorCards();
+                   
+                   // تأكيد الاستيراد
+                   const confirmMsg = currentCards.length > 0 
+                       ? `سيتم دمج ${importedCards.length} بطاقة مستوردة مع ${currentCards.length} بطاقة حالية. هل تريد المتابعة؟`
+                       : `سيتم استيراد ${importedCards.length} بطاقة. هل تريد المتابعة؟`;
+                   
+                   if (!confirm(confirmMsg)) {
+                       return;
+                   }
+                   
+                   // دمج البطاقات (تجنب التكرار)
+                   const existingCardIds = new Set(currentCards.map(card => card.id));
+                   const newCards = importedCards.filter(card => !existingCardIds.has(card.id));
+                   
+                   // إضافة البطاقات الجديدة
+                   const mergedCards = [...currentCards, ...newCards];
+                   
+                   // حفظ البطاقات المدمجة
+                   localStorage.setItem('investorCards', JSON.stringify(mergedCards));
+                   
+                   // تحديث العرض
+                   if (typeof InvestorCardSystem.renderInvestorCards === 'function') {
+                       InvestorCardSystem.renderInvestorCards();
+                   }
+                   
+                   showNotification(`تم استيراد ${newCards.length} بطاقة جديدة بنجاح`, 'success');
+               } catch (error) {
+                   console.error('خطأ في استيراد البطاقات:', error);
+                   showNotification('حدث خطأ أثناء استيراد البطاقات: ' + error.message, 'error');
+               }
+           };
+           
+           reader.onerror = () => {
+               showNotification('حدث خطأ أثناء قراءة الملف', 'error');
+           };
+           
+           reader.readAsText(file);
+       });
+       
+       // إضافة عنصر الإدخال للصفحة وتنفيذ النقر
+       document.body.appendChild(fileInput);
+       fileInput.click();
+       
+       // تنظيف
+       setTimeout(() => {
+           document.body.removeChild(fileInput);
+       }, 100);
+   }
+   
+   // إضافة أزرار التصدير والاستيراد
+   const sectionActions = document.querySelector('#investor-cards-page .section-actions');
+   if (sectionActions) {
+       // زر التصدير
+       const exportBtn = document.createElement('button');
+       exportBtn.className = 'btn btn-outline btn-sm';
+       exportBtn.id = 'export-cards-btn';
+       exportBtn.title = 'تصدير البطاقات';
+       exportBtn.innerHTML = '<i class="fas fa-file-export"></i><span>تصدير</span>';
+       
+       // زر الاستيراد
+       const importBtn = document.createElement('button');
+       importBtn.className = 'btn btn-outline btn-sm';
+       importBtn.id = 'import-cards-btn';
+       importBtn.title = 'استيراد البطاقات';
+       importBtn.innerHTML = '<i class="fas fa-file-import"></i><span>استيراد</span>';
+       
+       // إضافة الأزرار
+       sectionActions.appendChild(exportBtn);
+       sectionActions.appendChild(importBtn);
+       
+       // إضافة مستمعي الأحداث
+       exportBtn.addEventListener('click', exportCards);
+       importBtn.addEventListener('click', importCards);
+   }
 }
 
 // تفعيل التحسينات الإضافية
 document.addEventListener('DOMContentLoaded', () => {
-    // البدء بتهيئة النظام الأساسي
-    InvestorCardSystem.initialize()
-        .then(() => {
-            // تفعيل التحسينات الإضافية
-            enhanceCardStyles();
-            addCardSharingFeature();
-            addCardImportExportFeature();
-            
-            console.log('تم تفعيل جميع ميزات نظام بطاقات المستثمرين');
-        })
-        .catch(error => {
-            console.error('حدث خطأ أثناء تهيئة نظام بطاقات المستثمرين:', error);
-        });
+   // البدء بتهيئة النظام الأساسي
+   InvestorCardSystem.initialize()
+       .then(() => {
+           // تفعيل التحسينات الإضافية
+           enhanceCardStyles();
+           addCardSharingFeature();
+           addCardImportExportFeature();
+           
+           console.log('تم تفعيل جميع ميزات نظام بطاقات المستثمرين');
+       })
+       .catch(error => {
+           console.error('حدث خطأ أثناء تهيئة نظام بطاقات المستثمرين:', error);
+       });
 });
+
+
