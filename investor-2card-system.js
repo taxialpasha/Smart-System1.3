@@ -1950,3 +1950,61 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('نظام بطاقات المستثمرين غير متاح');
     }
 });
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // انتظر حتى يتم تهيئة نظام البطاقات الأساسي
+    const checkSystemInit = setInterval(() => {
+        if (typeof InvestorCardSystem !== 'undefined' && typeof InvestorCardSystem.initialize === 'function') {
+            clearInterval(checkSystemInit);
+            
+            // تهيئة نظام البطاقات
+            InvestorCardSystem.initialize()
+                .then(() => {
+                    // إعداد تكامل البطاقات
+                    setupInvestorCardIntegration();
+                })
+                .catch(error => {
+                    console.error('خطأ في تهيئة نظام بطاقات المستثمرين:', error);
+                });
+        }
+    }, 500);
+});
+
+
+
+function getInvestorCards() {
+    // الحصول من التخزين المحلي
+    const cardsString = localStorage.getItem('investorCards');
+    
+    // التحقق من وجود بيانات
+    if (!cardsString) {
+        return [];
+    }
+    
+    // تحويل البيانات إلى كائن
+    try {
+        return JSON.parse(cardsString);
+    } catch (error) {
+        console.error('خطأ في تحليل بيانات البطاقات:', error);
+        return [];
+    }
+}
+
+// التحقق من وجود متغير المستثمرين
+function ensureInvestorsVariable() {
+    if (typeof window.investors === 'undefined') {
+        // محاولة استرداد المستثمرين من التخزين المحلي
+        const investorsString = localStorage.getItem('investors');
+        if (investorsString) {
+            try {
+                window.investors = JSON.parse(investorsString);
+            } catch (error) {
+                console.error('خطأ في تحليل بيانات المستثمرين:', error);
+                window.investors = [];
+            }
+        } else {
+            window.investors = [];
+        }
+    }
+}

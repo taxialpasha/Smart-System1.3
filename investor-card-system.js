@@ -45,60 +45,89 @@ const InvestorCardSystem = (function() {
      * تهيئة نظام البطاقات
      * @returns {Promise} وعد بنجاح أو فشل التهيئة
      */
-    function initialize() {
-        return new Promise((resolve, reject) => {
-            if (isInitialized) {
-                resolve(true);
-                return;
-            }
+   function initialize() {
+    return new Promise((resolve, reject) => {
+        if (isInitialized) {
+            resolve(true);
+            return;
+        }
+        
+        console.log('جاري تهيئة نظام بطاقات المستثمرين...');
+        
+        // التأكد من أن التطبيق جاهز
+        if (!document.querySelector('.nav-list')) {
+            console.error('التطبيق الرئيسي غير جاهز بعد. سيتم إعادة المحاولة لاحقًا.');
             
-            console.log('جاري تهيئة نظام بطاقات المستثمرين...');
+            // انتظر حتى يصبح التطبيق جاهزًا
+            const waitForApp = setInterval(() => {
+                if (document.querySelector('.nav-list')) {
+                    clearInterval(waitForApp);
+                    initializeCardSystem().then(resolve).catch(reject);
+                }
+            }, 500);
+            return;
+        }
+        
+        initializeCardSystem().then(resolve).catch(reject);
+    });
+}
+
+function initializeCardSystem() {
+    // نقل محتوى الدالة الأصلية هنا
+    return new Promise((resolve, reject) => {
+        try {
+            // إضافة عنصر القائمة في الشريط الجانبي
+            addSidebarMenuItem();
             
-            try {
-                // إضافة عنصر القائمة في الشريط الجانبي
-                addSidebarMenuItem();
-                
-                // إنشاء صفحة البطاقات
-                createCardsPage();
-                
-                // إضافة النوافذ المنبثقة اللازمة
-                addCardModals();
-                
-                // إضافة أنماط CSS
-                addCardStyles();
-                
-                // تحميل مكتبات الباركود
-                loadBarcodeDependencies()
-                    .then(() => {
-                        // تهيئة قارئ الباركود
-                        initBarcodeScanner();
-                        
-                        isInitialized = true;
-                        console.log('تم تهيئة نظام بطاقات المستثمرين بنجاح');
-                        resolve(true);
-                    })
-                    .catch(error => {
-                        console.error('فشل في تحميل مكتبات الباركود:', error);
-                        // استمر رغم الفشل، ولكن بدون ميزة الباركود
-                        isInitialized = true;
-                        resolve(true);
-                    });
-            } catch (error) {
-                console.error('خطأ في تهيئة نظام بطاقات المستثمرين:', error);
-                reject(error);
-            }
-        });
-    }
+            // ... وباقي الكود الموجود في الدالة الأصلية
+        } catch (error) {
+            console.error('خطأ في تهيئة نظام بطاقات المستثمرين:', error);
+            reject(error);
+        }
+    });
+}
     
     /**
      * إضافة عنصر القائمة في الشريط الجانبي
      */
     function addSidebarMenuItem() {
-        const navList = document.querySelector('.nav-list');
-        if (!navList) {
-            console.error('لم يتم العثور على قائمة التنقل');
-            return;
-        }
+    const navList = document.querySelector('.nav-list');
+    if (!navList) {
+        console.error('لم يتم العثور على قائمة التنقل');
+        return;
+    }
+    
+    // تحقق من عدم وجود العنصر بالفعل
+    if (navList.querySelector('[data-page="investor-cards"]')) {
+        console.log('عنصر بطاقات المستثمرين موجود بالفعل');
+        return;
+    }
+    
+    // إنشاء عنصر القائمة
+    const menuItem = document.createElement('li');
+    menuItem.className = 'nav-item';
+    menuItem.innerHTML = `
+        <a class="nav-link" data-page="investor-cards" href="#">
+            <div class="nav-icon">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <span>بطاقات المستثمرين</span>
+        </a>
+    `;
+    
+    // محاولة العثور على عنصر الإعدادات
+    const settingsItem = navList.querySelector('[data-page="settings"]');
+    
+    if (settingsItem && settingsItem.parentNode) {
+        // إضافة العنصر قبل عنصر الإعدادات
+        navList.insertBefore(menuItem, settingsItem.parentNode);
+    } else {
+        // إضافة العنصر في نهاية القائمة إذا لم يتم العثور على الإعدادات
+        navList.appendChild(menuItem);
+    }
+    
+    // ... وباقي الكود
+}
         
         // إنشاء عنصر القائمة
         const menuItem = document.createElement('li');
