@@ -3005,98 +3005,405 @@ const InvestorCardSystem = (function() {
         `;
     }
     
-    // إنشاء بطاقة جديدة
     function createCard(investorId, cardType, expiryDate, options = {}) {
-        console.log(`إنشاء بطاقة جديدة للمستثمر ${investorId} من نوع ${cardType}`);
-        
-        // البحث عن المستثمر
-        const investor = investors.find(inv => inv.id === investorId);
-        if (!investor) {
-            alert('لم يتم العثور على المستثمر');
-            return;
+    console.log(`إنشاء بطاقة جديدة للمستثمر ${investorId} من نوع ${cardType}`);
+    
+    // البحث عن المستثمر
+    const investor = investors.find(inv => inv.id === investorId);
+    if (!investor) {
+        alert('لم يتم العثور على المستثمر');
+        return;
+    }
+    
+    // التحقق مما إذا كان للمستثمر بطاقة نشطة بالفعل
+    const existingActiveCard = cards.find(card => 
+        card.investorId === investorId && 
+        card.status === 'active' && 
+        new Date(card.expiryDate) > new Date()
+    );
+    
+    if (existingActiveCard) {
+        alert('هذا المستثمر لديه بطاقة نشطة بالفعل');
+        return;
+    }
+    
+    // إنشاء رقم بطاقة فريد
+    const cardNumber = generateCardNumber();
+    
+    // رقم CVV عشوائي (3 أرقام)
+    const cvv = Math.floor(100 + Math.random() * 900).toString();
+    
+    // إنشاء كائن البطاقة
+    const newCard = {
+        id: Date.now().toString(),
+        investorId: investorId,
+        investorName: investor.name,
+        investorPhone: investor.phone || '',
+        cardNumber: cardNumber,
+        cvv: cvv,
+        cardType: cardType,
+        expiryDate: expiryDate,
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        lastUsed: null,
+        lastRenewed: null,
+        features: {
+            enableQrCode: options.enableQrCode !== undefined ? options.enableQrCode : true,
+            enableHologram: options.enableHologram !== undefined ? options.enableHologram : true,
+            enableChip: options.enableChip !== undefined ? options.enableChip : true,
+            enablePin: options.enablePin || false
         }
-        
-        // التحقق مما إذا كان للمستثمر بطاقة نشطة بالفعل
-        const existingActiveCard = cards.find(card => 
-            card.investorId === investorId && 
-            card.status === 'active' && 
-            new Date(card.expiryDate) > new Date()
+    };
+    
+    // إضافة رمز PIN إذا كان مفعلاً
+    if (options.enablePin && options.pin) {
+        newCard.pin = options.pin;
+    }
+    
+    // إضافة ألوان مخصصة إذا كان النوع مخصصاً
+    if (cardType === 'custom' && options.customColors) {
+        newCard.customColors = options.customColors;
+    }
+    
+    // إضافة البطاقة إلى المصفوفة
+    cards.push(newCard);
+    
+    // إضافة نشاط الإنشاء
+    addActivity(newCard.id, 'create', {
+        cardType: cardType,
+        expiryDate: expiryDate
+    });
+    
+    // حفظ البطاقات
+    const savedLocally = saveCardsToLocalStorage();
+    
+    // إنشاء باركود QR للبطاقة
+    generateCardQRCode(newCard)
+        .then(() => {
+            // حفظ في Firebase إذا كان متاحاً
+            return saveCardsToFirebase();
+        })
+        .then(savedToFirebase => {
+            if (savedLocally || savedToFirebase) {
+                // تحديث الإحصائيات
+                updateCardStats();
+                
+                alert('تم إنشاء البطاقة بنجاح');
+                
+                // إعادة تعيين النموذج
+                document.getElementById('create-card-form').reset();
+                
+                // العودة إلى صفحة كل البطاقات وعرض البطاقة الجديدة
+                showCardDetails(newCard.id);
+            } else {
+                alert('حدث خطأ أثناء حفظ البطاقة');
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في إنشاء باركود QR للبطاقة:', error);
+            alert('تم إنشاء البطاقة ولكن فشل إنشاء باركود QR');
+            
+            // عرض تفاصيل البطاقة على أي حال
+            showCardDetails(newCard.id);
+        });
+}
+
+// أيضاً يجب تعديل دالة startBarcodeScanner لاستخدام الوظيفة الجديدة
+// لمعالجة البيانات المقروءة من الباركود
+
+function startBarcodeScanner() {
+    if (!scanner) {
+        initBarcodeScanner();
+        return;
+    }
+    
+    try {
+        scanner.render(
+            // نجاح المسح
+            result => {
+                // معالجة البيانات المقروءة
+                const scanResult = processScannedQRCode(result);
+                
+                // إظهار نتيجة المسح
+                const scanResultElement = document.getElementById('scan-result');
+                const scanResultData = document.getElementById('scan-result-data');
+                
+                if (scanResultElement && scanResultData) {
+                    scanResultElement.classList.remove('hidden');
+                    
+                    if (scanResult.success) {
+                        // نجح التعرف على البطاقة
+                        scanResultData.innerHTML = `
+                            <div class="scan-success">
+                                <i class="fas fa-check-circle" style="color: #2ecc71; margin-left: 8px;"></i>
+                                <span>تم التعرف على البطاقة بنجاح</span>
+                            </div>
+                            <div class="scan-card-info">
+                                <p><strong>اسم المستثمر:</strong> ${scanResult.card.investorName}</p>
+                                <p><strong>نوع البطاقة:</strong> ${CARD_TYPES[scanResult.card.cardType]?.name || scanResult.card.cardType}</p>
+                                <p><strong>تاريخ الانتهاء:</strong> ${formatDate(scanResult.card.expiryDate)}</p>
+                            </div>
+                        `;
+                    } else {
+                        // فشل التعرف على البطاقة
+                        scanResultData.innerHTML = `
+                            <div class="scan-error">
+                                <i class="fas fa-exclamation-triangle" style="color: #e74c3c; margin-left: 8px;"></i>
+                                <span>${scanResult.message}</span>
+                            </div>
+                            <div class="scan-raw-data">
+                                <p><strong>البيانات المقروءة:</strong> ${result}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // صوت تنبيه إذا كان مفعلاً
+                    if (document.getElementById('scanner-beep')?.checked) {
+                        playBeepSound();
+                    }
+                    
+                    // اهتزاز إذا كان مفعلاً ومدعوماً
+                    if (document.getElementById('scanner-vibrate')?.checked && 'vibrate' in navigator) {
+                        navigator.vibrate(200);
+                    }
+                    
+                    // الانتقال التلقائي إذا كان مفعلاً وتم العثور على البطاقة
+                    if (scanResult.success && document.getElementById('scanner-auto-redirect')?.checked) {
+                        stopBarcodeScanner();
+                        
+                        // عرض تفاصيل البطاقة
+                        showCardDetails(scanResult.card.id);
+                    }
+                }
+            },
+            // خطأ في المسح
+            error => {
+                if (error !== 'QR code parse error, error = NotFoundException: No MultiFormat Readers were able to detect the code.') {
+                    console.error('خطأ في المسح:', error);
+                }
+            }
         );
         
-        if (existingActiveCard) {
-            alert('هذا المستثمر لديه بطاقة نشطة بالفعل');
+        // تحديث حالة الأزرار
+        updateScannerButtonsState(true);
+    } catch (error) {
+        console.error('خطأ في بدء المسح:', error);
+        alert('حدث خطأ في بدء المسح: ' + error.message);
+    }
+}
+
+// أخيراً، يجب تحديث واجهة برمجة التطبيق العامة InvestorCardSystem لتصدير الوظائف الجديدة
+// في نهاية ملف investor-card-system.js، يجب تعديل السطر التالي:
+
+// تصدير واجهة برمجة التطبيق العامة
+return {
+    initialize,
+    renderCards,
+    showCardDetails,
+    printCard,
+    createCard,
+    showCardPage,
+    toggleDarkMode,
+    updateCardStats,
+    renderCardStats,
+    exportCardStats,
+    // إضافة الوظائف الجديدة
+    generateCardQRCode,
+    parseCardQRCode,
+    displayCardQRCode,
+    processScannedQRCode
+};
+
+
+/**
+ * وظيفة إنشاء وإدارة باركود QR لبطاقات المستثمرين
+ * تضاف إلى ملف investor-card-system.js
+ */
+
+// إضافة الوظائف التالية داخل كائن InvestorCardSystem
+
+/**
+ * إنشاء باركود QR للبطاقة
+ * @param {Object} card - بيانات البطاقة
+ * @returns {Promise} وعد يتم حله عند اكتمال إنشاء الباركود
+ */
+function generateCardQRCode(card) {
+    return new Promise((resolve, reject) => {
+        if (!card || !card.id) {
+            reject(new Error('بيانات البطاقة غير صالحة'));
             return;
         }
         
-        // إنشاء رقم بطاقة فريد
-        const cardNumber = generateCardNumber();
-        
-        // رقم CVV عشوائي (3 أرقام)
-        const cvv = Math.floor(100 + Math.random() * 900).toString();
-        
-        // إنشاء كائن البطاقة
-        const newCard = {
-            id: Date.now().toString(),
-            investorId: investorId,
-            investorName: investor.name,
-            investorPhone: investor.phone || '',
-            cardNumber: cardNumber,
-            cvv: cvv,
-            cardType: cardType,
-            expiryDate: expiryDate,
-            createdAt: new Date().toISOString(),
-            status: 'active',
-            lastUsed: null,
-            lastRenewed: null,
-            features: {
-                enableQrCode: options.enableQrCode !== undefined ? options.enableQrCode : true,
-                enableHologram: options.enableHologram !== undefined ? options.enableHologram : true,
-                enableChip: options.enableChip !== undefined ? options.enableChip : true,
-                enablePin: options.enablePin || false
-            }
+        // إعداد البيانات التي سيتم تضمينها في الباركود
+        const cardData = {
+            id: card.id,
+            investorId: card.investorId,
+            investorName: card.investorName,
+            cardNumber: card.cardNumber.replace(/\s/g, ''),  // إزالة المسافات
+            cardType: card.cardType,
+            expiryDate: card.expiryDate,
+            status: card.status,
+            timestamp: new Date().getTime()
         };
         
-        // إضافة رمز PIN إذا كان مفعلاً
-        if (options.enablePin && options.pin) {
-            newCard.pin = options.pin;
-        }
+        // تحويل البيانات إلى JSON ثم ترميزها لاستخدامها في URL
+        const qrData = encodeURIComponent(JSON.stringify(cardData));
         
-        // إضافة ألوان مخصصة إذا كان النوع مخصصاً
-        if (cardType === 'custom' && options.customColors) {
-            newCard.customColors = options.customColors;
-        }
+        // إنشاء URL للباركود باستخدام خدمة QR Code API
+        const qrCodeURL = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrData}`;
         
-        // إضافة البطاقة إلى المصفوفة
-        cards.push(newCard);
+        // حفظ URL ضمن بيانات البطاقة
+        card.qrCodeURL = qrCodeURL;
         
-        // إضافة نشاط الإنشاء
-        addActivity(newCard.id, 'create', {
-            cardType: cardType,
-            expiryDate: expiryDate
-        });
+        // حفظ البيانات المشفرة أيضاً للاستخدام المباشر
+        card.qrCodeData = qrData;
         
-        // حفظ البطاقات
-        const savedLocally = saveCardsToLocalStorage();
+        // تحديث البطاقة في قاعدة البيانات المحلية
+        saveCardsToLocalStorage();
         
-        // حفظ في Firebase إذا كان متاحاً
+        // تحديث البطاقة في Firebase إذا كان متاحاً
         saveCardsToFirebase()
-            .then(savedToFirebase => {
-                if (savedLocally || savedToFirebase) {
-                    // تحديث الإحصائيات
-                    updateCardStats();
-                    
-                    alert('تم إنشاء البطاقة بنجاح');
-                    
-                    // إعادة تعيين النموذج
-                    document.getElementById('create-card-form').reset();
-                    
-                    // العودة إلى صفحة كل البطاقات وعرض البطاقة الجديدة
-                    showCardDetails(newCard.id);
-                } else {
-                    alert('حدث خطأ أثناء حفظ البطاقة');
-                }
+            .then(() => {
+                console.log('تم إنشاء وحفظ باركود QR للبطاقة:', card.id);
+                resolve(qrCodeURL);
+            })
+            .catch(error => {
+                console.warn('تم إنشاء باركود QR ولكن فشل حفظه في Firebase:', error);
+                // لا نرفض الوعد هنا، لأن الباركود تم إنشاؤه بنجاح محلياً
+                resolve(qrCodeURL);
             });
+    });
+}
+
+/**
+ * استخراج بيانات البطاقة من باركود QR
+ * @param {string} qrData - البيانات المقروءة من الباركود
+ * @returns {Object|null} بيانات البطاقة أو null إذا كانت البيانات غير صالحة
+ */
+function parseCardQRCode(qrData) {
+    try {
+        // محاولة فك ترميز البيانات كـ JSON
+        let cardData;
+        
+        // التحقق مما إذا كانت البيانات مشفرة
+        if (qrData.startsWith('%7B') || qrData.includes('%22')) {
+            // البيانات مشفرة، نقوم بفك الترميز أولاً
+            cardData = JSON.parse(decodeURIComponent(qrData));
+        } else {
+            // محاولة تحليل البيانات مباشرة كـ JSON
+            cardData = JSON.parse(qrData);
+        }
+        
+        // التحقق من وجود المعرف على الأقل
+        if (!cardData || !cardData.id) {
+            console.error('بيانات البطاقة غير صالحة (معرف البطاقة مفقود)');
+            return null;
+        }
+        
+        return cardData;
+    } catch (error) {
+        console.error('خطأ في تحليل بيانات باركود QR:', error);
+        
+        // محاولة التعامل مع البيانات كمعرف بطاقة مباشر
+        if (typeof qrData === 'string' && qrData.trim()) {
+            return { id: qrData.trim() };
+        }
+        
+        return null;
     }
+}
+
+/**
+ * عرض باركود QR للبطاقة في عنصر HTML
+ * @param {string} cardId - معرف البطاقة
+ * @param {string} containerId - معرف عنصر HTML لعرض الباركود فيه
+ * @returns {boolean} نجاح أو فشل العملية
+ */
+function displayCardQRCode(cardId, containerId) {
+    // البحث عن البطاقة
+    const card = cards.find(c => c.id === cardId);
+    if (!card) {
+        console.error('لم يتم العثور على البطاقة:', cardId);
+        return false;
+    }
+    
+    // البحث عن عنصر العرض
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('لم يتم العثور على عنصر العرض:', containerId);
+        return false;
+    }
+    
+    // التحقق من وجود باركود QR أو إنشاء واحد جديد
+    if (!card.qrCodeURL) {
+        // إنشاء باركود QR جديد
+        generateCardQRCode(card)
+            .then(qrCodeURL => {
+                // عرض الباركود
+                container.innerHTML = `
+                    <img src="${qrCodeURL}" alt="QR Code للبطاقة" style="max-width: 100%;">
+                `;
+            })
+            .catch(error => {
+                console.error('فشل في إنشاء باركود QR:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>فشل في إنشاء باركود QR</p>
+                    </div>
+                `;
+            });
+    } else {
+        // عرض الباركود الموجود
+        container.innerHTML = `
+            <img src="${card.qrCodeURL}" alt="QR Code للبطاقة" style="max-width: 100%;">
+        `;
+    }
+    
+    return true;
+}
+
+/**
+ * معالجة الباركود بعد المسح
+ * @param {string} qrData - البيانات المقروءة من الباركود
+ * @returns {Object|null} بيانات البطاقة وحالة المعالجة
+ */
+function processScannedQRCode(qrData) {
+    // استخراج بيانات البطاقة من الباركود
+    const cardData = parseCardQRCode(qrData);
+    
+    if (!cardData) {
+        return {
+            success: false,
+            message: 'بيانات الباركود غير صالحة',
+            data: null
+        };
+    }
+    
+    // البحث عن البطاقة في النظام باستخدام المعرف
+    const card = cards.find(c => c.id === cardData.id);
+    
+    if (!card) {
+        return {
+            success: false,
+            message: 'لم يتم العثور على البطاقة في النظام',
+            data: cardData
+        };
+    }
+    
+    // إضافة نشاط المسح
+    addActivity(card.id, 'scan', {
+        scanTime: new Date().toISOString()
+    });
+    
+    return {
+        success: true,
+        message: 'تم التعرف على البطاقة بنجاح',
+        card: card,
+        data: cardData
+    };
+}
+
     
     // إنشاء رقم بطاقة فريد
     function generateCardNumber() {
