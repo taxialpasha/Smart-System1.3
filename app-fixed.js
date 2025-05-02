@@ -5363,3 +5363,1965 @@ function setupModalEvents() {
         }
     }
 });
+
+// إضافة أنماط CSS للصادرات والواردات
+function addFinancialTrackingStyles() {
+    // التحقق من وجود أنماط مسبقة
+    if (document.getElementById('financial-tracking-styles')) {
+        return;
+    }
+    
+    // إنشاء عنصر نمط جديد
+    const styleElement = document.createElement('style');
+    styleElement.id = 'financial-tracking-styles';
+    
+    // إضافة أنماط CSS
+    styleElement.textContent = `
+        /* أنماط عامة للصادرات والواردات */
+        .exports-dashboard,
+        .imports-dashboard {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* تنسيق الشارات */
+        .badge.badge-success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .badge.badge-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .badge.badge-info {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .badge.badge-primary {
+            background-color: #6366f1;
+            color: white;
+        }
+        
+        .badge.badge-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        .badge.badge-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        /* تنسيق جدول الصادرات والواردات */
+        #exports-table td,
+        #imports-table td {
+            vertical-align: middle;
+        }
+        
+        /* تنسيق حقول النماذج */
+        #expense-form .form-group,
+        #income-form .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        /* تنسيق الرسوم البيانية */
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        /* تنسيق فجوة بين الأزرار */
+        .btn + .btn {
+            margin-right: 0.5rem;
+        }
+        
+        /* تحسين مظهر البطاقات */
+        .card-value {
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .card-change {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        
+        /* تنسيق الأقسام */
+        .section {
+            margin-bottom: 2rem;
+        }
+        
+        .mt-4 {
+            margin-top: 2rem;
+        }
+    `;
+    
+    // إضافة عنصر النمط إلى رأس الصفحة
+    document.head.appendChild(styleElement);
+    console.log('تم إضافة أنماط CSS للصادرات والواردات');
+}
+
+// إضافة دالة تهيئة الأنماط عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تأخير قليل للتأكد من تحميل باقي النظام
+    setTimeout(() => {
+        addFinancialTrackingStyles();
+    }, 500);
+});// عرض بيانات الصادرات
+function renderExportsData(period = 'all') {
+    console.log(`عرض بيانات الصادرات (الفترة: ${period})...`);
+    
+    const tableBody = document.querySelector('#exports-table tbody');
+    if (!tableBody) {
+        console.error("لم يتم العثور على جدول الصادرات!");
+        return;
+    }
+    
+    // فلترة البيانات حسب الفترة المحددة
+    const filteredData = filterDataByPeriod(window.exports, period);
+    
+    // إذا لم تكن هناك بيانات
+    if (filteredData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">لا توجد بيانات صادرات ${getPeriodText(period)}</td></tr>`;
+        // تحديث بطاقات الإحصائيات
+        updateExportsDashboard(filteredData, period);
+        return;
+    }
+    
+    // ترتيب البيانات حسب التاريخ (الأحدث أولاً)
+    filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // إنشاء صفوف الجدول
+    tableBody.innerHTML = '';
+    filteredData.forEach(item => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${formatDate(item.date)}</td>
+            <td><span class="badge badge-${getTypeClass(item.type)}">${item.type}</span></td>
+            <td>${item.description}</td>
+            <td>${item.investorName || '-'}</td>
+            <td>${formatCurrency(item.amount)}</td>
+            <td>${item.notes || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline edit-export-btn" data-id="${item.id}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline danger delete-export-btn" data-id="${item.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // إضافة مستمعي الأحداث للأزرار
+    setupExportsActionButtons();
+    
+    // تحديث بطاقات الإحصائيات
+    updateExportsDashboard(filteredData, period);
+}
+
+// عرض بيانات الواردات
+function renderImportsData(period = 'all') {
+    console.log(`عرض بيانات الواردات (الفترة: ${period})...`);
+    
+    const tableBody = document.querySelector('#imports-table tbody');
+    if (!tableBody) {
+        console.error("لم يتم العثور على جدول الواردات!");
+        return;
+    }
+    
+    // فلترة البيانات حسب الفترة المحددة
+    const filteredData = filterDataByPeriod(window.imports, period);
+    
+    // إذا لم تكن هناك بيانات
+    if (filteredData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">لا توجد بيانات واردات ${getPeriodText(period)}</td></tr>`;
+        // تحديث بطاقات الإحصائيات
+        updateImportsDashboard(filteredData, period);
+        return;
+    }
+    
+    // ترتيب البيانات حسب التاريخ (الأحدث أولاً)
+    filteredData.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // إنشاء صفوف الجدول
+    tableBody.innerHTML = '';
+    filteredData.forEach(item => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${formatDate(item.date)}</td>
+            <td><span class="badge badge-${getTypeClass(item.type)}">${item.type}</span></td>
+            <td>${item.description}</td>
+            <td>${item.investorName || '-'}</td>
+            <td>${formatCurrency(item.amount)}</td>
+            <td>${item.notes || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline edit-import-btn" data-id="${item.id}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline danger delete-import-btn" data-id="${item.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // إضافة مستمعي الأحداث للأزرار
+    setupImportsActionButtons();
+    
+    // تحديث بطاقات الإحصائيات
+    updateImportsDashboard(filteredData, period);
+}
+
+// تحديث لوحة معلومات الصادرات
+function updateExportsDashboard(data, period) {
+    console.log("تحديث لوحة معلومات الصادرات...");
+    
+    // إجمالي الصادرات
+    const totalExpenses = data.reduce((sum, item) => sum + item.amount, 0);
+    
+    // تصنيف المصروفات حسب النوع
+    const withdrawals = data.filter(item => item.type === 'سحب');
+    const profitPayments = data.filter(item => item.type === 'دفع أرباح');
+    const operationalExpenses = data.filter(item => item.type === 'مصروف');
+    
+    // إجمالي السحوبات
+    const totalWithdrawals = withdrawals.reduce((sum, item) => sum + item.amount, 0);
+    
+    // إجمالي دفع الأرباح
+    const totalProfitPayments = profitPayments.reduce((sum, item) => sum + item.amount, 0);
+    
+    // إجمالي المصاريف التشغيلية
+    const totalOperationalExpenses = operationalExpenses.reduce((sum, item) => sum + item.amount, 0);
+    
+    // تحديث البطاقات
+    document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('expense-period').textContent = getPeriodText(period);
+    
+    document.getElementById('withdrawals-amount').textContent = formatCurrency(totalWithdrawals);
+    document.getElementById('withdrawals-count').textContent = `${withdrawals.length} عملية`;
+    
+    document.getElementById('operational-expenses').textContent = formatCurrency(totalOperationalExpenses);
+    document.getElementById('operational-count').textContent = `${operationalExpenses.length} عملية`;
+    
+    document.getElementById('profit-payments').textContent = formatCurrency(totalProfitPayments);
+    document.getElementById('profit-payments-count').textContent = `${profitPayments.length} عملية`;
+}
+
+// تحديث لوحة معلومات الواردات
+function updateImportsDashboard(data, period) {
+    console.log("تحديث لوحة معلومات الواردات...");
+    
+    // إجمالي الواردات
+    const totalIncome = data.reduce((sum, item) => sum + item.amount, 0);
+    
+    // تصنيف الواردات حسب النوع
+    const deposits = data.filter(item => item.type === 'إيداع');
+    const installments = data.filter(item => item.type === 'دفع قسط');
+    const otherIncome = data.filter(item => item.type !== 'إيداع' && item.type !== 'دفع قسط');
+    
+    // إجمالي الإيداعات
+    const totalDeposits = deposits.reduce((sum, item) => sum + item.amount, 0);
+    
+    // إجمالي الأقساط
+    const totalInstallments = installments.reduce((sum, item) => sum + item.amount, 0);
+    
+    // إجمالي الواردات الأخرى
+    const totalOtherIncome = otherIncome.reduce((sum, item) => sum + item.amount, 0);
+    
+    // تحديث البطاقات
+    document.getElementById('total-income').textContent = formatCurrency(totalIncome);
+    document.getElementById('income-period').textContent = getPeriodText(period);
+    
+    document.getElementById('deposits-amount').textContent = formatCurrency(totalDeposits);
+    document.getElementById('deposits-count').textContent = `${deposits.length} عملية`;
+    
+    document.getElementById('installments-amount').textContent = formatCurrency(totalInstallments);
+    document.getElementById('installments-count').textContent = `${installments.length} عملية`;
+    
+    document.getElementById('other-income').textContent = formatCurrency(totalOtherIncome);
+    document.getElementById('other-income-count').textContent = `${otherIncome.length} عملية`;
+}
+
+// فلترة البيانات حسب الفترة المحددة
+function filterDataByPeriod(data, period) {
+    if (period === 'all') {
+        return data;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return data.filter(item => {
+        const itemDate = new Date(item.date);
+        itemDate.setHours(0, 0, 0, 0);
+        
+        switch (period) {
+            case 'today':
+                return itemDate.getTime() === today.getTime();
+                
+            case 'week':
+                // آخر 7 أيام
+                const weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                return itemDate >= weekAgo;
+                
+            case 'month':
+                // آخر 30 يوم
+                const monthAgo = new Date(today);
+                monthAgo.setDate(today.getDate() - 30);
+                return itemDate >= monthAgo;
+                
+            default:
+                return true;
+        }
+    });
+}
+
+// البحث في البيانات المالية
+function searchFinancialData(type, query) {
+    if (!query || query.trim() === '') {
+        if (type === 'exports') {
+            renderExportsData();
+        } else {
+            renderImportsData();
+        }
+        return;
+    }
+    
+    query = query.trim().toLowerCase();
+    
+    const data = type === 'exports' ? window.exports : window.imports;
+    
+    const filteredData = data.filter(item => {
+        return (
+            (item.type && item.type.toLowerCase().includes(query)) ||
+            (item.description && item.description.toLowerCase().includes(query)) ||
+            (item.investorName && item.investorName.toLowerCase().includes(query)) ||
+            (item.notes && item.notes.toLowerCase().includes(query)) ||
+            (item.amount && item.amount.toString().includes(query))
+        );
+    });
+    
+    // عرض النتائج
+    if (type === 'exports') {
+        const tableBody = document.querySelector('#exports-table tbody');
+        if (!tableBody) return;
+        
+        if (filteredData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">لا توجد نتائج للبحث: "${query}"</td></tr>`;
+            return;
+        }
+        
+        // عرض البيانات المصفاة
+        tableBody.innerHTML = '';
+        filteredData.forEach(item => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${formatDate(item.date)}</td>
+                <td><span class="badge badge-${getTypeClass(item.type)}">${item.type}</span></td>
+                <td>${item.description}</td>
+                <td>${item.investorName || '-'}</td>
+                <td>${formatCurrency(item.amount)}</td>
+                <td>${item.notes || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline edit-export-btn" data-id="${item.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline danger delete-export-btn" data-id="${item.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // إضافة مستمعي الأحداث للأزرار
+        setupExportsActionButtons();
+    } else {
+        const tableBody = document.querySelector('#imports-table tbody');
+        if (!tableBody) return;
+        
+        if (filteredData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">لا توجد نتائج للبحث: "${query}"</td></tr>`;
+            return;
+        }
+        
+        // عرض البيانات المصفاة
+        tableBody.innerHTML = '';
+        filteredData.forEach(item => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${formatDate(item.date)}</td>
+                <td><span class="badge badge-${getTypeClass(item.type)}">${item.type}</span></td>
+                <td>${item.description}</td>
+                <td>${item.investorName || '-'}</td>
+                <td>${formatCurrency(item.amount)}</td>
+                <td>${item.notes || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline edit-import-btn" data-id="${item.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline danger delete-import-btn" data-id="${item.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // إضافة مستمعي الأحداث للأزرار
+        setupImportsActionButtons();
+    }
+}
+
+// إضافة مستمعي الأحداث لأزرار الصادرات
+function setupExportsActionButtons() {
+    // أزرار التعديل
+    document.querySelectorAll('.edit-export-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            editFinancialRecord('exports', id);
+        });
+    });
+    
+    // أزرار الحذف
+    document.querySelectorAll('.delete-export-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            deleteFinancialRecord('exports', id);
+        });
+    });
+}
+
+// إضافة مستمعي الأحداث لأزرار الواردات
+function setupImportsActionButtons() {
+    // أزرار التعديل
+    document.querySelectorAll('.edit-import-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            editFinancialRecord('imports', id);
+        });
+    });
+    
+    // أزرار الحذف
+    document.querySelectorAll('.delete-import-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            deleteFinancialRecord('imports', id);
+        });
+    });
+}
+
+// فتح نافذة إضافة مصروف جديد
+function openAddExpenseModal() {
+    // إنشاء النافذة المنبثقة
+    const modalId = 'add-expense-modal';
+    
+    // التحقق من وجود النافذة
+    if (!document.getElementById(modalId)) {
+        createExpenseModal();
+    }
+    
+    // تعيين عنوان النافذة
+    const modalTitle = document.querySelector(`#${modalId} .modal-title`);
+    if (modalTitle) {
+        modalTitle.textContent = 'إضافة مصروف جديد';
+    }
+    
+    // إعادة تعيين النموذج
+    const form = document.getElementById('expense-form');
+    if (form) {
+        form.reset();
+    }
+    
+    // تعيين التاريخ الحالي
+    const dateInput = document.getElementById('expense-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // ملء قائمة المستثمرين
+    populateInvestorsList('expense-investor');
+    
+    // فتح النافذة
+    openModal(modalId);
+}
+
+// فتح نافذة إضافة وارد جديد
+function openAddIncomeModal() {
+    // إنشاء النافذة المنبثقة
+    const modalId = 'add-income-modal';
+    
+    // التحقق من وجود النافذة
+    if (!document.getElementById(modalId)) {
+        createIncomeModal();
+    }
+    
+    // تعيين عنوان النافذة
+    const modalTitle = document.querySelector(`#${modalId} .modal-title`);
+    if (modalTitle) {
+        modalTitle.textContent = 'إضافة وارد جديد';
+    }
+    
+    // إعادة تعيين النموذج
+    const form = document.getElementById('income-form');
+    if (form) {
+        form.reset();
+    }
+    
+    // تعيين التاريخ الحالي
+    const dateInput = document.getElementById('income-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // ملء قائمة المستثمرين
+    populateInvestorsList('income-investor');
+    
+    // فتح النافذة
+    openModal(modalId);
+}
+
+// تعديل سجل مالي
+function editFinancialRecord(type, id) {
+    // البحث عن السجل
+    const data = type === 'exports' ? window.exports : window.imports;
+    const record = data.find(item => item.id === id);
+    
+    if (!record) {
+        showNotification(`لم يتم العثور على السجل المطلوب`, 'error');
+        return;
+    }
+    
+    // فتح النافذة المناسبة
+    const modalId = type === 'exports' ? 'add-expense-modal' : 'add-income-modal';
+    
+    // التحقق من وجود النافذة
+    if (!document.getElementById(modalId)) {
+        if (type === 'exports') {
+            createExpenseModal();
+        } else {
+            createIncomeModal();
+        }
+    }
+    
+    // تعيين عنوان النافذة
+    const modalTitle = document.querySelector(`#${modalId} .modal-title`);
+    if (modalTitle) {
+        modalTitle.textContent = type === 'exports' ? 'تعديل مصروف' : 'تعديل وارد';
+    }
+    
+    // ملء النموذج ببيانات السجل
+    if (type === 'exports') {
+        document.getElementById('expense-id').value = record.id;
+        document.getElementById('expense-type').value = record.type;
+        document.getElementById('expense-description').value = record.description;
+        document.getElementById('expense-amount').value = record.amount;
+        document.getElementById('expense-date').value = record.date;
+        document.getElementById('expense-notes').value = record.notes || '';
+        
+        // ملء قائمة المستثمرين
+        populateInvestorsList('expense-investor', record.investorId);
+    } else {
+        document.getElementById('income-id').value = record.id;
+        document.getElementById('income-type').value = record.type;
+        document.getElementById('income-description').value = record.description;
+        document.getElementById('income-amount').value = record.amount;
+        document.getElementById('income-date').value = record.date;
+        document.getElementById('income-notes').value = record.notes || '';
+        
+        // ملء قائمة المستثمرين
+        populateInvestorsList('income-investor', record.investorId);
+    }
+    
+    // فتح النافذة
+    openModal(modalId);
+}
+
+// حذف سجل مالي
+function deleteFinancialRecord(type, id) {
+    // التأكيد قبل الحذف
+    if (!confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
+        return;
+    }
+    
+    // حذف السجل
+    if (type === 'exports') {
+        window.exports = window.exports.filter(item => item.id !== id);
+    } else {
+        window.imports = window.imports.filter(item => item.id !== id);
+    }
+    
+    // حفظ البيانات
+    saveFinancialData();
+    
+    // تحديث واجهة المستخدم
+    if (type === 'exports') {
+        renderExportsData();
+    } else {
+        renderImportsData();
+    }
+    
+    // عرض إشعار النجاح
+    showNotification('تم حذف السجل بنجاح', 'success');
+}
+
+// إنشاء نافذة إضافة مصروف
+function createExpenseModal() {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'add-expense-modal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal animate__animated animate__fadeInUp">
+            <div class="modal-header">
+                <h3 class="modal-title">إضافة مصروف جديد</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="expense-form">
+                    <input type="hidden" id="expense-id" value="">
+                    
+                    <div class="form-group">
+                        <label class="form-label">نوع المصروف</label>
+                        <select class="form-select" id="expense-type" required>
+                            <option value="">اختر النوع</option>
+                            <option value="سحب">سحب</option>
+                            <option value="دفع أرباح">دفع أرباح</option>
+                            <option value="مصروف">مصروف تشغيلي</option>
+                            <option value="مصروف آخر">مصروف آخر</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">الوصف</label>
+                        <input type="text" class="form-input" id="expense-description" placeholder="وصف المصروف" required>
+                    </div>
+                    
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">المبلغ</label>
+                            <input type="number" class="form-input" id="expense-amount" min="1" step="1000" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">التاريخ</label>
+                            <input type="date" class="form-input" id="expense-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">المستثمر (اختياري)</label>
+                        <select class="form-select" id="expense-investor">
+                            <option value="">غير محدد</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea class="form-input" id="expense-notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline modal-close-btn">إلغاء</button>
+                <button class="btn btn-primary" id="save-expense-btn">حفظ</button>
+            </div>
+        </div>
+    `;
+    
+    // إضافة النافذة للجسم
+    document.body.appendChild(modalOverlay);
+    
+    // إضافة مستمع حدث لزر الحفظ
+    const saveButton = modalOverlay.querySelector('#save-expense-btn');
+    if (saveButton) {
+        saveButton.addEventListener('click', function() {
+            saveExpense();
+        });
+    }
+    
+    // إضافة مستمع حدث لزر الإغلاق
+    const closeButtons = modalOverlay.querySelectorAll('.modal-close, .modal-close-btn');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal-overlay');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+}
+
+// إنشاء نافذة إضافة وارد
+function createIncomeModal() {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'add-income-modal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal animate__animated animate__fadeInUp">
+            <div class="modal-header">
+                <h3 class="modal-title">إضافة وارد جديد</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="income-form">
+                    <input type="hidden" id="income-id" value="">
+                    
+                    <div class="form-group">
+                        <label class="form-label">نوع الوارد</label>
+                        <select class="form-select" id="income-type" required>
+                            <option value="">اختر النوع</option>
+                            <option value="إيداع">إيداع</option>
+                            <option value="دفع قسط">دفع قسط</option>
+                            <option value="وارد آخر">وارد آخر</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">الوصف</label>
+                        <input type="text" class="form-input" id="income-description" placeholder="وصف الوارد" required>
+                    </div>
+                    
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">المبلغ</label>
+                            <input type="number" class="form-input" id="income-amount" min="1" step="1000" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">التاريخ</label>
+                            <input type="date" class="form-input" id="income-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">المستثمر (اختياري)</label>
+                        <select class="form-select" id="income-investor">
+                            <option value="">غير محدد</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea class="form-input" id="income-notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline modal-close-btn">إلغاء</button>
+                <button class="btn btn-primary" id="save-income-btn">حفظ</button>
+            </div>
+        </div>
+    `;
+    
+    // إضافة النافذة للجسم
+    document.body.appendChild(modalOverlay);
+    
+    // إضافة مستمع حدث لزر الحفظ
+    const saveButton = modalOverlay.querySelector('#save-income-btn');
+    if (saveButton) {
+        saveButton.addEventListener('click', function() {
+            saveIncome();
+        });
+    }
+    
+    // إضافة مستمع حدث لزر الإغلاق
+    const closeButtons = modalOverlay.querySelectorAll('.modal-close, .modal-close-btn');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal-overlay');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+}
+
+// ملء قائمة المستثمرين
+function populateInvestorsList(selectId, selectedId = null) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    // الحفاظ على الخيار الأول
+    const firstOption = select.querySelector('option:first-child');
+    select.innerHTML = '';
+    if (firstOption) {
+        select.appendChild(firstOption);
+    }
+    
+    // ملء القائمة بالمستثمرين
+    if (Array.isArray(window.investors)) {
+        // ترتيب المستثمرين أبجديًا
+        const sortedInvestors = [...window.investors].sort((a, b) => a.name.localeCompare(b.name));
+        
+        sortedInvestors.forEach(investor => {
+            const option = document.createElement('option');
+            option.value = investor.id;
+            option.textContent = investor.name;
+            
+            // تحديد الخيار إذا كان مطابقًا
+            if (selectedId && investor.id === selectedId) {
+                option.selected = true;
+            }
+            
+            select.appendChild(option);
+        });
+    }
+}
+
+// حفظ مصروف جديد
+function saveExpense() {
+    const form = document.getElementById('expense-form');
+    if (!form) return;
+    
+    // التحقق من صحة البيانات
+    const id = document.getElementById('expense-id').value;
+    const type = document.getElementById('expense-type').value;
+    const description = document.getElementById('expense-description').value;
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const date = document.getElementById('expense-date').value;
+    const investorId = document.getElementById('expense-investor').value;
+    const notes = document.getElementById('expense-notes').value;
+    
+    if (!type || !description || isNaN(amount) || amount <= 0 || !date) {
+        showNotification('يرجى ملء جميع الحقول المطلوبة بشكل صحيح', 'error');
+        return;
+    }
+    
+    // الحصول على اسم المستثمر إذا كان محددًا
+    let investorName = '';
+    if (investorId) {
+        const investor = window.investors.find(inv => inv.id === investorId);
+        if (investor) {
+            investorName = investor.name;
+        }
+    }
+    
+    // إنشاء سجل مصروف جديد
+    const expense = {
+        id: id || Date.now().toString(),
+        type,
+        description,
+        amount,
+        date,
+        investorId,
+        investorName,
+        notes,
+        createdAt: new Date().toISOString()
+    };
+    
+    // إضافة أو تحديث السجل
+    if (id) {
+        // تحديث سجل موجود
+        const index = window.exports.findIndex(item => item.id === id);
+        if (index !== -1) {
+            window.exports[index] = expense;
+        }
+    } else {
+        // إضافة سجل جديد
+        window.exports.push(expense);
+    }
+    
+    // حفظ البيانات
+    saveFinancialData();
+    
+    // إضافة إلى سجل العمليات أيضًا إذا كان سجل جديد
+    if (!id && (type === 'سحب' || type === 'دفع أرباح')) {
+        addToTransactions(expense);
+    }
+    
+    // إغلاق النافذة
+    closeModal('add-expense-modal');
+    
+    // تحديث واجهة المستخدم
+    renderExportsData();
+    
+    // عرض إشعار النجاح
+    showNotification(id ? 'تم تحديث المصروف بنجاح' : 'تم إضافة المصروف بنجاح', 'success');
+}
+
+// حفظ وارد جديد
+function saveIncome() {
+    const form = document.getElementById('income-form');
+    if (!form) return;
+    
+    // التحقق من صحة البيانات
+    const id = document.getElementById('income-id').value;
+    const type = document.getElementById('income-type').value;
+    const description = document.getElementById('income-description').value;
+    const amount = parseFloat(document.getElementById('income-amount').value);
+    const date = document.getElementById('income-date').value;
+    const investorId = document.getElementById('income-investor').value;
+    const notes = document.getElementById('income-notes').value;
+    
+    if (!type || !description || isNaN(amount) || amount <= 0 || !date) {
+        showNotification('يرجى ملء جميع الحقول المطلوبة بشكل صحيح', 'error');
+        return;
+    }
+    
+    // الحصول على اسم المستثمر إذا كان محددًا
+    let investorName = '';
+    if (investorId) {
+        const investor = window.investors.find(inv => inv.id === investorId);
+        if (investor) {
+            investorName = investor.name;
+        }
+    }
+    
+    // إنشاء سجل وارد جديد
+    const income = {
+        id: id || Date.now().toString(),
+        type,
+        description,
+        amount,
+        date,
+        investorId,
+        investorName,
+        notes,
+        createdAt: new Date().toISOString()
+    };
+    
+    // إضافة أو تحديث السجل
+    if (id) {
+        // تحديث سجل موجود
+        const index = window.imports.findIndex(item => item.id === id);
+        if (index !== -1) {
+            window.imports[index] = income;
+        }
+    } else {
+        // إضافة سجل جديد
+        window.imports.push(income);
+    }
+    
+    // حفظ البيانات
+    saveFinancialData();
+    
+    // إضافة إلى سجل العمليات أيضًا إذا كان سجل جديد
+    if (!id && (type === 'إيداع' || type === 'دفع قسط')) {
+        addToTransactions(income);
+    }
+    
+    // إغلاق النافذة
+    closeModal('add-income-modal');
+    
+    // تحديث واجهة المستخدم
+    renderImportsData();
+    
+    // عرض إشعار النجاح
+    showNotification(id ? 'تم تحديث الوارد بنجاح' : 'تم إضافة الوارد بنجاح', 'success');
+}
+
+// إضافة سجل إلى transactions
+function addToTransactions(record) {
+    if (!Array.isArray(window.transactions)) {
+        window.transactions = [];
+    }
+    
+    // إنشاء سجل للعملية
+    const transaction = {
+        id: record.id,
+        date: record.date,
+        createdAt: record.createdAt,
+        type: record.type,
+        investorId: record.investorId,
+        investorName: record.investorName,
+        amount: record.amount,
+        notes: record.notes
+    };
+    
+    // إضافة العملية
+    window.transactions.push(transaction);
+    
+    // تحديث رصيد المستثمر إذا كان محددًا
+    if (record.investorId) {
+        const investor = window.investors.find(inv => inv.id === record.investorId);
+        if (investor) {
+            if (record.type === 'إيداع') {
+                investor.amount = (investor.amount || 0) + record.amount;
+            } else if (record.type === 'سحب') {
+                investor.amount = (investor.amount || 0) - record.amount;
+            }
+            
+            // تحديث transaction بالرصيد الجديد
+            transaction.balanceAfter = investor.amount;
+        }
+    }
+    
+    // حفظ البيانات
+    if (typeof window.saveData === 'function') {
+        window.saveData();
+    }
+    
+    // إطلاق حدث تحديث العمليات
+    document.dispatchEvent(new CustomEvent('transaction:update'));
+}
+
+// رسم مخطط الصادرات
+function renderExportsChart() {
+    const canvas = document.getElementById('expenses-chart');
+    if (!canvas || !window.Chart) return;
+    
+    // تنظيف المخطط السابق
+    const chartInstance = Chart.getChart(canvas);
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+    
+    // تجميع البيانات حسب النوع
+    const withdrawals = window.exports.filter(item => item.type === 'سحب').reduce((sum, item) => sum + item.amount, 0);
+    const profitPayments = window.exports.filter(item => item.type === 'دفع أرباح').reduce((sum, item) => sum + item.amount, 0);
+    const operationalExpenses = window.exports.filter(item => item.type === 'مصروف').reduce((sum, item) => sum + item.amount, 0);
+    const otherExpenses = window.exports.filter(item => item.type === 'مصروف آخر').reduce((sum, item) => sum + item.amount, 0);
+    
+    // إنشاء المخطط
+    new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: ['سحوبات', 'دفع أرباح', 'مصاريف تشغيلية', 'مصاريف أخرى'],
+            datasets: [{
+                data: [withdrawals, profitPayments, operationalExpenses, otherExpenses],
+                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: 'Tajawal'
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// رسم مخطط الواردات
+function renderImportsChart() {
+    const canvas = document.getElementById('income-chart');
+    if (!canvas || !window.Chart) return;
+    
+    // تنظيف المخطط السابق
+    const chartInstance = Chart.getChart(canvas);
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+    
+    // تجميع البيانات حسب النوع
+    const deposits = window.imports.filter(item => item.type === 'إيداع').reduce((sum, item) => sum + item.amount, 0);
+    const installments = window.imports.filter(item => item.type === 'دفع قسط').reduce((sum, item) => sum + item.amount, 0);
+    const otherIncome = window.imports.filter(item => item.type === 'وارد آخر').reduce((sum, item) => sum + item.amount, 0);
+    
+    // إنشاء المخطط
+    new Chart(canvas, {
+        type: 'pie',
+        data: {
+            labels: ['إيداعات', 'دفع أقساط', 'واردات أخرى'],
+            datasets: [{
+                data: [deposits, installments, otherIncome],
+                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: 'Tajawal'
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// تصدير البيانات المالية إلى ملف CSV
+function exportFinancialData(type) {
+    const data = type === 'exports' ? window.exports : window.imports;
+    
+    if (!data || data.length === 0) {
+        showNotification('لا توجد بيانات للتصدير', 'warning');
+        return;
+    }
+    
+    // إنشاء عناوين الأعمدة
+    const headers = ['المعرف', 'التاريخ', 'النوع', 'الوصف', 'المستثمر', 'المبلغ', 'ملاحظات'];
+    
+    // تحويل البيانات إلى صفوف CSV
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    
+    // إضافة الصفوف
+    data.forEach(item => {
+        const row = [
+            item.id,
+            item.date,
+            item.type,
+            `"${item.description.replace(/"/g, '""')}"`,
+            item.investorName || '',
+            item.amount,
+            `"${(item.notes || '').replace(/"/g, '""')}"`
+        ];
+        
+        csvRows.push(row.join(','));
+    });
+    
+    // إنشاء محتوى الملف
+    const csvContent = csvRows.join('\n');
+    
+    // إنشاء رابط التنزيل
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${type === 'exports' ? 'صادرات' : 'واردات'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    // إضافة الرابط للصفحة والنقر عليه
+    document.body.appendChild(link);
+    link.click();
+    
+    // تنظيف
+    document.body.removeChild(link);
+    
+    showNotification(`تم تصدير بيانات ${type === 'exports' ? 'الصادرات' : 'الواردات'} بنجاح`, 'success');
+}
+
+// فتح النافذة المنبثقة
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.classList.add('active');
+}
+
+// إغلاق النافذة المنبثقة
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.classList.remove('active');
+}
+
+// الحصول على نص الفترة
+function getPeriodText(period) {
+    switch (period) {
+        case 'today':
+            return 'اليوم';
+        case 'week':
+            return 'هذا الأسبوع';
+        case 'month':
+            return 'هذا الشهر';
+        default:
+            return '';
+    }
+}
+
+// الحصول على فئة لون نوع العملية
+function getTypeClass(type) {
+    switch (type) {
+        case 'إيداع':
+            return 'success';
+        case 'سحب':
+            return 'danger';
+        case 'دفع أرباح':
+            return 'info';
+        case 'دفع قسط':
+            return 'primary';
+        case 'مصروف':
+            return 'warning';
+        default:
+            return 'secondary';
+    }
+}
+
+// تنسيق التاريخ
+function formatDate(dateString) {
+    if (!dateString) return '';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-EG');
+    } catch (e) {
+        return dateString;
+    }
+}
+
+// تنسيق المبلغ المالي
+function formatCurrency(amount) {
+    // استخدام دالة النظام لتنسيق المبلغ إذا كانت موجودة
+    if (typeof window.formatCurrency === 'function') {
+        return window.formatCurrency(amount);
+    }
+    
+    if (isNaN(amount)) amount = 0;
+    const formattedAmount = amount.toLocaleString();
+    const currency = window.settings?.currency || 'دينار';
+    
+    return `${formattedAmount} ${currency}`;
+}
+
+// تشغيل نظام تتبع الصادرات والواردات
+function runFinancialTrackingSystem() {
+    console.log("بدء تشغيل نظام تتبع الصادرات والواردات...");
+
+    // تهيئة نظام تتبع الصادرات والواردات
+    initFinancialTracking();
+    
+    // إضافة الأنماط
+    addFinancialTrackingStyles();
+    
+    console.log("تم تشغيل نظام تتبع الصادرات والواردات بنجاح!");
+}
+
+// تهيئة نظام تتبع الصادرات والواردات عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تأخير قليل للتأكد من تحميل باقي النظام
+    setTimeout(() => {
+        runFinancialTrackingSystem();
+    }, 1000);
+});/**
+ * إضافة صفحات الصادرات والواردات إلى نظام الاستثمار المتكامل
+ * يجب إضافة هذا الملف في نهاية ملف app-fixed.js
+ */
+
+// مصفوفات لتخزين الصادرات والواردات
+if (!window.exports) {
+    window.exports = [];
+}
+
+if (!window.imports) {
+    window.imports = [];
+}
+
+// دالة تهيئة صفحات الصادرات والواردات
+function initFinancialTracking() {
+    console.log("تهيئة نظام تتبع الصادرات والواردات...");
+
+    // إضافة أزرار التنقل إلى الشريط الجانبي
+    addNavBarItems();
+
+    // إنشاء صفحات الصادرات والواردات
+    createExportsPage();
+    createImportsPage();
+
+    // تحميل بيانات الصادرات والواردات
+    loadFinancialData();
+
+    // تسجيل مستمعي الأحداث للعمليات المالية
+    registerTransactionListeners();
+
+    console.log("تم تهيئة نظام تتبع الصادرات والواردات بنجاح");
+}
+
+// إضافة عناصر القائمة الجانبية
+function addNavBarItems() {
+    console.log("إضافة أزرار الصادرات والواردات إلى القائمة الجانبية...");
+    
+    const navList = document.querySelector('.nav-list');
+    if (!navList) {
+        console.error("لم يتم العثور على قائمة التنقل!");
+        return false;
+    }
+    
+    // التحقق من عدم وجود الأزرار مسبقًا
+    if (document.querySelector('.nav-link[data-page="exports"]') || document.querySelector('.nav-link[data-page="imports"]')) {
+        console.log("أزرار الصادرات والواردات موجودة بالفعل");
+        return true;
+    }
+    
+    // البحث عن عنصر التقارير لإضافة الأزرار بعده
+    const reportsItem = document.querySelector('.nav-link[data-page="reports"]');
+    const reportsLi = reportsItem ? reportsItem.closest('.nav-item') : null;
+    
+    // إنشاء عنصر زر الصادرات
+    const exportsItem = document.createElement('li');
+    exportsItem.className = 'nav-item';
+    exportsItem.innerHTML = `
+        <a class="nav-link" data-page="exports" href="#">
+            <div class="nav-icon">
+                <i class="fas fa-file-export"></i>
+            </div>
+            <span>الصادرات</span>
+        </a>
+    `;
+    
+    // إنشاء عنصر زر الواردات
+    const importsItem = document.createElement('li');
+    importsItem.className = 'nav-item';
+    importsItem.innerHTML = `
+        <a class="nav-link" data-page="imports" href="#">
+            <div class="nav-icon">
+                <i class="fas fa-file-import"></i>
+            </div>
+            <span>الواردات</span>
+        </a>
+    `;
+    
+    // إضافة الأزرار إلى القائمة
+    if (reportsLi) {
+        // إضافة بعد زر التقارير مباشرة
+        const nextSibling = reportsLi.nextSibling;
+        if (nextSibling) {
+            navList.insertBefore(exportsItem, nextSibling);
+            navList.insertBefore(importsItem, nextSibling);
+        } else {
+            navList.appendChild(exportsItem);
+            navList.appendChild(importsItem);
+        }
+    } else {
+        navList.appendChild(exportsItem);
+        navList.appendChild(importsItem);
+    }
+    
+    // إضافة مستمعي أحداث للأزرار
+    exportsItem.querySelector('.nav-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        showFinancialPage("exports");
+    });
+    
+    importsItem.querySelector('.nav-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        showFinancialPage("imports");
+    });
+    
+    console.log("تم إضافة أزرار الصادرات والواردات بنجاح");
+    return true;
+}
+
+// إنشاء صفحة الصادرات
+function createExportsPage() {
+    // التحقق من عدم وجود الصفحة مسبقًا
+    if (document.getElementById('exports-page')) {
+        return;
+    }
+    
+    // إنشاء عنصر الصفحة
+    const pageElement = document.createElement('div');
+    pageElement.className = 'page';
+    pageElement.id = 'exports-page';
+    
+    // إنشاء محتوى الصفحة
+    pageElement.innerHTML = `
+        <div class="header">
+            <button class="toggle-sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">الصادرات المالية</h1>
+            <div class="header-actions">
+                <div class="search-box">
+                    <input class="search-input" id="exports-search" placeholder="بحث في الصادرات..." type="text" />
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <button class="btn btn-primary" id="export-data-btn">
+                    <i class="fas fa-download"></i>
+                    <span>تصدير البيانات</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="exports-dashboard">
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">إجمالي الصادرات</div>
+                            <div class="card-value" id="total-expenses">0 دينار</div>
+                            <div class="card-change">
+                                <span id="expense-period">هذا الشهر</span>
+                            </div>
+                        </div>
+                        <div class="card-icon danger">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">سحوبات المستثمرين</div>
+                            <div class="card-value" id="withdrawals-amount">0 دينار</div>
+                            <div class="card-change">
+                                <span id="withdrawals-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon warning">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">المصاريف التشغيلية</div>
+                            <div class="card-value" id="operational-expenses">0 دينار</div>
+                            <div class="card-change">
+                                <span id="operational-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon info">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">دفع الأرباح</div>
+                            <div class="card-value" id="profit-payments">0 دينار</div>
+                            <div class="card-change">
+                                <span id="profit-payments-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon success">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">سجل الصادرات</h2>
+                <div class="section-actions">
+                    <div class="btn-group">
+                        <button class="btn btn-outline btn-sm active" data-period="all">الكل</button>
+                        <button class="btn btn-outline btn-sm" data-period="today">اليوم</button>
+                        <button class="btn btn-outline btn-sm" data-period="week">هذا الأسبوع</button>
+                        <button class="btn btn-outline btn-sm" data-period="month">هذا الشهر</button>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="add-expense-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة مصروف</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="exports-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>الوصف</th>
+                            <th>المستثمر</th>
+                            <th>المبلغ</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="text-center">جاري تحميل بيانات الصادرات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section mt-4">
+                <div class="section-header">
+                    <h2 class="section-title">إحصائيات الصادرات</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="expenses-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // إضافة الصفحة للمحتوى الرئيسي
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.appendChild(pageElement);
+        console.log('تم إنشاء صفحة الصادرات بنجاح');
+    }
+}
+
+// إنشاء صفحة الواردات
+function createImportsPage() {
+    // التحقق من عدم وجود الصفحة مسبقًا
+    if (document.getElementById('imports-page')) {
+        return;
+    }
+    
+    // إنشاء عنصر الصفحة
+    const pageElement = document.createElement('div');
+    pageElement.className = 'page';
+    pageElement.id = 'imports-page';
+    
+    // إنشاء محتوى الصفحة
+    pageElement.innerHTML = `
+        <div class="header">
+            <button class="toggle-sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">الواردات المالية</h1>
+            <div class="header-actions">
+                <div class="search-box">
+                    <input class="search-input" id="imports-search" placeholder="بحث في الواردات..." type="text" />
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <button class="btn btn-primary" id="import-data-btn">
+                    <i class="fas fa-download"></i>
+                    <span>تصدير البيانات</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="imports-dashboard">
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">إجمالي الواردات</div>
+                            <div class="card-value" id="total-income">0 دينار</div>
+                            <div class="card-change">
+                                <span id="income-period">هذا الشهر</span>
+                            </div>
+                        </div>
+                        <div class="card-icon success">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">إيداعات المستثمرين</div>
+                            <div class="card-value" id="deposits-amount">0 دينار</div>
+                            <div class="card-change">
+                                <span id="deposits-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon primary">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">تسديد الأقساط</div>
+                            <div class="card-value" id="installments-amount">0 دينار</div>
+                            <div class="card-change">
+                                <span id="installments-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon info">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-pattern">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">عائدات أخرى</div>
+                            <div class="card-value" id="other-income">0 دينار</div>
+                            <div class="card-change">
+                                <span id="other-income-count">0 عملية</span>
+                            </div>
+                        </div>
+                        <div class="card-icon warning">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">سجل الواردات</h2>
+                <div class="section-actions">
+                    <div class="btn-group">
+                        <button class="btn btn-outline btn-sm active" data-period="all">الكل</button>
+                        <button class="btn btn-outline btn-sm" data-period="today">اليوم</button>
+                        <button class="btn btn-outline btn-sm" data-period="week">هذا الأسبوع</button>
+                        <button class="btn btn-outline btn-sm" data-period="month">هذا الشهر</button>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="add-income-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة وارد</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="imports-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>الوصف</th>
+                            <th>المستثمر</th>
+                            <th>المبلغ</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="text-center">جاري تحميل بيانات الواردات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section mt-4">
+                <div class="section-header">
+                    <h2 class="section-title">إحصائيات الواردات</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="income-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // إضافة الصفحة للمحتوى الرئيسي
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.appendChild(pageElement);
+        console.log('تم إنشاء صفحة الواردات بنجاح');
+    }
+}
+
+// عرض صفحة مالية محددة (صادرات أو واردات)
+function showFinancialPage(pageType) {
+    const pageId = `${pageType}-page`;
+    const page = document.getElementById(pageId);
+    
+    if (!page) {
+        console.error(`الصفحة ${pageId} غير موجودة!`);
+        return;
+    }
+    
+    // إخفاء جميع الصفحات
+    document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+    });
+    
+    // إظهار الصفحة المطلوبة
+    page.classList.add('active');
+    
+    // تحديث القائمة الجانبية
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const navLink = document.querySelector(`.nav-link[data-page="${pageType}"]`);
+    if (navLink) {
+        navLink.classList.add('active');
+    }
+    
+    // تحديث بيانات الصفحة
+    if (pageType === 'exports') {
+        renderExportsData();
+        if (window.Chart) {
+            renderExportsChart();
+        }
+    } else {
+        renderImportsData();
+        if (window.Chart) {
+            renderImportsChart();
+        }
+    }
+}
+
+// تحميل بيانات الصادرات والواردات
+function loadFinancialData() {
+    console.log("تحميل بيانات الصادرات والواردات...");
+    
+    // محاولة تحميل البيانات من التخزين المحلي
+    try {
+        const savedExports = localStorage.getItem('exports');
+        if (savedExports) {
+            window.exports = JSON.parse(savedExports);
+            console.log(`تم تحميل ${window.exports.length} صادر`);
+        }
+
+        const savedImports = localStorage.getItem('imports');
+        if (savedImports) {
+            window.imports = JSON.parse(savedImports);
+            console.log(`تم تحميل ${window.imports.length} وارد`);
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل بيانات الصادرات والواردات:', error);
+        showNotification('حدث خطأ أثناء تحميل بيانات الصادرات والواردات', 'error');
+    }
+    
+    // أول مرة نقوم بإنشاء البيانات، نحاول استيراد البيانات من transactions
+    if (window.exports.length === 0 && window.imports.length === 0) {
+        importFromTransactions();
+    }
+}
+
+// استيراد البيانات من transactions الموجودة
+function importFromTransactions() {
+    console.log("استيراد البيانات من سجل العمليات...");
+    
+    if (!Array.isArray(window.transactions) || window.transactions.length === 0) {
+        console.log("لا توجد عمليات لاستيرادها");
+        return;
+    }
+    
+    // استيراد العمليات إلى الصادرات والواردات
+    window.transactions.forEach(transaction => {
+        const financialRecord = {
+            id: transaction.id,
+            date: transaction.date,
+            createdAt: transaction.createdAt,
+            type: transaction.type,
+            investorId: transaction.investorId,
+            investorName: transaction.investorName,
+            amount: transaction.amount,
+            balanceAfter: transaction.balanceAfter,
+            notes: transaction.notes || '',
+            description: getDescriptionFromType(transaction.type)
+        };
+        
+        // تصنيف العمليات إلى صادرات وواردات
+        if (transaction.type === 'سحب' || transaction.type === 'دفع أرباح' || transaction.type === 'مصروف') {
+            window.exports.push(financialRecord);
+        } else if (transaction.type === 'إيداع' || transaction.type === 'دفع قسط' || transaction.type === 'وارد') {
+            window.imports.push(financialRecord);
+        }
+    });
+    
+    // حفظ البيانات المستوردة
+    saveFinancialData();
+    
+    console.log(`تم استيراد ${window.exports.length} صادر و ${window.imports.length} وارد من سجل العمليات`);
+}
+
+// الحصول على وصف من نوع العملية
+function getDescriptionFromType(type) {
+    switch (type) {
+        case 'إيداع':
+            return 'إيداع مبلغ استثمار';
+        case 'سحب':
+            return 'سحب مبلغ من الاستثمار';
+        case 'دفع أرباح':
+            return 'دفع أرباح للمستثمر';
+        case 'دفع قسط':
+            return 'تسديد قسط';
+        default:
+            return type;
+    }
+}
+
+// حفظ بيانات الصادرات والواردات
+function saveFinancialData() {
+    try {
+        localStorage.setItem('exports', JSON.stringify(window.exports));
+        localStorage.setItem('imports', JSON.stringify(window.imports));
+        console.log('تم حفظ بيانات الصادرات والواردات بنجاح');
+        return true;
+    } catch (error) {
+        console.error('خطأ في حفظ بيانات الصادرات والواردات:', error);
+        showNotification('حدث خطأ أثناء حفظ بيانات الصادرات والواردات', 'error');
+        return false;
+    }
+}
+
+// تسجيل مستمعي الأحداث للعمليات المالية
+function registerTransactionListeners() {
+    // الاستماع إلى حدث إضافة/تعديل/حذف العمليات
+    document.addEventListener('transaction:update', function() {
+        // تحديث البيانات من transactions الموجودة (للعمليات الجديدة فقط)
+        updateFromNewTransactions();
+    });
+    
+    // إضافة مستمعي أحداث للأزرار
+    document.addEventListener('DOMContentLoaded', function() {
+        // أزرار إضافة المصروفات والواردات
+        const addExpenseBtn = document.getElementById('add-expense-btn');
+        if (addExpenseBtn) {
+            addExpenseBtn.addEventListener('click', function() {
+                openAddExpenseModal();
+            });
+        }
+        
+        const addIncomeBtn = document.getElementById('add-income-btn');
+        if (addIncomeBtn) {
+            addIncomeBtn.addEventListener('click', function() {
+                openAddIncomeModal();
+            });
+        }
+        
+        // أزرار تصدير البيانات
+        const exportDataBtn = document.getElementById('export-data-btn');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', function() {
+                exportFinancialData('exports');
+            });
+        }
+        
+        const importDataBtn = document.getElementById('import-data-btn');
+        if (importDataBtn) {
+            importDataBtn.addEventListener('click', function() {
+                exportFinancialData('imports');
+            });
+        }
+        
+        // أزرار تصفية البيانات حسب الفترة
+        const periodBtns = document.querySelectorAll('.btn-group .btn[data-period]');
+        periodBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                const periodBtns = this.closest('.btn-group').querySelectorAll('.btn');
+                periodBtns.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const period = this.getAttribute('data-period');
+                const pageType = this.closest('.page').id.includes('exports') ? 'exports' : 'imports';
+                
+                if (pageType === 'exports') {
+                    renderExportsData(period);
+                } else {
+                    renderImportsData(period);
+                }
+            });
+        });
+        
+        // حقول البحث
+        const exportsSearch = document.getElementById('exports-search');
+        if (exportsSearch) {
+            exportsSearch.addEventListener('input', function() {
+                searchFinancialData('exports', this.value);
+            });
+        }
+        
+        const importsSearch = document.getElementById('imports-search');
+        if (importsSearch) {
+            importsSearch.addEventListener('input', function() {
+                searchFinancialData('imports', this.value);
+            });
+        }
+    });
+}
+
+// تحديث البيانات من العمليات الجديدة
+function updateFromNewTransactions() {
+    console.log("تحديث البيانات من العمليات الجديدة...");
+    
+    if (!Array.isArray(window.transactions) || window.transactions.length === 0) {
+        return;
+    }
+    
+    // الحصول على آخر معرف في الصادرات والواردات
+    const lastExportId = window.exports.length > 0 ? 
+        window.exports[window.exports.length - 1].id : null;
+        
+    const lastImportId = window.imports.length > 0 ? 
+        window.imports[window.imports.length - 1].id : null;
+    
+    // البحث عن العمليات الجديدة التي لم تتم إضافتها بعد
+    const newTransactions = window.transactions.filter(transaction => {
+        // تجاهل العمليات التي تم استيرادها بالفعل
+        const inExports = window.exports.some(exp => exp.id === transaction.id);
+        const inImports = window.imports.some(imp => imp.id === transaction.id);
+        return !inExports && !inImports;
+    });
+    
+    if (newTransactions.length === 0) {
+        console.log("لا توجد عمليات جديدة للتحديث");
+        return;
+    }
+    
+    // استيراد العمليات الجديدة
+    newTransactions.forEach(transaction => {
+        const financialRecord = {
+            id: transaction.id,
+            date: transaction.date,
+            createdAt: transaction.createdAt,
+            type: transaction.type,
+            investorId: transaction.investorId,
+            investorName: transaction.investorName || 'غير محدد',
+            amount: transaction.amount,
+            balanceAfter: transaction.balanceAfter,
+            notes: transaction.notes || '',
+            description: getDescriptionFromType(transaction.type)
+        };
+        
+        // تصنيف العمليات إلى صادرات وواردات
+        if (transaction.type === 'سحب' || transaction.type === 'دفع أرباح' || transaction.type === 'مصروف') {
+            window.exports.push(financialRecord);
+        } else if (transaction.type === 'إيداع' || transaction.type === 'دفع قسط' || transaction.type === 'وارد') {
+            window.imports.push(financialRecord);
+        }
+    });
+    
+    // حفظ البيانات المستوردة
+    saveFinancialData();
+    
+    // تحديث واجهة المستخدم إذا كانت الصفحة مفتوحة
+    const exportsPage = document.getElementById('exports-page');
+    const importsPage = document.getElementById('imports-page');
+    
+    if (exportsPage && exportsPage.classList.contains('active')) {
+        renderExportsData();
+    }
+    
+    if (importsPage && importsPage.classList.contains('active')) {
+        renderImportsData();
+    }
+    
+    console.log(`تم تحديث ${newTransactions.length} عملية جديدة`);
+}
