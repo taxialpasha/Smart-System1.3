@@ -456,3 +456,456 @@
 .hidden {
     display: none !important;
 }
+
+/* أنماط البطاقة الماسية الجديدة */
+.investor-card {
+    width: 390px;
+    height: 245px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #0f1c33 0%, #172642 50%, #0c1526 100%);
+    color: white;
+    padding: 25px;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    margin: 0 auto 30px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    perspective: 1000px;
+}
+
+.investor-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.2;
+    width: 150px;
+    height: 150px;
+}
+
+/* شعار الماس */
+.diamond-logo {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.diamond-logo svg {
+    width: 100%;
+    height: 100%;
+    fill: #4a90e2;
+}
+
+.card-chip {
+    position: absolute;
+    top: 80px;
+    left: 25px; /* تغيير موضع الرقاقة إلى اليسار */
+    width: 50px;
+    height: 40px;
+    background: linear-gradient(135deg, #c9a851 0%, #ffd700 50%, #c9a851 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.card-number {
+    position: absolute;
+    top: 140px; /* نقل رقم البطاقة للأعلى قليلاً */
+    width: 100%;
+    left: 0;
+    padding: 0 25px;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    text-align: center;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.card-details {
+    position: absolute;
+    bottom: 25px;
+    width: 100%;
+    left: 0;
+    padding: 0 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.card-name {
+    font-size: 1.2rem;
+    text-align: right;
+    font-family: 'Tajawal', 'Arial', sans-serif;
+    letter-spacing: 1px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-name-arabic {
+    font-weight: bold;
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+}
+
+.card-name-english {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.card-validity {
+    font-size: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.card-valid-text {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-bottom: 3px;
+}
+
+/* تعديل المعاينات للبطاقات في القائمة */
+.card-preview {
+    width: 320px;
+    height: 180px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0f1c33 0%, #172642 50%, #0c1526 100%);
+    color: white;
+    padding: 15px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.card-preview .card-logo {
+    opacity: 0.15;
+    width: 100px;
+    height: 100px;
+}
+
+.card-preview .card-chip {
+    width: 35px;
+    height: 25px;
+    top: 50px;
+    left: 20px;
+}
+
+.card-preview .card-number {
+    font-size: 1.2rem;
+    top: 100px;
+}
+
+.card-preview .card-name .card-name-arabic {
+    font-size: 1rem;
+}
+
+.card-preview .card-name .card-name-english {
+    font-size: 0.7rem;
+}
+
+/* تخصيص بطاقات الأنواع المختلفة */
+.investor-card.platinum,
+.card-preview.platinum {
+    background: linear-gradient(135deg, #1a1a1a 0%, #333333 50%, #1a1a1a 100%);
+}
+
+.investor-card.gold,
+.card-preview.gold {
+    background: linear-gradient(135deg, #85754e 0%, #cfb53b 50%, #85754e 100%);
+}
+
+.investor-card.premium,
+.card-preview.premium {
+    background: linear-gradient(135deg, #142c58 0%, #1f4287 50%, #142c58 100%);
+}
+
+.investor-card.diamond,
+.card-preview.diamond {
+    background: linear-gradient(135deg, #0f1c33 0%, #172642 50%, #0c1526 100%);
+}
+
+.investor-card.islamic,
+.card-preview.islamic {
+    background: linear-gradient(135deg, #004c23 0%, #006b3c 50%, #004c23 100%);
+}
+
+// إضافة هذه الدالة لإنشاء شعار الماس
+function createDiamondLogo() {
+    return `
+        <div class="diamond-logo">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50,0 L100,30 L85,40 L50,20 L15,40 L0,30 Z" />
+                <path d="M15,40 L50,20 L85,40 L85,70 L50,100 L15,70 Z" />
+                <path d="M50,46 L50,70 L30,58 Z" />
+                <path d="M50,46 L50,70 L70,58 Z" />
+            </svg>
+        </div>
+    `;
+}
+
+// تعديل دالة updateCardPreview لاستخدام التصميم الجديد
+function updateCardPreview() {
+    const previewContainer = document.getElementById('card-preview');
+    if (!previewContainer) return;
+    
+    // الحصول على بيانات النموذج
+    const investorId = document.getElementById('investor-select').value;
+    const cardType = document.querySelector('input[name="card-type"]:checked')?.value || settings.defaultCardType;
+    
+    // البحث عن المستثمر
+    const investor = investors.find(inv => inv.id === investorId);
+    
+    // إعداد الاسم ورقم الهاتف
+    const investorName = investor ? investor.name : 'اسم المستثمر';
+    const investorPhone = investor ? investor.phone : '';
+    
+    // إنشاء رقم بطاقة للمعاينة
+    const cardNumber = '1234 5678 9012 3456';
+    
+    // تاريخ الانتهاء
+    const expiryDate = document.getElementById('expiry-date')?.value || '';
+    let expiryMonth = '12';
+    let expiryYear = '28';
+    
+    if (expiryDate) {
+        const date = new Date(expiryDate);
+        expiryMonth = String(date.getMonth() + 1).padStart(2, '0');
+        expiryYear = date.getFullYear().toString().slice(2);
+    }
+    
+    // ضبط فئة البطاقة حسب النوع
+    let cardClass = cardType;
+    
+    // إنشاء HTML للمعاينة بالتصميم الجديد
+    previewContainer.innerHTML = `
+        <div class="investor-card ${cardClass}">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="card-chip">
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                    </div>
+                    
+                    <div class="card-logo">
+                        ${createDiamondLogo()}
+                    </div>
+                    
+                    <div class="card-number">${cardNumber}</div>
+                    <div class="card-details">
+                        <div class="card-validity">
+                            <div class="card-valid-text">حتى</div>
+                            <div>${expiryMonth}/${expiryYear}</div>
+                        </div>
+                        <div class="card-name">
+                            <div class="card-name-arabic">${investorName}</div>
+                            <div class="card-name-english">INVESTOR NAME</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// تعديل دالة showCardDetails لعرض تفاصيل البطاقة بالتصميم الجديد
+function showCardDetails(cardId) {
+    console.log(`عرض تفاصيل البطاقة: ${cardId}`);
+    
+    // البحث عن البطاقة
+    const card = cards.find(c => c.id === cardId);
+    if (!card) {
+        alert('لم يتم العثور على البطاقة');
+        return;
+    }
+    
+    // حفظ معرف البطاقة الحالية
+    currentCardId = cardId;
+    
+    // البحث عن المستثمر
+    const investor = investors.find(inv => inv.id === card.investorId);
+    
+    // إضافة نشاط المشاهدة
+    addActivity(cardId, 'view');
+    
+    // التنقل إلى صفحة تفاصيل البطاقة
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    const cardDetailsPage = document.getElementById('card-details-page');
+    if (!cardDetailsPage) return;
+    
+    cardDetailsPage.classList.add('active');
+    
+    // إزالة الفئة النشطة من جميع الروابط في القائمة
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // تحديث العنوان في شريط العنوان
+    const pageTitle = cardDetailsPage.querySelector('.page-title');
+    if (pageTitle) {
+        pageTitle.textContent = `بطاقة ${card.investorName}`;
+    }
+    
+    // الحصول على حاويات التفاصيل
+    const cardDetailsContainer = document.getElementById('card-details-container');
+    const investorDetailsContainer = document.getElementById('investor-details-container');
+    const cardActivitiesContainer = document.getElementById('card-activities-container');
+    
+    if (!cardDetailsContainer || !investorDetailsContainer || !cardActivitiesContainer) return;
+    
+    const expiryMonth = new Date(card.expiryDate).getMonth() + 1;
+    const expiryYear = new Date(card.expiryDate).getFullYear().toString().slice(2);
+    const expiryFormatted = `${expiryMonth}/${expiryYear}`;
+    const isExpired = new Date(card.expiryDate) < new Date();
+    const isActive = card.status === 'active';
+    
+    // ملء معلومات البطاقة بالتصميم الجديد
+    cardDetailsContainer.innerHTML = `
+        <div class="investor-card ${card.cardType}" id="card-for-print">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="card-chip">
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                        <div class="chip-line"></div>
+                    </div>
+                    
+                    <div class="card-logo">
+                        ${createDiamondLogo()}
+                    </div>
+                    
+                    <div class="card-number">${card.cardNumber}</div>
+                    <div class="card-details">
+                        <div class="card-validity">
+                            <div class="card-valid-text">حتى</div>
+                            <div>${expiryFormatted}</div>
+                        </div>
+                        <div class="card-name">
+                            <div class="card-name-arabic">${card.investorName}</div>
+                            <div class="card-name-english">INVESTOR NAME</div>
+                        </div>
+                    </div>
+                    
+                    ${isExpired || !isActive ? `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); border: 5px solid #e74c3c; padding: 10px; font-size: 1.5rem; color: #e74c3c; font-weight: bold; border-radius: 10px; background-color: rgba(255,255,255,0.3);">
+                        ${isActive ? 'منتهية الصلاحية' : 'موقوفة'}
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // بقية الكود للعرض بقي كما هو...
+    // تخزين معرف البطاقة في أزرار التحكم
+    document.getElementById('print-card-btn').setAttribute('data-card-id', card.id);
+    document.getElementById('share-card-btn').setAttribute('data-card-id', card.id);
+    document.getElementById('edit-card-btn').setAttribute('data-card-id', card.id);
+    document.getElementById('deactivate-card-btn').setAttribute('data-card-id', card.id);
+    
+    // تحديث نص زر التعطيل بناءً على حالة البطاقة
+    const deactivateBtn = document.getElementById('deactivate-card-btn');
+    if (card.status === 'active') {
+        deactivateBtn.innerHTML = '<i class="fas fa-times-circle"></i><span>إيقاف البطاقة</span>';
+        deactivateBtn.classList.add('danger');
+        deactivateBtn.classList.remove('primary');
+    } else {
+        deactivateBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>تفعيل البطاقة</span>';
+        deactivateBtn.classList.add('primary');
+        deactivateBtn.classList.remove('danger');
+    }
+    
+    // عرض معلومات المستثمر والأنشطة كما هي في الدالة الأصلية
+    // ...
+}
+
+// تعديل دالة renderCards لعرض البطاقات في القائمة بالتصميم الجديد
+function renderCards(type = 'all', filter = null, searchText = '') {
+    // ... الكود الموجود
+    
+    // تعديل طريقة إنشاء عنصر البطاقة
+    filteredCards.forEach(card => {
+        const isExpired = new Date(card.expiryDate) < currentDate;
+        const isActive = card.status === 'active';
+        
+        const cardElement = document.createElement('div');
+        cardElement.className = `card-preview ${card.cardType}`;
+        cardElement.setAttribute('data-card-id', card.id);
+        
+        const expiryMonth = new Date(card.expiryDate).getMonth() + 1;
+        const expiryYear = new Date(card.expiryDate).getFullYear().toString().slice(2);
+        const expiryFormatted = `${expiryMonth}/${expiryYear}`;
+        
+        cardElement.innerHTML = `
+            <div class="card-chip">
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+                <div class="chip-line"></div>
+            </div>
+            
+            <div class="card-logo">
+                ${createDiamondLogo()}
+            </div>
+            
+            <div class="card-number">${card.cardNumber.slice(-8).padStart(16, 'X')}</div>
+            <div class="card-details">
+                <div class="card-validity">
+                    <div class="card-valid-text">حتى</div>
+                    <div>${expiryFormatted}</div>
+                </div>
+                <div class="card-name">
+                    <div class="card-name-arabic">${card.investorName}</div>
+                    <div class="card-name-english">INVESTOR NAME</div>
+                </div>
+            </div>
+        `;
+        
+        // إضافة فئة للبطاقات المنتهية أو غير النشطة
+        if (isExpired || !isActive) {
+            cardElement.style.opacity = '0.7';
+            cardElement.style.filter = 'grayscale(0.5)';
+            
+            // إضافة علامة منتهية أو موقوفة
+            const badge = document.createElement('div');
+            badge.style.position = 'absolute';
+            badge.style.top = '10px';
+            badge.style.right = '10px';
+            badge.style.background = isActive ? '#e74c3c' : '#f39c12';
+            badge.style.color = 'white';
+            badge.style.padding = '2px 6px';
+            badge.style.borderRadius = '3px';
+            badge.style.fontSize = '8px';
+            badge.style.zIndex = '10';
+            badge.textContent = isActive ? 'منتهية' : 'موقوفة';
+            cardElement.appendChild(badge);
+        }
+        
+        container.appendChild(cardElement);
+    });
+}
