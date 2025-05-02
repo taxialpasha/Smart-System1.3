@@ -5362,8 +5362,9 @@ function setupModalEvents() {
             return false;
         }
     }
-    
-    // إضافة أنماط CSS للصادرات والواردات
+});
+
+// إضافة أنماط CSS للصادرات والواردات
 function addFinancialTrackingStyles() {
     // التحقق من وجود أنماط مسبقة
     if (document.getElementById('financial-tracking-styles')) {
@@ -7324,6 +7325,3 @@ function updateFromNewTransactions() {
     
     console.log(`تم تحديث ${newTransactions.length} عملية جديدة`);
 }
-    
-    
-});
