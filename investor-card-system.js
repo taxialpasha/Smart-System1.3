@@ -207,1084 +207,1121 @@ const InvestorCardSystem = (function() {
         }));
     }
     
-  // إضافة أنماط CSS للبطاقات
-function addCardStyles() {
-    // التحقق من وجود عنصر الأنماط مسبقاً
-    if (document.getElementById('investor-card-styles')) {
-        return;
+    // إضافة أنماط CSS للبطاقات
+    function addCardStyles() {
+        // التحقق من وجود عنصر الأنماط مسبقاً
+        if (document.getElementById('investor-card-styles')) {
+            return;
+        }
+        
+        // إنشاء عنصر النمط
+        const styleElement = document.createElement('style');
+        styleElement.id = 'investor-card-styles';
+        
+        // إضافة أنماط CSS
+        styleElement.textContent = `
+            /* أنماط صفحة البطاقات */
+            #investor-cards-page, #active-cards-page, #expired-cards-page, #barcode-scanner-page, #card-details-page, #new-card-page, #card-stats-page {
+                padding: 20px;
+                direction: rtl;
+            }
+            
+            .card-content-area {
+                background-color: #f8f9fa;
+                border-radius: 10px;
+                padding: 20px;
+                overflow-y: auto;
+            }
+            
+            /* أنماط الوضع الداكن */
+            body.dark-mode .card-content-area {
+                background-color: #1e1e2f;
+                color: #e0e0e0;
+            }
+            
+            body.dark-mode .card-form-container,
+            body.dark-mode .investor-details,
+            body.dark-mode .barcode-scanner {
+                background-color: #252538;
+                color: #e0e0e0;
+            }
+            
+            body.dark-mode .card-form-title,
+            body.dark-mode .investor-details-title,
+            body.dark-mode .info-title {
+                color: #e0e0e0;
+            }
+            
+            body.dark-mode .card-form-input {
+                background-color: #1e1e2f;
+                border-color: #3a3a5c;
+                color: #e0e0e0;
+            }
+            
+            body.dark-mode .info-message {
+                background-color: #252538;
+                color: #e0e0e0;
+            }
+            
+            body.dark-mode .card-option-btn,
+            body.dark-mode .scanner-controls .btn-outline {
+                background-color: #2c2c44;
+                border-color: #3a3a5c;
+                color: #e0e0e0;
+            }
+            
+            /* أنماط نموذج إنشاء البطاقة */
+            .card-form-container {
+                background-color: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                margin-bottom: 20px;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            
+            .card-form-title {
+                font-size: 1.4rem;
+                margin-bottom: 20px;
+                color: #2c3e50;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .card-form-group {
+                margin-bottom: 20px;
+            }
+            
+            .card-form-label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .card-form-label {
+                color: #e0e0e0;
+            }
+            
+            .card-form-input {
+                width: 100%;
+                padding: 12px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 1rem;
+                transition: border-color 0.2s;
+            }
+            
+            .card-form-input:focus {
+                border-color: #3498db;
+                outline: none;
+            }
+            
+            .card-type-options {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+                margin-top: 10px;
+            }
+            
+            .card-type-option {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                padding: 10px 15px;
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+            }
+            
+            body.dark-mode .card-type-option {
+                background-color: #252538;
+                border-color: #3a3a5c;
+            }
+            
+            .card-type-option:hover {
+                background-color: #e9ecef;
+            }
+            
+            body.dark-mode .card-type-option:hover {
+                background-color: #2c2c44;
+            }
+            
+            .card-type-option.selected {
+                background-color: #3498db;
+                color: white;
+                border-color: #3498db;
+            }
+            
+            .card-type-option input {
+                margin-left: 8px;
+            }
+            
+            .card-form-actions {
+                margin-top: 30px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+            
+            /* أنماط البطاقة */
+            .investor-card {
+                width: 390px;
+                height: 245px;
+                border-radius: 15px;
+                background-color: #101a2c;
+                color: white;
+                padding: 25px;
+                position: relative;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                margin: 0 auto 30px;
+                overflow: hidden;
+                transition: transform 0.3s ease;
+                perspective: 1000px;
+            }
+            
+            .investor-card:hover {
+                transform: translateY(-5px);
+            }
+            
+            .investor-card.flipped .card-inner {
+                transform: rotateY(180deg);
+            }
+            
+            .card-inner {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                transition: transform 0.8s;
+                transform-style: preserve-3d;
+            }
+            
+            .card-front, .card-back {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                backface-visibility: hidden;
+            }
+            
+            .card-back {
+                transform: rotateY(180deg);
+                background-color: inherit;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .card-brand {
+                position: absolute;
+                top: 20px;
+                right: 25px;
+                font-size: 1.2rem;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            
+            .card-logo {
+                position: absolute;
+                top: 20px;
+                left: 25px;
+                display: flex;
+                gap: 5px;
+            }
+            
+            .card-logo-circle {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+            }
+            
+            .card-logo-circle.red {
+                background: #eb001b;
+            }
+            
+            .card-logo-circle.yellow {
+                background: #f79e1b;
+                opacity: 0.8;
+                margin-right: -15px;
+            }
+            
+            .card-chip {
+                position: absolute;
+                top: 80px;
+                right: 50px;
+                width: 50px;
+                height: 40px;
+                background: linear-gradient(135deg, #c9a851 0%, #ffd700 50%, #c9a851 100%);
+                border-radius: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                overflow: hidden;
+            }
+            
+            .chip-line {
+                position: absolute;
+                height: 1.5px;
+                background-color: rgba(0, 0, 0, 0.3);
+                width: 100%;
+            }
+            
+            .chip-line:nth-child(1) { top: 8px; }
+            .chip-line:nth-child(2) { top: 16px; }
+            .chip-line:nth-child(3) { top: 24px; }
+            .chip-line:nth-child(4) { top: 32px; }
+            
+            .chip-line:nth-child(5) {
+                height: 100%;
+                width: 1.5px;
+                left: 12px;
+            }
+            
+            .chip-line:nth-child(6) {
+                height: 100%;
+                width: 1.5px;
+                left: 24px;
+            }
+            
+            .chip-line:nth-child(7) {
+                height: 100%;
+                width: 1.5px;
+                left: 36px;
+            }
+            
+            .card-hologram {
+                position: absolute;
+                width: 60px;
+                height: 60px;
+                bottom: 50px;
+                left: 40px;
+                background: linear-gradient(45deg, 
+                    rgba(255,255,255,0.1) 0%, 
+                    rgba(255,255,255,0.3) 25%, 
+                    rgba(255,255,255,0.5) 50%, 
+                    rgba(255,255,255,0.3) 75%, 
+                    rgba(255,255,255,0.1) 100%);
+                border-radius: 50%;
+                animation: hologram-animation 3s infinite linear;
+                opacity: 0.7;
+            }
+            
+            @keyframes hologram-animation {
+                0% { 
+                    background-position: 0% 0%;
+                }
+                100% { 
+                    background-position: 100% 100%;
+                }
+            }
+            
+            .card-qrcode {
+                width: 80px;
+                height: 80px;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-top: 15px;
+                margin-left: auto;
+                overflow: hidden;
+            }
+            
+            .card-qrcode img, .card-qrcode canvas {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+            
+            .card-number {
+                position: absolute;
+                bottom: 80px;
+                width: 100%;
+                left: 0;
+                padding: 0 25px;
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+                text-align: center;
+                color: white;
+                font-family: 'Courier New', monospace;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            
+            .card-details {
+                position: absolute;
+                bottom: 25px;
+                width: 100%;
+                left: 0;
+                padding: 0 25px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+            }
+            
+            .card-validity {
+                font-size: 0.9rem;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .card-valid-text {
+                font-size: 0.7rem;
+                opacity: 0.7;
+                margin-bottom: 3px;
+            }
+            
+            .card-name {
+                font-size: 1rem;
+                text-align: right;
+                text-transform: uppercase;
+                font-family: 'Arial', sans-serif;
+                letter-spacing: 1px;
+            }
+            
+            /* CVV على ظهر البطاقة */
+            .card-back-strip {
+                width: 100%;
+                height: 40px;
+                background-color: rgba(0, 0, 0, 0.8);
+                margin: 20px 0;
+                position: relative;
+            }
+            
+            .card-cvv {
+                position: absolute;
+                right: 20px;
+                bottom: -25px;
+                background-color: white;
+                color: black;
+                padding: 5px 15px;
+                border-radius: 4px;
+                font-size: 0.9rem;
+                font-family: 'Courier New', monospace;
+            }
+            
+            .card-issuer-info {
+                margin-top: 30px;
+                font-size: 0.8rem;
+                text-align: center;
+                opacity: 0.7;
+            }
+            
+            /* أنماط قائمة البطاقات */
+            .cards-collection {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                margin-top: 20px;
+                justify-content: center;
+            }
+            
+            .card-preview {
+                width: 320px;
+                height: 180px;
+                border-radius: 12px;
+                background-color: #101a2c;
+                color: white;
+                padding: 15px;
+                position: relative;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+                transition: transform 0.3s ease;
+                overflow: hidden;
+                margin-bottom: 20px;
+            }
+            
+            .card-preview:hover {
+                transform: translateY(-3px);
+            }
+            
+            .card-preview .card-brand {
+                font-size: 1rem;
+            }
+            
+            .card-preview .card-logo-circle {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .card-preview .card-number {
+                font-size: 1rem;
+                bottom: 50px;
+            }
+            
+            .card-preview .card-details {
+                bottom: 15px;
+            }
+            
+            .card-preview .card-name {
+                font-size: 0.8rem;
+            }
+            
+            .card-preview .card-qrcode {
+                width: 50px;
+                height: 50px;
+                margin-top: 25px;
+            }
+            
+            .card-preview .card-chip {
+                width: 35px;
+                height: 28px;
+                top: 60px;
+                right: 40px;
+            }
+            
+            .card-preview .card-hologram {
+                width: 40px;
+                height: 40px;
+                bottom: 40px;
+                left: 30px;
+            }
+            
+            /* أنماط لتعديل البطاقة */
+            .card-options {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                margin: 20px 0;
+            }
+            
+            .card-option-btn {
+                padding: 10px 15px;
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.2s ease;
+            }
+            
+            .card-option-btn:hover {
+                background-color: #e9ecef;
+            }
+            
+            .card-option-btn.primary {
+                background-color: #3498db;
+                color: white;
+                border-color: #3498db;
+            }
+            
+            .card-option-btn.primary:hover {
+                background-color: #2980b9;
+            }
+            
+            .card-option-btn.success {
+                background-color: #2ecc71;
+                color: white;
+                border-color: #27ae60;
+            }
+            
+            .card-option-btn.success:hover {
+                background-color: #27ae60;
+            }
+            
+            .card-option-btn.warning {
+                background-color: #f39c12;
+                color: white;
+                border-color: #e67e22;
+            }
+            
+            .card-option-btn.warning:hover {
+                background-color: #e67e22;
+            }
+            
+            .card-option-btn.danger {
+                background-color: #e74c3c;
+                color: white;
+                border-color: #e74c3c;
+            }
+            
+            .card-option-btn.danger:hover {
+                background-color: #c0392b;
+            }
+            
+            /* أنماط تفاصيل المستثمر */
+            .investor-details {
+                background-color: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                margin-top: 30px;
+            }
+            
+            .investor-details-title {
+                font-size: 1.2rem;
+                margin-bottom: 15px;
+                color: #2c3e50;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .investor-detail-item {
+                display: flex;
+                margin-bottom: 12px;
+            }
+            
+            .investor-detail-label {
+                width: 160px;
+                font-weight: 500;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .investor-detail-label {
+                color: #e0e0e0;
+            }
+            
+            .investor-detail-value {
+                flex: 1;
+            }
+            
+            .transactions-summary {
+                margin-top: 15px;
+            }
+            
+            .transaction-list {
+                margin-top: 15px;
+                border: 1px solid #eee;
+                border-radius: 6px;
+                overflow: hidden;
+            }
+            
+            body.dark-mode .transaction-list {
+                border-color: #3a3a5c;
+            }
+            
+            .transaction-list table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            
+            .transaction-list th {
+                background-color: #f8f9fa;
+                padding: 12px 15px;
+                text-align: right;
+                font-weight: 500;
+            }
+            
+            body.dark-mode .transaction-list th {
+                background-color: #252538;
+            }
+            
+            .transaction-list td {
+                padding: 12px 15px;
+                border-top: 1px solid #eee;
+            }
+            
+            body.dark-mode .transaction-list td {
+                border-color: #3a3a5c;
+            }
+            
+            .transaction-list tr:hover td {
+                background-color: #f8f9fa;
+            }
+            
+            body.dark-mode .transaction-list tr:hover td {
+                background-color: #252538;
+            }
+            
+            /* أنماط لقارئ الباركود */
+            .barcode-scanner {
+                width: 100%;
+                max-width: 500px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: white;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+            
+            .scanner-header {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .scanner-title {
+                font-size: 1.4rem;
+                margin-bottom: 10px;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .scanner-title {
+                color: #e0e0e0;
+            }
+            
+            .scanner-description {
+                color: #7f8c8d;
+                font-size: 0.9rem;
+            }
+            
+            body.dark-mode .scanner-description {
+                color: #aaaaaa;
+            }
+            
+            .scanner-container {
+                position: relative;
+                width: 100%;
+                height: 300px;
+                overflow: hidden;
+                border-radius: 8px;
+                background-color: #2c3e50;
+                margin-bottom: 20px;
+            }
+            
+            .scanner-container video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            
+            .scan-region-highlight {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 200px;
+                height: 200px;
+                transform: translate(-50%, -50%);
+                border: 2px solid #3498db;
+                box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.3);
+                border-radius: 8px;
+            }
+            
+            .scanner-controls {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 15px;
+            }
+            
+            .scanner-options {
+                margin-top: 20px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 6px;
+                border: 1px solid #eee;
+            }
+            
+            body.dark-mode .scanner-options {
+                background-color: #252538;
+                border-color: #3a3a5c;
+            }
+            
+            .scanner-option-title {
+                font-weight: 500;
+                margin-bottom: 10px;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .scanner-option-title {
+                color: #e0e0e0;
+            }
+            
+            .scanner-option-item {
+                margin-bottom: 10px;
+            }
+            
+            .scan-result {
+                margin-top: 20px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 6px;
+                border: 1px solid #eee;
+            }
+            
+            body.dark-mode .scan-result {
+                background-color: #252538;
+                border-color: #3a3a5c;
+            }
+            
+            .scan-result-title {
+                font-weight: 500;
+                margin-bottom: 10px;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .scan-result-title {
+                color: #e0e0e0;
+            }
+            
+            .scan-result-data {
+                word-break: break-all;
+            }
+            
+            /* أنماط الإحصائيات */
+            .stats-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .stat-card {
+                flex: 1;
+                min-width: 200px;
+                background-color: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                transition: transform 0.3s ease;
+            }
+            
+            body.dark-mode .stat-card {
+                background-color: #252538;
+            }
+            
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 5px;
+                color: #3498db;
+            }
+            
+            .stat-label {
+                font-size: 1rem;
+                color: #7f8c8d;
+            }
+            
+            body.dark-mode .stat-label {
+                color: #aaaaaa;
+            }
+            
+            .chart-container {
+                width: 100%;
+                height: 300px;
+                background-color: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                margin-bottom: 20px;
+            }
+            
+            body.dark-mode .chart-container {
+                background-color: #252538;
+            }
+            
+            .chart-title {
+                font-size: 1.2rem;
+                margin-bottom: 15px;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .chart-title {
+                color: #e0e0e0;
+            }
+            
+            /* أنماط المعلومات */
+            .info-message {
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 6px;
+                margin-bottom: 20px;
+                border-right: 4px solid #3498db;
+            }
+            
+            .info-title {
+                font-weight: 500;
+                margin-bottom: 5px;
+                color: #2c3e50;
+            }
+            
+            .info-text {
+                color: #7f8c8d;
+                font-size: 0.9rem;
+            }
+            
+            body.dark-mode .info-text {
+                color: #aaaaaa;
+            }
+            
+            /* أنماط للنوافذ المنبثقة */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+            
+            .modal-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            /* أنماط سجل الأنشطة */
+            .activity-list {
+                margin-top: 20px;
+                border: 1px solid #eee;
+                border-radius: 6px;
+                overflow: hidden;
+            }
+            
+            body.dark-mode .activity-list {
+                border-color: #3a3a5c;
+            }
+            
+            .activity-list-item {
+                padding: 12px 15px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                align-items: center;
+            }
+            
+            body.dark-mode .activity-list-item {
+                border-color: #3a3a5c;
+            }
+            
+            .activity-list-item:last-child {
+                border-bottom: none;
+            }
+            
+            .activity-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: #f8f9fa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 15px;
+            }
+            
+            body.dark-mode .activity-icon {
+                background-color: #252538;
+            }
+            
+            .activity-icon i {
+                font-size: 1.2rem;
+                color: #3498db;
+            }
+            
+            .activity-details {
+                flex: 1;
+            }
+            
+            .activity-title {
+                font-weight: 500;
+                margin-bottom: 5px;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .activity-title {
+                color: #e0e0e0;
+            }
+            
+            .activity-time {
+                font-size: 0.8rem;
+                color: #7f8c8d;
+            }
+            
+            body.dark-mode .activity-time {
+                color: #aaaaaa;
+            }
+            
+            .activity-meta {
+                color: #7f8c8d;
+                font-size: 0.9rem;
+            }
+            
+            body.dark-mode .activity-meta {
+                color: #aaaaaa;
+            }
+            
+            /* أنماط للجدول العام */
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                background-color: white;
+                border-radius: 6px;
+                overflow: hidden;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+            
+            body.dark-mode .data-table {
+                background-color: #252538;
+                color: #e0e0e0;
+            }
+            
+            .data-table th {
+                background-color: #f8f9fa;
+                padding: 12px 15px;
+                text-align: right;
+                font-weight: 500;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .data-table th {
+                background-color: #1e1e2f;
+                color: #e0e0e0;
+            }
+            
+            .data-table td {
+                padding: 12px 15px;
+                border-top: 1px solid #eee;
+            }
+            
+            body.dark-mode .data-table td {
+                border-color: #3a3a5c;
+            }
+            
+            .data-table tr:hover td {
+                background-color: #f8f9fa;
+            }
+            
+            body.dark-mode .data-table tr:hover td {
+                background-color: #222233;
+            }
+            
+            /* كلاسات مساعدة */
+            .text-center {
+                text-align: center;
+            }
+            
+            .mb-10 {
+                margin-bottom: 10px;
+            }
+            
+            .mb-20 {
+                margin-bottom: 20px;
+            }
+            
+            .mt-20 {
+                margin-top: 20px;
+            }
+            
+            .flex {
+                display: flex;
+            }
+            
+            .flex-wrap {
+                flex-wrap: wrap;
+            }
+            
+            .gap-10 {
+                gap: 10px;
+            }
+            
+            .gap-20 {
+                gap: 20px;
+            }
+            
+            .justify-center {
+                justify-content: center;
+            }
+            
+            .justify-between {
+                justify-content: space-between;
+            }
+            
+            .items-center {
+                align-items: center;
+            }
+            
+            .hidden {
+                display: none !important;
+            }
+            
+            /* أنماط الخيارات المبسطة */
+            .settings-list {
+                margin-top: 20px;
+            }
+            
+            .settings-item {
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            body.dark-mode .settings-item {
+                border-color: #3a3a5c;
+            }
+            
+            .settings-item:last-child {
+                border-bottom: none;
+            }
+            
+            .settings-label {
+                font-weight: 500;
+                color: #2c3e50;
+            }
+            
+            body.dark-mode .settings-label {
+                color: #e0e0e0;
+            }
+            
+            .settings-description {
+                font-size: 0.9rem;
+                color: #7f8c8d;
+                margin-top: 5px;
+            }
+            
+            body.dark-mode .settings-description {
+                color: #aaaaaa;
+            }
+            
+            /* أنماط زر الإضافة العائم */
+            .add-card-fab {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #3498db;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.3s ease;
+                z-index: 100;
+            }
+            
+            .add-card-fab:hover {
+                background-color: #2980b9;
+                transform: translateY(-3px);
+            }
+            
+            .add-card-fab i {
+                font-size: 24px;
+            }
+            
+            /* بالوضع الداكن */
+            body.dark-mode .add-card-fab {
+                background-color: #3498db;
+            }
+            
+            body.dark-mode .add-card-fab:hover {
+                background-color: #2980b9;
+            }
+        `;
+        
+        // إضافة العنصر إلى head
+        document.head.appendChild(styleElement);
+        
+        console.log('تم إضافة أنماط CSS للبطاقات');
     }
-    
-    // إنشاء عنصر النمط
-    const styleElement = document.createElement('style');
-    styleElement.id = 'investor-card-styles';
-    
-    // إضافة أنماط CSS
-    styleElement.textContent = `
-        /* أنماط صفحة البطاقات */
-        #investor-cards-page, #active-cards-page, #expired-cards-page, #barcode-scanner-page, #card-details-page, #new-card-page, #card-stats-page {
-            padding: 20px;
-            direction: rtl;
-        }
-        
-        .card-content-area {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        /* أنماط الوضع الداكن */
-        body.dark-mode .card-content-area {
-            background-color: #1e1e2f;
-            color: #e0e0e0;
-        }
-        
-        body.dark-mode .card-form-container,
-        body.dark-mode .investor-details,
-        body.dark-mode .barcode-scanner {
-            background-color: #252538;
-            color: #e0e0e0;
-        }
-        
-        body.dark-mode .card-form-title,
-        body.dark-mode .investor-details-title,
-        body.dark-mode .info-title {
-            color: #e0e0e0;
-        }
-        
-        body.dark-mode .card-form-input {
-            background-color: #1e1e2f;
-            border-color: #3a3a5c;
-            color: #e0e0e0;
-        }
-        
-        body.dark-mode .info-message {
-            background-color: #252538;
-            color: #e0e0e0;
-        }
-        
-        body.dark-mode .card-option-btn,
-        body.dark-mode .scanner-controls .btn-outline {
-            background-color: #2c2c44;
-            border-color: #3a3a5c;
-            color: #e0e0e0;
-        }
-        
-        /* أنماط نموذج إنشاء البطاقة */
-        .card-form-container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .card-form-title {
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .card-form-group {
-            margin-bottom: 20px;
-        }
-        
-        .card-form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .card-form-label {
-            color: #e0e0e0;
-        }
-        
-        .card-form-input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        
-        .card-form-input:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        
-        .card-type-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .card-type-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 10px 15px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        body.dark-mode .card-type-option {
-            background-color: #252538;
-            border-color: #3a3a5c;
-        }
-        
-        .card-type-option:hover {
-            background-color: #e9ecef;
-        }
-        
-        body.dark-mode .card-type-option:hover {
-            background-color: #2c2c44;
-        }
-        
-        .card-type-option.selected {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-        
-        .card-type-option input {
-            margin-left: 8px;
-        }
-        
-        .card-form-actions {
-            margin-top: 30px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        /* أنماط البطاقة - التصميم الجديد */
-        .investor-card {
-            width: 390px;
-            height: 245px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, #0f1a2c 0%, #121e32 100%);
-            color: white;
-            padding: 25px;
-            position: relative;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-            margin: 0 auto 30px;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-            perspective: 1000px;
-        }
-        
-        .investor-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .investor-card.flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-        
-        .card-inner {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transition: transform 0.8s;
-            transform-style: preserve-3d;
-        }
-        
-        .card-front, .card-back {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            backface-visibility: hidden;
-        }
-        
-        .card-back {
-            transform: rotateY(180deg);
-            background-color: inherit;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        /* شعار الماس */
-        .card-diamond-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -60%);
-            opacity: 0.5;
-            z-index: 0;
-        }
-        
-        .card-diamond-logo svg {
-            width: 120px;
-            height: 120px;
-        }
-        
-        /* إخفاء العناصر غير المطلوبة في التصميم الجديد */
-        .card-brand {
-            display: none;
-        }
-        
-        .card-logo {
-            display: none;
-        }
-        
-        .card-chip {
-            position: absolute;
-            top: 65px;
-            left: 40px;
-            width: 50px;
-            height: 40px;
-            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-        
-        .chip-line {
-            position: absolute;
-            height: 1.5px;
-            background-color: rgba(0, 0, 0, 0.3);
-            width: 100%;
-        }
-        
-        .chip-line:nth-child(1) { top: 8px; }
-        .chip-line:nth-child(2) { top: 16px; }
-        .chip-line:nth-child(3) { top: 24px; }
-        .chip-line:nth-child(4) { top: 32px; }
-        
-        .chip-line:nth-child(5) {
-            height: 100%;
-            width: 1.5px;
-            left: 12px;
-        }
-        
-        .chip-line:nth-child(6) {
-            height: 100%;
-            width: 1.5px;
-            left: 24px;
-        }
-        
-        .chip-line:nth-child(7) {
-            height: 100%;
-            width: 1.5px;
-            left: 36px;
-        }
-        
-        .card-hologram {
-            display: none;
-        }
-        
-        .card-qrcode {
-            display: none;
-        }
-        
-        .card-number {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            padding: 0 25px;
-            font-size: 2rem;
-            letter-spacing: 4px;
-            text-align: center;
-            color: white;
-            font-family: 'Roboto', 'Arial', sans-serif;
-            font-weight: 500;
-            z-index: 1;
-        }
-        
-        .card-details {
-            position: absolute;
-            bottom: 25px;
-            width: 100%;
-            left: 0;
-            padding: 0 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-        
-        .card-validity {
-            text-align: right;
-        }
-        
-        .card-valid-text {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-bottom: 3px;
-        }
-        
-        .card-name {
-            font-size: 1.1rem;
-            text-align: right;
-            text-transform: uppercase;
-            font-family: 'Tajawal', 'Arial', sans-serif;
-            letter-spacing: 1px;
-        }
-        
-        /* CVV على ظهر البطاقة */
-        .card-back-strip {
-            width: 100%;
-            height: 40px;
-            background-color: rgba(0, 0, 0, 0.8);
-            margin: 20px 0;
-            position: relative;
-        }
-        
-        .card-cvv {
-            position: absolute;
-            right: 20px;
-            bottom: -25px;
-            background-color: white;
-            color: black;
-            padding: 5px 15px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .card-issuer-info {
-            margin-top: 30px;
-            font-size: 0.8rem;
-            text-align: center;
-            opacity: 0.7;
-        }
-        
-        /* أنماط قائمة البطاقات */
-        .cards-collection {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 20px;
-            justify-content: center;
-        }
-        
-        .card-preview {
-            width: 320px;
-            height: 180px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #0f1a2c 0%, #121e32 100%);
-            color: white;
-            padding: 15px;
-            position: relative;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        
-        .card-preview:hover {
-            transform: translateY(-3px);
-        }
-        
-        /* تعديل معاينة البطاقة لتتوافق مع التصميم الجديد */
-        .card-preview .card-brand,
-        .card-preview .card-logo {
-            display: none;
-        }
-        
-        .card-preview .card-hologram,
-        .card-preview .card-qrcode {
-            display: none;
-        }
-        
-        /* شعار الماس المصغر للمعاينة */
-        .card-preview::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -60%);
-            width: 80px;
-            height: 80px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10L90 50L50 90L10 50L50 10Z' fill='%233498db' fill-opacity='0.5'/%3E%3Cpath d='M40 40H60V60H40V40Z' fill='%233498db' fill-opacity='0.8'/%3E%3Cpath d='M30 30L50 15L70 30H30Z' fill='%233498db' fill-opacity='0.6'/%3E%3Cpath d='M30 70L50 85L70 70H30Z' fill='%233498db' fill-opacity='0.6'/%3E%3C/svg%3E");
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.4;
-            z-index: 0;
-        }
-        
-        .card-preview .card-number {
-            font-size: 1.5rem;
-            top: 50%;
-            bottom: auto;
-            letter-spacing: 3px;
-            z-index: 1;
-        }
-        
-        .card-preview .card-chip {
-            top: 40px;
-            left: 30px;
-            width: 35px;
-            height: 28px;
-        }
-        
-        .card-preview .card-details {
-            bottom: 15px;
-        }
-        
-        .card-preview .card-name {
-            font-size: 0.9rem;
-        }
-        
-        /* Resto del código CSS permanece igual */
-        
-        /* أنماط لتعديل البطاقة */
-        .card-options {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .card-option-btn {
-            padding: 10px 15px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .card-option-btn:hover {
-            background-color: #e9ecef;
-        }
-        
-        .card-option-btn.primary {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-        
-        .card-option-btn.primary:hover {
-            background-color: #2980b9;
-        }
-        
-        .card-option-btn.success {
-            background-color: #2ecc71;
-            color: white;
-            border-color: #27ae60;
-        }
-        
-        .card-option-btn.success:hover {
-            background-color: #27ae60;
-        }
-        
-        .card-option-btn.warning {
-            background-color: #f39c12;
-            color: white;
-            border-color: #e67e22;
-        }
-        
-        .card-option-btn.warning:hover {
-            background-color: #e67e22;
-        }
-        
-        .card-option-btn.danger {
-            background-color: #e74c3c;
-            color: white;
-            border-color: #e74c3c;
-        }
-        
-        .card-option-btn.danger:hover {
-            background-color: #c0392b;
-        }
-        
-        /* أنماط تفاصيل المستثمر */
-        .investor-details {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-top: 30px;
-        }
-        
-        .investor-details-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .investor-detail-item {
-            display: flex;
-            margin-bottom: 12px;
-        }
-        
-        .investor-detail-label {
-            width: 160px;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .investor-detail-label {
-            color: #e0e0e0;
-        }
-        
-        .investor-detail-value {
-            flex: 1;
-        }
-        
-        .transactions-summary {
-            margin-top: 15px;
-        }
-        
-        .transaction-list {
-            margin-top: 15px;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        body.dark-mode .transaction-list {
-            border-color: #3a3a5c;
-        }
-        
-        .transaction-list table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .transaction-list th {
-            background-color: #f8f9fa;
-            padding: 12px 15px;
-            text-align: right;
-            font-weight: 500;
-        }
-        
-        body.dark-mode .transaction-list th {
-            background-color: #252538;
-        }
-        
-        .transaction-list td {
-            padding: 12px 15px;
-            border-top: 1px solid #eee;
-        }
-        
-        body.dark-mode .transaction-list td {
-            border-color: #3a3a5c;
-        }
-        
-        .transaction-list tr:hover td {
-            background-color: #f8f9fa;
-        }
-        
-        body.dark-mode .transaction-list tr:hover td {
-            background-color: #252538;
-        }
-        
-        /* أنماط لقارئ الباركود */
-        .barcode-scanner {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .scanner-header {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .scanner-title {
-            font-size: 1.4rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .scanner-title {
-            color: #e0e0e0;
-        }
-        
-        .scanner-description {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        body.dark-mode .scanner-description {
-            color: #aaaaaa;
-        }
-        
-        .scanner-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            overflow: hidden;
-            border-radius: 8px;
-            background-color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        
-        .scanner-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .scan-region-highlight {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200px;
-            height: 200px;
-            transform: translate(-50%, -50%);
-            border: 2px solid #3498db;
-            box-shadow: 0 0 0 5000px rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-        }
-        
-        .scanner-controls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }
-        
-        .scanner-options {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
-        
-        body.dark-mode .scanner-options {
-            background-color: #252538;
-            border-color: #3a3a5c;
-        }
-        
-        .scanner-option-title {
-            font-weight: 500;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .scanner-option-title {
-            color: #e0e0e0;
-        }
-        
-        .scanner-option-item {
-            margin-bottom: 10px;
-        }
-        
-        .scan-result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
-        
-        body.dark-mode .scan-result {
-            background-color: #252538;
-            border-color: #3a3a5c;
-        }
-        
-        .scan-result-title {
-            font-weight: 500;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .scan-result-title {
-            color: #e0e0e0;
-        }
-        
-        .scan-result-data {
-            word-break: break-all;
-        }
-        
-        /* أنماط الإحصائيات */
-        .stats-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            flex: 1;
-            min-width: 200px;
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-        
-        body.dark-mode .stat-card {
-            background-color: #252538;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: #3498db;
-        }
-        
-        .stat-label {
-            font-size: 1rem;
-            color: #7f8c8d;
-        }
-        
-        body.dark-mode .stat-label {
-            color: #aaaaaa;
-        }
-        
-        .chart-container {
-            width: 100%;
-            height: 300px;
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-        
-        body.dark-mode .chart-container {
-            background-color: #252538;
-        }
-        
-        .chart-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .chart-title {
-            color: #e0e0e0;
-        }
-        
-        /* أنماط المعلومات */
-        .info-message {
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border-right: 4px solid #3498db;
-        }
-        
-        .info-title {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #2c3e50;
-        }
-        
-        .info-text {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        body.dark-mode .info-text {
-            color: #aaaaaa;
-        }
-        
-        /* أنماط للنوافذ المنبثقة */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        /* أنماط سجل الأنشطة */
-        .activity-list {
-            margin-top: 20px;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        body.dark-mode .activity-list {
-            border-color: #3a3a5c;
-        }
-        
-        .activity-list-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-        }
-        
-        body.dark-mode .activity-list-item {
-            border-color: #3a3a5c;
-        }
-        
-        .activity-list-item:last-child {
-            border-bottom: none;
-        }
-        
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 15px;
-        }
-        
-        body.dark-mode .activity-icon {
-            background-color: #252538;
-        }
-        
-        .activity-icon i {
-            font-size: 1.2rem;
-            color: #3498db;
-        }
-        
-        .activity-details {
-            flex: 1;
-        }
-        
-        .activity-title {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .activity-title {
-            color: #e0e0e0;
-        }
-        
-        .activity-time {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-        }
-        
-        body.dark-mode .activity-time {
-            color: #aaaaaa;
-        }
-        
-        .activity-meta {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        body.dark-mode .activity-meta {
-            color: #aaaaaa;
-        }
-        
-        /* أنماط للجدول العام */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-            border-radius: 6px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        body.dark-mode .data-table {
-            background-color: #252538;
-            color: #e0e0e0;
-        }
-        
-        .data-table th {
-            background-color: #f8f9fa;
-            padding: 12px 15px;
-            text-align: right;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .data-table th {
-            background-color: #1e1e2f;
-            color: #e0e0e0;
-        }
-        
-        .data-table td {
-            padding: 12px 15px;
-            border-top: 1px solid #eee;
-        }
-        
-        body.dark-mode .data-table td {
-            border-color: #3a3a5c;
-        }
-        
-        .data-table tr:hover td {
-            background-color: #f8f9fa;
-        }
-        
-        body.dark-mode .data-table tr:hover td {
-            background-color: #222233;
-        }
-        
-        /* كلاسات مساعدة */
-        .text-center {
-            text-align: center;
-        }
-        
-        .mb-10 {
-            margin-bottom: 10px;
-        }
-        
-        .mb-20 {
-            margin-bottom: 20px;
-        }
-        
-        .mt-20 {
-            margin-top: 20px;
-        }
-        
-        .flex {
-            display: flex;
-        }
-        
-        .flex-wrap {
-            flex-wrap: wrap;
-        }
-        
-        .gap-10 {
-            gap: 10px;
-        }
-        
-        .gap-20 {
-            gap: 20px;
-        }
-        
-        .justify-center {
-            justify-content: center;
-        }
-        
-        .justify-between {
-            justify-content: space-between;
-        }
-        
-        .items-center {
-            align-items: center;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        /* أنماط الخيارات المبسطة */
-        .settings-list {
-            margin-top: 20px;
-        }
-        
-        .settings-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        body.dark-mode .settings-item {
-            border-color: #3a3a5c;
-        }
-        
-        .settings-item:last-child {
-            border-bottom: none;
-        }
-        
-        .settings-label {
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        body.dark-mode .settings-label {
-            color: #e0e0e0;
-        }
-        
-        .settings-description {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        
-        body.dark-mode .settings-description {
-            color: #aaaaaa;
-        }
-        
-        /* أنماط زر الإضافة العائم */
-        .add-card-fab {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #3498db;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            z-index: 100;
-        }
-        
-        .add-card-fab:hover {
-            background-color: #2980b9;
-            transform: translateY(-3px);
-        }
-        
-        .add-card-fab i {
-            font-size: 24px;
-        }
-        
-        /* بالوضع الداكن */
-        body.dark-mode .add-card-fab {
-            background-color: #3498db;
-        }
-        
-        body.dark-mode .add-card-fab:hover {
-            background-color: #2980b9;
-        }
-    `;
-    
-    // إضافة العنصر إلى head
-    document.head.appendChild(styleElement);
-    
-    console.log('تم إضافة أنماط CSS للبطاقات');
-}
     
     // إنشاء صفحات البطاقات المختلفة
     function createCardPages() {
@@ -2875,17 +2912,6 @@ function addCardStyles() {
             expiryYear = date.getFullYear().toString().slice(2);
         }
         
-        
-        const diamondLogo = `
-    <div class="card-diamond-logo">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 0L92.5 42.5L50 85L7.5 42.5L50 0Z" fill="#3498db" fill-opacity="0.5"/>
-            <path d="M50 20L70 40H30L50 20Z" fill="#3498db" fill-opacity="0.7"/>
-            <path d="M40 40H60V60H40V40Z" fill="#3498db" fill-opacity="0.8"/>
-            <path d="M50 60L70 80L50 100L30 80L50 60Z" fill="#3498db" fill-opacity="0.7"/>
-        </svg>
-    </div>
-`;
         // الخيارات المتقدمة
         const enableQrCode = document.getElementById('enable-qrcode')?.checked ?? true;
         const enableHologram = document.getElementById('enable-hologram')?.checked ?? true;
@@ -2924,46 +2950,60 @@ function addCardStyles() {
                 break;
         }
         
-       // إضافة شعار الماس إلى HTML البطاقة
-previewContainer.innerHTML = `
-    <div class="investor-card" style="${cardStyle}">
-        <div class="card-inner">
-            <div class="card-front">
-                ${diamondLogo}
-                ${enableChip ? `
-                <div class="card-chip">
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                    <div class="chip-line"></div>
-                </div>
-                ` : ''}
-                
-                <div class="card-number">${cardNumber}</div>
-                <div class="card-details">
-                    <div class="card-validity">
-                        <div class="card-valid-text">VALID THRU</div>
-                        <div>${expiryMonth}/${expiryYear}</div>
+        // إنشاء HTML للمعاينة
+        previewContainer.innerHTML = `
+            <div class="investor-card" style="${cardStyle}">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="card-brand">${cardBrandText}</div>
+                        <div class="card-logo">
+                            <div class="card-logo-circle red"></div>
+                            <div class="card-logo-circle yellow"></div>
+                        </div>
+                        
+                        ${enableChip ? `
+                        <div class="card-chip">
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                            <div class="chip-line"></div>
+                        </div>
+                        ` : ''}
+                        
+                        ${enableHologram ? `<div class="card-hologram"></div>` : ''}
+                        
+                        ${enableQrCode ? `
+                        <div class="card-qrcode">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=preview" alt="QR Code">
+                        </div>
+                        ` : ''}
+                        
+                        <div class="card-number">${cardNumber}</div>
+                        <div class="card-details">
+                            <div class="card-validity">
+                                <div class="card-valid-text">VALID THRU</div>
+                                <div>${expiryMonth}/${expiryYear}</div>
+                            </div>
+                            <div class="card-name">${investorName}</div>
+                        </div>
                     </div>
-                    <div class="card-name">${investorName}</div>
+                    
+                    <div class="card-back">
+                        <div class="card-back-strip"></div>
+                        <div class="card-cvv">CVV: 123</div>
+                        <div class="card-issuer-info">
+                            نظام الاستثمار المتكامل<br>
+                            بطاقة المستثمر<br>
+                            ${investorPhone ? investorPhone : ''}
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="card-back">
-                <div class="card-back-strip"></div>
-                <div class="card-cvv">CVV: 123</div>
-                <div class="card-issuer-info">
-                    نظام الاستثمار المتكامل<br>
-                    بطاقة المستثمر<br>
-                    ${investorPhone ? investorPhone : ''}
-                </div>
-            </div>
-        </div>
-    </div>
-`;
+        `;
+    }
     
     // إنشاء بطاقة جديدة
     function createCard(investorId, cardType, expiryDate, options = {}) {
