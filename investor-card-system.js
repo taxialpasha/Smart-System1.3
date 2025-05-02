@@ -39,6 +39,15 @@ const InvestorCardSystem = (function() {
             chipColor: '#ffffff',
             benefits: ['نقاط مكافآت', 'خصومات خاصة', 'تأمين مشتريات']
         },
+        
+          premium_dark: {
+        name: 'بريميوم دارك',
+        color: '#0f1a2c', // لون أزرق داكن/أسود
+        textColor: '#ffffff', // لون النص أبيض
+        logoColor: '#3498db', // لون الشعار أزرق
+        chipColor: '#ffd700', // لون الشريحة ذهبي
+        benefits: ['مزايا خاصة', 'خدمة عملاء VIP', 'تأمين سفر']
+    },
         premium: {
             name: 'بريميوم',
             color: '#1F3A5F',
@@ -3004,6 +3013,32 @@ const InvestorCardSystem = (function() {
             </div>
         `;
     }
+    
+    
+    function updateCardPreview() {
+    // ...
+    
+    // إضافة الشعار الماسي في وسط البطاقة
+    const diamondLogo = `
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); z-index: 0;">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 0L92.5 42.5L50 85L7.5 42.5L50 0Z" fill="#3498db" opacity="0.6"/>
+                <path d="M50 20L70 40H30L50 20Z" fill="#3498db" opacity="0.8"/>
+                <path d="M40 40H60V60H40V40Z" fill="#3498db" opacity="0.8"/>
+                <path d="M50 60L70 80L50 100L30 80L50 60Z" fill="#3498db" opacity="0.8"/>
+            </svg>
+        </div>
+    `;
+    
+    // إضافته إلى HTML البطاقة
+    const cardHTML = `
+        <!-- باقي عناصر البطاقة -->
+        ${diamondLogo}
+        <!-- استمرار عناصر البطاقة -->
+    `;
+    
+    // ...
+}
     
     // إنشاء بطاقة جديدة
     function createCard(investorId, cardType, expiryDate, options = {}) {
