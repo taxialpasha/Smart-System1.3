@@ -1,0 +1,1110 @@
+/* نظام إدارة السلف والقروض - الأنماط */
+
+/* ترتيب الإتجاه */
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+/* تنسيقات عامة */
+.page#loans-page {
+    padding: 1rem;
+}
+
+.section {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #333;
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.grid-cols-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 992px) {
+    .grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* بطاقات الإحصائيات */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-pattern {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: rgba(0, 0, 0, 0.03);
+    font-size: 4rem;
+    transform: rotate(-15deg);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+}
+
+.card-title {
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.card-change {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.card-icon {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.card-icon.primary {
+    background-color: #3b82f6;
+}
+
+.card-icon.success {
+    background-color: #10b981;
+}
+
+.card-icon.warning {
+    background-color: #f59e0b;
+}
+
+.card-icon.info {
+    background-color: #6366f1;
+}
+
+/* جداول البيانات */
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th,
+table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    text-align: right;
+    color: #4b5563;
+}
+
+table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+table tbody tr.overdue {
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+table tbody tr.selected {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.borrower-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #3b82f6;
+    color: #fff;
+    font-weight: 600;
+}
+
+.avatar.large {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    color: #fff;
+    background-color: #3b82f6;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.active, .status-badge.unpaid {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.status-badge.completed, .status-badge.paid {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.status-badge.renewed {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.status-badge.overdue, .status-badge.cancelled {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.small {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* نموذج إضافة قرض جديد */
+.form-tabs {
+    margin-bottom: 1rem;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    color: #6b7280;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background-color: #f9fafb;
+    color: #3b82f6;
+}
+
+.tab-btn.active {
+    background-color: #3b82f6;
+    color: #fff;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* معاينة حساب القرض */
+.loan-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 5px;
+    background-color: #f9fafb;
+}
+
+.loan-preview h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+.loan-preview-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+}
+
+.preview-label {
+    color: #6b7280;
+}
+
+.preview-value {
+    font-weight: 600;
+    color: #333;
+}
+
+/* حقول الكفلاء */
+.guarantor-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    background-color: #f9fafb;
+}
+
+.guarantor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.guarantor-header h4 {
+    margin: 0;
+    color: #4b5563;
+}
+
+.guarantor-documents {
+    margin-top: 1rem;
+}
+
+.guarantor-documents h5 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+/* حقول المستمسكات */
+.documents-container {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.document-item {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    background-color: #f9fafb;
+}
+
+.document-item h4, .document-item h6 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+.document-uploads {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.upload-container {
+    position: relative;
+}
+
+.upload-container input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.upload-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    border: 2px dashed #d1d5db;
+    border-radius: 5px;
+    padding: 1rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.upload-preview i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.uploaded-image {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 5px;
+}
+
+/* زر إضافة كفيل */
+.guarantor-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* أزرار التنقل بين التبويبات */
+.modal-tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* نافذة تفاصيل القرض */
+.loan-details-summary {
+    margin-bottom: 1.5rem;
+}
+
+.loan-details-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.loan-details-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.loan-details-card .card-header h4 {
+    margin: 0;
+    color: #4b5563;
+}
+
+.loan-details-card .card-content {
+    padding: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #6b7280;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+}
+
+.loan-payment-summary {
+    margin-top: 1rem;
+}
+
+.loan-payment-summary h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+.payment-progress {
+    margin-top: 0.5rem;
+}
+
+.progress-container {
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #3b82f6;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* بيانات المقترض */
+.borrower-profile {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.borrower-header {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.borrower-name h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.borrower-info {
+    padding: 1.5rem;
+}
+
+.info-group {
+    margin-bottom: 1.5rem;
+}
+
+.info-group h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.info-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.info-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.info-content {
+    flex-grow: 1;
+}
+
+.info-label {
+    display: block;
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    color: #333;
+    font-weight: 600;
+}
+
+/* عرض المستمسكات */
+.documents-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.document-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.document-header {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.document-header h4 {
+    margin: 0;
+    color: #4b5563;
+}
+
+.document-files {
+    padding: 1rem;
+}
+
+.document-file {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.file-info {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.file-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.file-meta {
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* عرض الكفلاء */
+.guarantors-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.guarantor-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.guarantor-header {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.guarantor-title h4 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.guarantor-title span {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.guarantor-details {
+    padding: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.detail-icon {
+    width: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3b82f6;
+}
+
+.guarantor-documents {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.guarantor-documents h5 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+}
+
+.document-icon {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.document-info {
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document-info span {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* نافذة دفع قسط */
+.installment-info {
+    margin-bottom: 1.5rem;
+}
+
+.borrower-info {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.installment-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #333;
+}
+
+/* حالات فارغة */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+.empty-state.small {
+    padding: 1rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+.empty-state.small i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    margin: 0;
+}
+
+/* التنبيهات */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.alert.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.alert.alert-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.alert.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* النوافذ المنبثقة */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background-color: #fff;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+    margin: 0;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* الإشعارات */
+.notifications-container {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 400px;
+}
+
+.notification {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.notification.success {
+    border-right: 4px solid #10b981;
+}
+
+.notification.error {
+    border-right: 4px solid #ef4444;
+}
+
+.notification.warning {
+    border-right: 4px solid #f59e0b;
+}
+
+.notification.info {
+    border-right: 4px solid #3b82f6;
+}
+
+.notification-icon {
+    font-size: 1.25rem;
+}
+
+.notification.success .notification-icon {
+    color: #10b981;
+}
+
+.notification.error .notification-icon {
+    color: #ef4444;
+}
+
+.notification.warning .notification-icon {
+    color: #f59e0b;
+}
+
+.notification.info .notification-icon {
+    color: #3b82f6;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-message {
+    color: #333;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #6b7280;
+    align-self: flex-start;
+    padding: 0;
+}
+
+/* تأثيرات متحركة */
+.animate__animated {
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate__fadeInUp {
+    animation-name: fadeInUp;
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+}
+
+.animate__fadeOutDown {
+    animation-name: fadeOutDown;
+}
+
+/* توافق الهواتف المحمولة */
+@media (max-width: 768px) {
+    .grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .document-uploads {
+        grid-template-columns: 1fr;
+    }
+    
+    .guarantors-list, .documents-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .installment-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn span {
+        display: none;
+    }
+    
+    .status-badge {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+}
