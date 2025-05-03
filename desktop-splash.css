@@ -1,0 +1,406 @@
+/*
+ * نظام الاستثمار المتكامل - أنماط شاشة الانتظار المنبثقة لسطح المكتب
+ * صفحة الأنماط الخاصة بشاشة الانتظار المنبثقة عند تشغيل التطبيق على سطح المكتب
+ * 
+ * الإصدار: 1.0.0
+ * تاريخ التحديث: 2025-05-03
+ */
+
+/* استيراد الخطوط العربية */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Cairo:wght@400;600;700&display=swap');
+
+/* تأثيرات الحركة */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes progressAnimation {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+@keyframes rotateClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes rotateCounterClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes moveGradient {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+}
+
+@keyframes glowing {
+    0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.5); }
+    100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); }
+}
+
+@keyframes borderPulse {
+    0% { border-color: rgba(255, 255, 255, 0.1); }
+    50% { border-color: rgba(255, 255, 255, 0.3); }
+    100% { border-color: rgba(255, 255, 255, 0.1); }
+}
+
+/* تنسيق شاشة الانتظار الرئيسية */
+.desktop-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #142952 0%, #0a1834 100%);
+    background-size: 200% 200%;
+    animation: gradientAnimation 15s ease infinite;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+    direction: rtl;
+    font-family: 'Tajawal', 'Cairo', 'Arial', sans-serif;
+    user-select: none;
+    overflow: hidden;
+}
+
+.desktop-splash::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(20,41,82,0.4), rgba(10,24,52,0.9));
+    z-index: -1;
+}
+
+/* تنسيق نافذة الانتظار */
+.desktop-splash-window {
+    width: 500px;
+    height: 300px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: scaleIn 0.6s ease-out forwards, borderPulse 3s infinite;
+}
+
+/* الشعار */
+.desktop-splash-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 20px;
+    animation: float 6s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+    position: relative;
+    z-index: 2;
+}
+
+.desktop-splash-logo::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 150px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: pulse 3s infinite;
+}
+
+/* عنوان التطبيق */
+.desktop-splash-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.desktop-splash-title::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    right: 30%;
+    width: 40%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+    border-radius: 2px;
+}
+
+/* النص الفرعي */
+.desktop-splash-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 30px;
+    text-align: center;
+    max-width: 80%;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* شريط التقدم */
+.desktop-splash-progress {
+    width: 300px;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.desktop-splash-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.7), rgba(74,144,226,0.9), rgba(255,255,255,0.7));
+    background-size: 200% 100%;
+    animation: progressAnimation 3.5s cubic-bezier(0.1, 0.7, 0.9, 0.99) forwards, gradientAnimation 2s ease infinite;
+    box-shadow: 0 0 15px rgba(74,144,226,0.5);
+}
+
+.desktop-splash-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
+    animation: shimmer 2s infinite;
+    background-size: 200% 100%;
+}
+
+/* النص أسفل شريط التقدم */
+.desktop-splash-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    animation: pulse 1.5s infinite;
+}
+
+/* معلومات الإصدار */
+.desktop-splash-version {
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* زر الإغلاق */
+.desktop-splash-close {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.desktop-splash-close:hover {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+/* الجزيئات المتحركة */
+.desktop-splash-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.desktop-splash-particle {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    filter: blur(1px);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* تأثيرات إضافية */
+.rotating-ring {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: rotateCounterClockwise 30s linear infinite;
+}
+
+.orbiting-circle {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: rotateClockwise 20s linear infinite;
+}
+
+/* شريط عنوان النافذة */
+.window-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.window-top-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.window-control-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.window-control-dot:hover {
+    transform: scale(1.2);
+}
+
+.window-control-dot.red {
+    background: rgba(255, 100, 97, 0.8);
+}
+
+.window-control-dot.yellow {
+    background: rgba(255, 187, 47, 0.8);
+}
+
+.window-control-dot.green {
+    background: rgba(40, 200, 64, 0.8);
+}
+
+.window-title {
+    margin-right: auto;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+/* تعديلات للشاشات الصغيرة */
+@media (max-width: 600px) {
+    .desktop-splash-window {
+        width: 90%;
+        height: auto;
+        aspect-ratio: 16/10;
+        min-height: 250px;
+    }
+    
+    .desktop-splash-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 15px;
+    }
+    
+    .desktop-splash-title {
+        font-size: 22px;
+    }
+    
+    .desktop-splash-subtitle {
+        font-size: 14px;
+    }
+    
+    .desktop-splash-progress {
+        width: 80%;
+    }
+    
+    .rotating-ring, 
+    .orbiting-circle {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+/* تعديلات لدعم المتصفحات القديمة */
+@supports not (backdrop-filter: blur(15px)) {
+    .desktop-splash-window {
+        background: rgba(0, 0, 0, 0.7);
+    }
+    
+    .window-top-bar {
+        background: rgba(0, 0, 0, 0.5);
+    }
+}

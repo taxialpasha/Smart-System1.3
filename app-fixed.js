@@ -7325,3 +7325,13 @@ function updateFromNewTransactions() {
     
     console.log(`تم تحديث ${newTransactions.length} عملية جديدة`);
 }
+
+// استدعاء شاشات الترحيب عند بدء التطبيق
+document.addEventListener('DOMContentLoaded', function() {
+    // الكود الحالي لتهيئة التطبيق
+    
+    // عرض شاشات الترحيب مع كل فتح للتطبيق
+    if (window.WelcomeScreens && typeof window.WelcomeScreens.show === 'function') {
+        window.WelcomeScreens.show();
+    }
+});

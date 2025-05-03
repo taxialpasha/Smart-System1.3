@@ -217,6 +217,21 @@
         }
     }
     
+    // إضافة مستمع لزر فتح/إغلاق الشريط الجانبي
+    function setupSidebarToggle() {
+        const toggleButton = document.querySelector('.toggle-sidebar');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (toggleButton && sidebar) {
+            toggleButton.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                console.log("تم تغيير حالة الشريط الجانبي");
+            });
+        } else {
+            console.error("لم يتم العثور على زر أو شريط جانبي لإضافة مستمع");
+        }
+    }
+
     // تشغيل دالة إضافة الأزرار
     addExportImportButtons();
     
@@ -228,5 +243,20 @@
                 addExportImportButtons();
             }
         }, 2000);
+
+        // إعداد مستمع زر فتح/إغلاق الشريط الجانبي
+        setupSidebarToggle();
+
+        // إرسال حدث تغيير الصفحة عند التنقل
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    const event = new CustomEvent('page:change', { detail: { page } });
+                    document.dispatchEvent(event);
+                }
+            });
+        });
     });
 })();
+

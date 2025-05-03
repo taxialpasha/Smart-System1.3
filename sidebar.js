@@ -31,7 +31,12 @@ class Navigation {
         this.toggleButtons.forEach(button => {
             button.addEventListener('click', () => this.toggleSidebar());
         });
-        
+
+        // إضافة مستمع عام لتحديث الشريط الجانبي عند تغيير الصفحة
+        document.addEventListener('page:change', () => {
+            this.updateSidebarState();
+        });
+
         // أحداث روابط التنقل
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -42,7 +47,7 @@ class Navigation {
                 }
             });
         });
-        
+
         // الاستجابة لتغير حجم النافذة
         window.addEventListener('resize', () => this.handleResize());
     }
@@ -198,6 +203,18 @@ class Navigation {
                 }
             });
         });
+    }
+
+    // تحديث حالة الشريط الجانبي عند تغيير الصفحة
+    updateSidebarState() {
+        const layout = document.querySelector('.layout');
+        if (window.innerWidth < 768) {
+            layout.classList.add('sidebar-collapsed');
+            this.saveSidebarState(true);
+        } else {
+            layout.classList.remove('sidebar-collapsed');
+            this.saveSidebarState(false);
+        }
     }
 }
 
