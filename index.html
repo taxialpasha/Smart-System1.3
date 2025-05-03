@@ -13,10 +13,6 @@
     <!-- أنماط ملف المستخدم المحسن -->
     <link rel="stylesheet" href="user-profile-styles.css" />
     <link rel="stylesheet" href="installment-5system-styles.css" />
-       <!-- أنماط شاشات الترحيب -->
-       <link rel="stylesheet" href="welcome-screens.css">
-       <link rel="stylesheet" href="loans-management.css">
-
 
     
 
@@ -37,10 +33,6 @@
     <!-- Google Fonts - Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&amp;display=swap"
         rel="stylesheet" />
-
-        <!-- أضف هذه الأسطر قبل إغلاق وسم head -->
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
@@ -66,7 +58,6 @@
     <link href="style.css" rel="stylesheet" />
     <link href="auth-system-styles.css" rel="stylesheet" />
 </head>
-<div id="welcome-screens-root"></div>
 <div class="custom-titlebar">
     <div class="window-drag-area">
         <img src="assets/icon.png" alt="Logo" />
@@ -283,6 +274,14 @@
                 </ul>
             </nav>
 
+            <li class="nav-item">
+                <a class="nav-link" id="logout-btn" href="#">
+                    <div class="nav-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </li>
         </div>
 
 
@@ -1229,30 +1228,23 @@
 
 
     <script>
-     async function fetchExchangeRate() {
-    const display = document.getElementById("usd-iqd");
-    try {
-        // استخدام API بديل أو قيمة ثابتة كبديل في حالة فشل الاتصال
-        display.textContent = "1490 دينار"; // قيمة تقريبية ثابتة كبديل
+        async function fetchExchangeRate() {
+            const display = document.getElementById("usd-iqd");
+            try {
+                const response = await fetch("https://api.frankfurter.app/latest?from=USD&to=IQD");
+                const data = await response.json();
 
-        // محاولة الحصول على سعر الصرف الفعلي
-        try {
-            // تغيير API من frankfurter إلى exchangerate-api
-            const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-            const data = await response.json();
-
-            if (data && data.rates && data.rates.IQD) {
-                const rate = data.rates.IQD.toFixed(2);
-                display.textContent = `${rate} دينار`;
+                if (data && data.rates && data.rates.IQD) {
+                    const rate = data.rates.IQD.toFixed(2);
+                    display.textContent = `${rate} دينار`;
+                } else {
+                    display.textContent = "غير متوفر";
+                }
+            } catch (error) {
+                console.error("فشل في جلب سعر الصرف:", error);
+                display.textContent = "تعذر الاتصال";
             }
-        } catch (networkError) {
-            console.log("تعذر الاتصال بخدمة سعر الصرف، استخدام القيمة الافتراضية");
         }
-    } catch (error) {
-        console.log("فشل في عرض سعر الصرف:", error);
-        display.textContent = "تعذر الاتصال";
-    }
-}
 
 
 
@@ -1301,8 +1293,6 @@
 
     <!-- ملف خاص بإدارة الشريط الجانبي -->
     <script src="sidebar.js"></script>
-    <!-- إضافة ملف إصلاح الشريط الجانبي - يجب وضعه بعد تحميل جميع الملفات -->
-<script src="sidebar-fix.js"></script>
 
     <!-- نظام إدارة التنبيهات -->
     <script src="notifications-system.js"></script>
@@ -1368,8 +1358,8 @@
    
     
 
-    <script src="welcome-screens.js"></script>
-<script src="loans-management.js"></script>
+
+
 
 
 
@@ -1420,9 +1410,7 @@
         setInterval(updateClock, 1000);
         updateClock(); // أول تحديث عند التحميل
 
-document.addEventListener('DOMContentLoaded', function() {
-    initLoanSystem();
-});
+
 
       
     </script>
