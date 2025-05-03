@@ -1,0 +1,212 @@
+/* أنماط خاصة بنظام القروض */
+.loan-dashboard {
+    margin-bottom: 2rem;
+}
+
+.loan-dashboard .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.loan-dashboard .card .card-pattern {
+    color: rgba(255, 255, 255, 0.1);
+}
+
+/* أنماط الجداول */
+#loans-table,
+#installments-table {
+    width: 100%;
+}
+
+/* أنماط الشارات */
+.badge.badge-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.badge.badge-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.badge.badge-info {
+    background-color: #0ea5e9;
+    color: white;
+}
+
+.badge.badge-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.badge.badge-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.badge.badge-secondary {
+    background-color: #6b7280;
+    color: white;
+}
+
+/* أنماط النوافذ المنبثقة */
+#add-loan-modal .tabs {
+    margin-top: 1rem;
+}
+
+#add-loan-modal .tab-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#add-loan-modal .tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+#add-loan-modal .tab-btn.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+#add-loan-modal .tab-content {
+    display: none;
+}
+
+#add-loan-modal .tab-content.active {
+    display: block;
+}
+
+#add-loan-modal .grid-cols-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+#add-loan-modal .form-group {
+    margin-bottom: 1rem;
+}
+
+#add-loan-modal .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+#add-loan-modal .form-input,
+#add-loan-modal .form-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* أنماط أزرار الجدول */
+.btn.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn.btn-outline {
+    border: 1px solid currentColor;
+    background: transparent;
+}
+
+.btn.btn-outline:hover {
+    background: currentColor;
+    color: white;
+}
+
+.btn.btn-outline.danger {
+    color: #ef4444;
+}
+
+.btn.btn-outline.danger:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* أنماط الرسوم البيانية */
+.chart-container {
+    height: 300px;
+    margin-top: 1rem;
+}
+
+/* أنماط إضافية للتوافق */
+#loans-page .page-title {
+    flex: 1;
+    text-align: right;
+}
+
+#loans-page .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+#loans-page .search-box {
+    position: relative;
+}
+
+#loans-page .search-input {
+    width: 300px;
+    padding: 0.5rem 1rem;
+    padding-left: 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+}
+
+#loans-page .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+/* تصحيح الأنماط لدعم RTL */
+#loans-page .search-input {
+    padding-right: 1rem;
+    padding-left: 2.5rem;
+}
+
+#loans-page .search-icon {
+    left: unset;
+    right: 0.75rem;
+}
+
+#loans-page .table-container {
+    overflow-x: auto;
+}
+
+#loans-page .btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#loans-page .modal-animate__animated.modal-animate__fadeInUp {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 40px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
