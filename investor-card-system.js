@@ -4368,129 +4368,121 @@ const InvestorCardSystem = (function() {
         return true;
     }
     
-    // مشاركة البطاقة
-    function shareCard(cardId) {
-        // البحث عن البطاقة
-        const card = cards.find(c => c.id === cardId);
-        if (!card) return;
-        
-        // إنشاء نافذة منبثقة للمشاركة
-        const container = document.createElement('div');
-        container.className = 'modal-overlay active';
-        container.id = 'share-card-modal';
-        
-        // تحديد بيانات البطاقة للمشاركة
-        const cardData = {
-            name: card.investorName,
-            phone: card.investorPhone,
-            cardNumber: card.cardNumber.slice(-8).padStart(16, 'X'), // إخفاء جزء من الرقم
-            expiry: `${new Date(card.expiryDate).getMonth() + 1}/${new Date(card.expiryDate).getFullYear().toString().slice(2)}`,
-            type: CARD_TYPES[card.cardType]?.name || card.cardType
-        };
-        
-        container.innerHTML = `
-            <div class="modal animate__animated animate__fadeInUp">
-                <div class="modal-header">
-                    <h3 class="modal-title">مشاركة بطاقة</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-20">
-                        <div style="margin: 0 auto; width: 150px; height: 150px; background-color: white; padding: 10px; border-radius: 10px;">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(JSON.stringify(cardData))}" alt="QR Code" style="width: 100%; height: 100%;">
-                        </div>
-                        <p class="mt-10">امسح هذا الكود لمشاركة بيانات البطاقة</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">نص للنسخ</label>
-                        <textarea class="form-input" rows="4" id="share-text" readonly>اسم المستثمر: ${card.investorName}
-رقم البطاقة: ${card.cardNumber.slice(-8).padStart(16, 'X')}
+   // Modificar la función shareCard para mostrar información completa no encriptada
+function shareCard(cardId) {
+    // Buscar la tarjeta
+    const card = cards.find(c => c.id === cardId);
+    if (!card) return;
+    
+    // Preparar la información completa de la tarjeta en formato texto
+    const cardInfoText = `اسم المستثمر: ${card.investorName}
+رقم البطاقة: ${card.cardNumber}
 تاريخ الانتهاء: ${new Date(card.expiryDate).getMonth() + 1}/${new Date(card.expiryDate).getFullYear().toString().slice(2)}
-نوع البطاقة: ${CARD_TYPES[card.cardType]?.name || card.cardType}</textarea>
+CVV: ${card.cvv}
+نوع البطاقة: ${CARD_TYPES[card.cardType]?.name || card.cardType}`;
+
+    // Crear la ventana modal para compartir
+    const container = document.createElement('div');
+    container.className = 'modal-overlay active';
+    container.id = 'share-card-modal';
+    
+    container.innerHTML = `
+        <div class="modal animate__animated animate__fadeInUp">
+            <div class="modal-header">
+                <h3 class="modal-title">مشاركة بطاقة</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-20">
+                    <div style="margin: 0 auto; width: 150px; height: 150px; background-color: white; padding: 10px; border-radius: 10px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(cardInfoText)}" alt="QR Code" style="width: 100%; height: 100%;">
                     </div>
+                    <p class="mt-10">امسح هذا الكود لمشاركة بيانات البطاقة</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">نص للنسخ</label>
+                    <textarea class="form-input" rows="6" id="share-text" readonly>${cardInfoText}</textarea>
+                </div>
+                
+                <div class="flex justify-center gap-10 mt-20">
+                    <button class="btn btn-primary" id="copy-text-btn">
+                        <i class="fas fa-copy"></i>
+                        <span>نسخ النص</span>
+                    </button>
                     
-                    <div class="flex justify-center gap-10 mt-20">
-                        <button class="btn btn-primary" id="copy-text-btn">
-                            <i class="fas fa-copy"></i>
-                            <span>نسخ النص</span>
-                        </button>
-                        
-                        <button class="btn btn-success" id="download-qr-btn">
-                            <i class="fas fa-download"></i>
-                            <span>تنزيل QR</span>
-                        </button>
-                        
-                        <button class="btn btn-outline" id="send-email-btn">
-                            <i class="fas fa-envelope"></i>
-                            <span>إرسال بالبريد</span>
-                        </button>
-                    </div>
+                    <button class="btn btn-success" id="download-qr-btn">
+                        <i class="fas fa-download"></i>
+                        <span>تنزيل QR</span>
+                    </button>
+                    
+                    <button class="btn btn-outline" id="send-email-btn">
+                        <i class="fas fa-envelope"></i>
+                        <span>إرسال بالبريد</span>
+                    </button>
                 </div>
             </div>
-        `;
-        
-        // إضافة النافذة إلى الصفحة
-        document.body.appendChild(container);
-        
-        // إضافة مستمعي الأحداث
-        const closeButtons = container.querySelectorAll('.modal-close');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                container.remove();
-            });
+        </div>
+    `;
+    
+    // Añadir el modal al body
+    document.body.appendChild(container);
+    
+    // Agregar listeners de eventos igual que en la función original
+    const closeButtons = container.querySelectorAll('.modal-close');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            container.remove();
         });
-        
-        // مستمع لزر نسخ النص
-        const copyTextBtn = container.querySelector('#copy-text-btn');
-        if (copyTextBtn) {
-            copyTextBtn.addEventListener('click', function() {
-                const textarea = document.getElementById('share-text');
-                textarea.select();
-                document.execCommand('copy');
-                
-                // تغيير النص للتأكيد
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-check"></i><span>تم النسخ</span>';
-                
-                // إعادة النص الأصلي بعد ثانيتين
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                }, 2000);
-            });
-        }
-        
-        // مستمع لزر تنزيل QR
-        const downloadQrBtn = container.querySelector('#download-qr-btn');
-        if (downloadQrBtn) {
-            downloadQrBtn.addEventListener('click', function() {
-                const qrImage = container.querySelector('img');
-                if (qrImage && qrImage.src) {
-                    const link = document.createElement('a');
-                    link.href = qrImage.src;
-                    link.download = `بطاقة_${card.investorName.replace(/\s+/g, '_')}.png`;
-                    link.click();
-                }
-            });
-        }
-        
-        // مستمع لزر إرسال البريد
-        const sendEmailBtn = container.querySelector('#send-email-btn');
-        if (sendEmailBtn) {
-            sendEmailBtn.addEventListener('click', function() {
-                const subject = `بطاقة المستثمر - ${card.investorName}`;
-                const body = document.getElementById('share-text').value;
-                
-                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            });
-        }
-        
-        // إضافة نشاط المشاركة
-        addActivity(cardId, 'share');
-        
-        return true;
+    });
+    
+    // Botón para copiar texto
+    const copyTextBtn = container.querySelector('#copy-text-btn');
+    if (copyTextBtn) {
+        copyTextBtn.addEventListener('click', function() {
+            const textarea = document.getElementById('share-text');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i><span>تم النسخ</span>';
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+            }, 2000);
+        });
     }
     
+    // Botón para descargar QR
+    const downloadQrBtn = container.querySelector('#download-qr-btn');
+    if (downloadQrBtn) {
+        downloadQrBtn.addEventListener('click', function() {
+            const qrImage = container.querySelector('img');
+            if (qrImage && qrImage.src) {
+                const link = document.createElement('a');
+                link.href = qrImage.src;
+                link.download = `بطاقة_${card.investorName.replace(/\s+/g, '_')}.png`;
+                link.click();
+            }
+        });
+    }
+    
+    // Botón para enviar por email
+    const sendEmailBtn = container.querySelector('#send-email-btn');
+    if (sendEmailBtn) {
+        sendEmailBtn.addEventListener('click', function() {
+            const subject = `بطاقة المستثمر - ${card.investorName}`;
+            const body = document.getElementById('share-text').value;
+            
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        });
+    }
+    
+    // Registrar actividad
+    addActivity(cardId, 'share');
+    
+    return true;
+} 
     // تعديل البطاقة
     function editCard(cardId) {
         // البحث عن البطاقة
