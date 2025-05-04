@@ -6640,3 +6640,1297 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 })();
+
+const interestRate = parseFloat(document.getElementById('interest-rate').value);
+    const loanPeriod = parseInt(document.getElementById('loan-period').value);
+    
+    // التحقق من الحقول المطلوبة
+    if (!borrowerCategory) {
+        showNotification('يرجى اختيار نوع المقترض', 'error');
+        return false;
+    }
+    
+    if (!borrowerName || borrowerName.trim().length < 3) {
+        showNotification('يرجى إدخال اسم المقترض بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!borrowerPhone || !/^\d{10,11}$/.test(borrowerPhone.replace(/\s/g, ''))) {
+        showNotification('يرجى إدخال رقم هاتف صحيح', 'error');
+        return false;
+    }
+    
+    if (!borrowerIdNumber || borrowerIdNumber.trim().length < 5) {
+        showNotification('يرجى إدخال رقم البطاقة الشخصية بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!borrowerAddress || borrowerAddress.trim().length < 5) {
+        showNotification('يرجى إدخال عنوان المقترض بشكل صحيح', 'error');
+        return false;
+    }
+    
+    // التحقق من مبلغ القرض
+    if (isNaN(loanAmount) || loanAmount <= 0) {
+        showNotification('يرجى إدخال مبلغ القرض بشكل صحيح', 'error');
+        return false;
+    }
+    
+    // التحقق من الحد الأقصى للقرض حسب الفئة
+    const maxLoanAmount = loanSettings.maxLoanAmount[borrowerCategory];
+    if (loanAmount > maxLoanAmount) {
+        showNotification(`مبلغ القرض يتجاوز الحد الأقصى المسموح به (${formatCurrency(maxLoanAmount)})`, 'error');
+        return false;
+    }
+    
+    // التحقق من نسبة الفائدة
+    if (isNaN(interestRate) || interestRate < 0 || interestRate > 20) {
+        showNotification('يرجى إدخال نسبة الفائدة بشكل صحيح (بين 0 و 20)', 'error');
+        return false;
+    }
+    
+    // التحقق من مدة القرض
+    if (isNaN(loanPeriod) || loanPeriod < 6 || loanPeriod > 60 || loanPeriod % 6 !== 0) {
+        showNotification('يرجى إدخال مدة القرض بشكل صحيح (بين 6 و 60 شهر، مضاعفات 6)', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * التحقق من صحة الخطوة الثانية (معلومات المقترض)
+ * @returns {boolean} - نجاح التحقق
+ */
+function validateBorrowerInfoStep() {
+    const borrowerCategory = document.getElementById('borrower-category').value;
+    const borrowerSalary = parseFloat(document.getElementById('borrower-salary').value);
+    const borrowerWorkplace = document.getElementById('borrower-workplace').value;
+    const borrowerWorkAddress = document.getElementById('borrower-work-address').value;
+    const borrowerServiceYears = parseFloat(document.getElementById('borrower-service-years').value);
+    
+    // التحقق من الحقول المطلوبة
+    if (isNaN(borrowerSalary) || borrowerSalary <= 0) {
+        showNotification('يرجى إدخال الراتب الشهري بشكل صحيح', 'error');
+        return false;
+    }
+    
+    // التحقق من الحد الأدنى للراتب
+    const minSalary = loanSettings.minSalary[borrowerCategory];
+    if (borrowerSalary < minSalary) {
+        showNotification(`الراتب الشهري أقل من الحد الأدنى المطلوب (${formatCurrency(minSalary)})`, 'error');
+        return false;
+    }
+    
+    if (!borrowerWorkplace || borrowerWorkplace.trim().length < 3) {
+        showNotification('يرجى إدخال مكان العمل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!borrowerWorkAddress || borrowerWorkAddress.trim().length < 5) {
+        showNotification('يرجى إدخال عنوان العمل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (isNaN(borrowerServiceYears) || borrowerServiceYears < 0) {
+        showNotification('يرجى إدخال مدة الخدمة بشكل صحيح', 'error');
+        return false;
+    }
+    
+    // التحقق من حد القرض نسبة إلى الراتب
+    const loanAmount = parseFloat(document.getElementById('loan-amount').value);
+    const maxLoanToSalaryRatio = loanSettings.maxLoanToSalaryRatio[borrowerCategory];
+    const maxLoanBasedOnSalary = borrowerSalary * maxLoanToSalaryRatio;
+    
+    if (loanAmount > maxLoanBasedOnSalary) {
+        showNotification(`مبلغ القرض يتجاوز الحد المسموح به بناءً على الراتب (${formatCurrency(maxLoanBasedOnSalary)})`, 'error');
+        return false;
+    }
+    
+    // التحقق من المستندات المطلوبة
+    if (loanSettings.requireAllDocuments) {
+        const requiredDocuments = [
+            { id: 'borrower-id-front', name: 'البطاقة الموحدة (الوجه الأمامي)' },
+            { id: 'borrower-id-back', name: 'البطاقة الموحدة (الوجه الخلفي)' },
+            { id: 'borrower-residence-front', name: 'بطاقة السكن (الوجه الأمامي)' },
+            { id: 'borrower-residence-back', name: 'بطاقة السكن (الوجه الخلفي)' },
+            { id: 'borrower-salary-certificate', name: 'تأييد بالراتب' },
+            { id: 'borrower-work-certificate', name: 'تأييد استمرارية بالعمل' }
+        ];
+        
+        for (const doc of requiredDocuments) {
+            const fileInput = document.getElementById(doc.id);
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                showNotification(`يرجى إرفاق ${doc.name}`, 'error');
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * التحقق من صحة الخطوة الثالثة (معلومات الكفيل)
+ * @returns {boolean} - نجاح التحقق
+ */
+function validateGuarantorInfoStep() {
+    const borrowerCategory = document.getElementById('borrower-category').value;
+    const guarantorName = document.getElementById('guarantor-name').value;
+    const guarantorPhone = document.getElementById('guarantor-phone').value;
+    const guarantorAddress = document.getElementById('guarantor-address').value;
+    const guarantorWorkplace = document.getElementById('guarantor-workplace').value;
+    const guarantorSalary = parseFloat(document.getElementById('guarantor-salary').value);
+    
+    // التحقق من الحقول المطلوبة للكفيل الأول
+    if (!guarantorName || guarantorName.trim().length < 3) {
+        showNotification('يرجى إدخال اسم الكفيل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!guarantorPhone || !/^\d{10,11}$/.test(guarantorPhone.replace(/\s/g, ''))) {
+        showNotification('يرجى إدخال رقم هاتف الكفيل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!guarantorAddress || guarantorAddress.trim().length < 5) {
+        showNotification('يرجى إدخال عنوان الكفيل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (!guarantorWorkplace || guarantorWorkplace.trim().length < 3) {
+        showNotification('يرجى إدخال مكان عمل الكفيل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    if (isNaN(guarantorSalary) || guarantorSalary <= 0) {
+        showNotification('يرجى إدخال راتب الكفيل بشكل صحيح', 'error');
+        return false;
+    }
+    
+    // التحقق من المستندات المطلوبة للكفيل الأول
+    if (loanSettings.requireAllDocuments) {
+        const requiredDocuments = [
+            { id: 'guarantor-id-front', name: 'البطاقة الموحدة للكفيل (الوجه الأمامي)' },
+            { id: 'guarantor-id-back', name: 'البطاقة الموحدة للكفيل (الوجه الخلفي)' },
+            { id: 'guarantor-residence-front', name: 'بطاقة سكن الكفيل (الوجه الأمامي)' },
+            { id: 'guarantor-residence-back', name: 'بطاقة سكن الكفيل (الوجه الخلفي)' },
+            { id: 'guarantor-salary-certificate', name: 'تأييد براتب الكفيل' }
+        ];
+        
+        for (const doc of requiredDocuments) {
+            const fileInput = document.getElementById(doc.id);
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                showNotification(`يرجى إرفاق ${doc.name}`, 'error');
+                return false;
+            }
+        }
+    }
+    
+    // التحقق من الكفيل الثاني إذا كان مطلوباً
+    const requireSecondGuarantor = loanSettings.requireSecondGuarantor[borrowerCategory];
+    const hasSecondGuarantor = !document.getElementById('second-guarantor-section').classList.contains('hidden-section');
+    
+    if (requireSecondGuarantor && !hasSecondGuarantor) {
+        showNotification('يجب إضافة كفيل ثاني لهذا النوع من القروض', 'error');
+        return false;
+    }
+    
+    // التحقق من معلومات الكفيل الثاني إذا كان موجوداً
+    if (hasSecondGuarantor) {
+        const guarantor2Name = document.getElementById('guarantor2-name').value;
+        const guarantor2Phone = document.getElementById('guarantor2-phone').value;
+        const guarantor2Address = document.getElementById('guarantor2-address').value;
+        const guarantor2Workplace = document.getElementById('guarantor2-workplace').value;
+        const guarantor2Salary = parseFloat(document.getElementById('guarantor2-salary').value);
+        
+        if (!guarantor2Name || guarantor2Name.trim().length < 3) {
+            showNotification('يرجى إدخال اسم الكفيل الثاني بشكل صحيح', 'error');
+            return false;
+        }
+        
+        if (!guarantor2Phone || !/^\d{10,11}$/.test(guarantor2Phone.replace(/\s/g, ''))) {
+            showNotification('يرجى إدخال رقم هاتف الكفيل الثاني بشكل صحيح', 'error');
+            return false;
+        }
+        
+        if (!guarantor2Address || guarantor2Address.trim().length < 5) {
+            showNotification('يرجى إدخال عنوان الكفيل الثاني بشكل صحيح', 'error');
+            return false;
+        }
+        
+        if (!guarantor2Workplace || guarantor2Workplace.trim().length < 3) {
+            showNotification('يرجى إدخال مكان عمل الكفيل الثاني بشكل صحيح', 'error');
+            return false;
+        }
+        
+        if (isNaN(guarantor2Salary) || guarantor2Salary <= 0) {
+            showNotification('يرجى إدخال راتب الكفيل الثاني بشكل صحيح', 'error');
+            return false;
+        }
+        
+        // التحقق من المستندات المطلوبة للكفيل الثاني
+        if (loanSettings.requireAllDocuments) {
+            const requiredDocuments = [
+                { id: 'guarantor2-id-front', name: 'البطاقة الموحدة للكفيل الثاني (الوجه الأمامي)' },
+                { id: 'guarantor2-id-back', name: 'البطاقة الموحدة للكفيل الثاني (الوجه الخلفي)' },
+                { id: 'guarantor2-residence-front', name: 'بطاقة سكن الكفيل الثاني (الوجه الأمامي)' },
+                { id: 'guarantor2-residence-back', name: 'بطاقة سكن الكفيل الثاني (الوجه الخلفي)' },
+                { id: 'guarantor2-salary-certificate', name: 'تأييد براتب الكفيل الثاني' }
+            ];
+            
+            for (const doc of requiredDocuments) {
+                const fileInput = document.getElementById(doc.id);
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    showNotification(`يرجى إرفاق ${doc.name}`, 'error');
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * تحديث بيانات المراجعة في الخطوة الرابعة
+ */
+function updateLoanReviewData() {
+    // معلومات القرض الأساسية
+    const borrowerCategory = document.getElementById('borrower-category').value;
+    const borrowerName = document.getElementById('borrower-name').value;
+    const borrowerPhone = document.getElementById('borrower-phone').value;
+    const borrowerAddress = document.getElementById('borrower-address').value;
+    const loanAmount = parseFloat(document.getElementById('loan-amount').value);
+    const interestRate = parseFloat(document.getElementById('interest-rate').value);
+    const loanPeriod = parseInt(document.getElementById('loan-period').value);
+    
+    // تحديث عناصر المراجعة
+    document.getElementById('review-borrower-category').textContent = getCategoryName(borrowerCategory);
+    document.getElementById('review-borrower-name').textContent = borrowerName;
+    document.getElementById('review-borrower-phone').textContent = borrowerPhone;
+    document.getElementById('review-borrower-address').textContent = borrowerAddress;
+    document.getElementById('review-loan-amount').textContent = formatCurrency(loanAmount);
+    document.getElementById('review-interest-rate').textContent = `${interestRate}%`;
+    document.getElementById('review-loan-period').textContent = `${loanPeriod} شهر`;
+    
+    // حساب القسط الشهري وإجمالي المبلغ
+    const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanPeriod);
+    const totalAmount = loanAmount + (loanAmount * interestRate / 100 * loanPeriod / 12);
+    
+    document.getElementById('review-monthly-payment').textContent = formatCurrency(monthlyPayment);
+    document.getElementById('review-total-amount').textContent = formatCurrency(totalAmount);
+    
+    // معلومات الكفيل
+    const guarantorName = document.getElementById('guarantor-name').value;
+    document.getElementById('review-guarantor-name').textContent = guarantorName;
+    
+    // التحقق من المستندات
+    const documentsStatus = loanSettings.requireAllDocuments ? 'مكتملة' : 'قيد المراجعة';
+    document.getElementById('review-guarantor-documents').textContent = documentsStatus;
+    
+    // معلومات الكفيل الثاني
+    const secondGuarantorSection = document.getElementById('second-guarantor-section');
+    const hasSecondGuarantor = !secondGuarantorSection.classList.contains('hidden-section');
+    
+    if (hasSecondGuarantor) {
+        const guarantor2Name = document.getElementById('guarantor2-name').value;
+        document.getElementById('review-has-second-guarantor').textContent = guarantor2Name;
+    } else {
+        document.getElementById('review-has-second-guarantor').textContent = 'غير مضاف';
+    }
+}
+
+/**
+ * إعداد مستمعي الأحداث لحقول حساب القرض
+ */
+function setupLoanCalculationListeners() {
+    // حقول الحساب
+    const loanAmountInput = document.getElementById('loan-amount');
+    const interestRateInput = document.getElementById('interest-rate');
+    const loanPeriodInput = document.getElementById('loan-period');
+    
+    // ملخص القرض
+    const summaryAmount = document.getElementById('summary-amount');
+    const summaryInterest = document.getElementById('summary-interest');
+    const summaryTotal = document.getElementById('summary-total');
+    const summaryMonthly = document.getElementById('summary-monthly');
+    
+    // تحديث الملخص عند تغيير أي حقل
+    const updateLoanSummary = function() {
+        const loanAmount = parseFloat(loanAmountInput.value) || 0;
+        const interestRate = parseFloat(interestRateInput.value) || 0;
+        const loanPeriod = parseInt(loanPeriodInput.value) || 0;
+        
+        // حساب قيمة الفوائد
+        const interestValue = loanAmount * interestRate / 100 * loanPeriod / 12;
+        
+        // حساب إجمالي المبلغ
+        const totalAmount = loanAmount + interestValue;
+        
+        // حساب القسط الشهري
+        const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanPeriod);
+        
+        // تحديث عناصر الملخص
+        summaryAmount.textContent = formatCurrency(loanAmount);
+        summaryInterest.textContent = formatCurrency(interestValue);
+        summaryTotal.textContent = formatCurrency(totalAmount);
+        summaryMonthly.textContent = formatCurrency(monthlyPayment);
+    };
+    
+    // إضافة مستمعي الأحداث
+    if (loanAmountInput) loanAmountInput.addEventListener('input', updateLoanSummary);
+    if (interestRateInput) interestRateInput.addEventListener('input', updateLoanSummary);
+    if (loanPeriodInput) loanPeriodInput.addEventListener('input', updateLoanSummary);
+    
+    // التنفيذ الأولي
+    updateLoanSummary();
+}
+
+/**
+ * تحديث حدود القرض بناءً على فئة المقترض
+ * @param {string} category - فئة المقترض
+ */
+function updateLoanLimitsBasedOnCategory(category) {
+    if (!category) return;
+    
+    // تحديث الحد الأقصى لمبلغ القرض
+    const maxLoanAmount = loanSettings.maxLoanAmount[category];
+    const maxLoanHint = document.getElementById('max-loan-hint');
+    if (maxLoanHint) {
+        maxLoanHint.textContent = `الحد الأقصى: ${formatCurrency(maxLoanAmount)}`;
+    }
+    
+    // تحديث الحد الأدنى للراتب
+    const minSalary = loanSettings.minSalary[category];
+    const minSalaryHint = document.getElementById('min-salary-hint');
+    if (minSalaryHint) {
+        minSalaryHint.textContent = `الحد الأدنى: ${formatCurrency(minSalary)}`;
+    }
+    
+    // تحديث نسبة الفائدة الافتراضية
+    const defaultInterestRate = loanSettings.defaultInterestRate[category];
+    const interestRateInput = document.getElementById('interest-rate');
+    if (interestRateInput && (!interestRateInput.value || interestRateInput.value === '0')) {
+        interestRateInput.value = defaultInterestRate;
+    }
+    
+    // تحديث المدة الافتراضية للقرض
+    const defaultLoanPeriod = loanSettings.defaultLoanPeriod[category];
+    const loanPeriodInput = document.getElementById('loan-period');
+    if (loanPeriodInput && (!loanPeriodInput.value || loanPeriodInput.value === '0')) {
+        loanPeriodInput.value = defaultLoanPeriod;
+    }
+    
+    // تحديث ملخص القرض
+    const updateEvent = new Event('input');
+    const loanAmountInput = document.getElementById('loan-amount');
+    if (loanAmountInput) loanAmountInput.dispatchEvent(updateEvent);
+    
+    // التحقق من الكفيل الثاني الإجباري
+    const requireSecondGuarantor = loanSettings.requireSecondGuarantor[category];
+    const addSecondGuarantorBtn = document.getElementById('add-second-guarantor-btn');
+    
+    if (addSecondGuarantorBtn) {
+        if (requireSecondGuarantor) {
+            addSecondGuarantorBtn.innerHTML = '<i class="fas fa-plus-circle"></i> إضافة كفيل ثاني (إلزامي)';
+            addSecondGuarantorBtn.classList.add('required-action');
+        } else {
+            addSecondGuarantorBtn.innerHTML = '<i class="fas fa-plus-circle"></i> إضافة كفيل ثاني';
+            addSecondGuarantorBtn.classList.remove('required-action');
+        }
+    }
+}
+
+/**
+ * إعداد مستمعي الأحداث لمعاينة الملفات
+ */
+function setupFilePreviewListeners() {
+    // العثور على جميع حقول تحميل الملفات
+    const fileInputs = document.querySelectorAll('.file-input');
+    
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const previewId = this.id + '-preview';
+            const previewContainer = document.getElementById(previewId);
+            
+            if (!previewContainer) return;
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // التحقق من نوع الملف
+                if (file.type.match('image.*')) {
+                    // معاينة الصورة
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" alt="معاينة الملف">`;
+                        previewContainer.classList.add('has-preview');
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    // معاينة PDF
+                    previewContainer.innerHTML = `
+                        <div class="pdf-preview">
+                            <i class="fas fa-file-pdf"></i>
+                            <div class="file-info">
+                                <span>${file.name}</span>
+                                <span>${(file.size / 1024).toFixed(2)} KB</span>
+                            </div>
+                        </div>
+                    `;
+                    previewContainer.classList.add('has-preview');
+                } else {
+                    // معاينة ملف عادي
+                    previewContainer.innerHTML = `
+                        <div class="file-preview-generic">
+                            <i class="fas fa-file"></i>
+                            <div class="file-info">
+                                <span>${file.name}</span>
+                                <span>${(file.size / 1024).toFixed(2)} KB</span>
+                            </div>
+                        </div>
+                    `;
+                    previewContainer.classList.add('has-preview');
+                }
+            } else {
+                // إزالة المعاينة
+                previewContainer.innerHTML = '';
+                previewContainer.classList.remove('has-preview');
+            }
+        });
+    });
+}
+
+/**
+ * إعداد مستمعي الأحداث للكفيل الثاني
+ */
+function setupSecondGuarantorListeners() {
+    // أزرار إضافة/إزالة الكفيل الثاني
+    const addSecondGuarantorBtn = document.getElementById('add-second-guarantor-btn');
+    const removeSecondGuarantorBtn = document.getElementById('remove-second-guarantor-btn');
+    const secondGuarantorSection = document.getElementById('second-guarantor-section');
+    
+    if (addSecondGuarantorBtn && secondGuarantorSection) {
+        addSecondGuarantorBtn.addEventListener('click', function() {
+            // إظهار قسم الكفيل الثاني
+            secondGuarantorSection.classList.remove('hidden-section');
+            // إخفاء زر الإضافة
+            this.style.display = 'none';
+        });
+    }
+    
+    if (removeSecondGuarantorBtn && secondGuarantorSection) {
+        removeSecondGuarantorBtn.addEventListener('click', function() {
+            // إخفاء قسم الكفيل الثاني
+            secondGuarantorSection.classList.add('hidden-section');
+            // إظهار زر الإضافة
+            if (addSecondGuarantorBtn) {
+                addSecondGuarantorBtn.style.display = 'block';
+            }
+            
+            // مسح البيانات المدخلة
+            const inputs = secondGuarantorSection.querySelectorAll('input');
+            inputs.forEach(input => {
+                if (input.type === 'text' || input.type === 'tel' || input.type === 'number') {
+                    input.value = '';
+                } else if (input.type === 'file') {
+                    input.value = '';
+                    const previewId = input.id + '-preview';
+                    const previewContainer = document.getElementById(previewId);
+                    if (previewContainer) {
+                        previewContainer.innerHTML = '';
+                        previewContainer.classList.remove('has-preview');
+                    }
+                }
+            });
+        });
+    }
+}
+
+/**
+ * تقديم طلب القرض
+ */
+function submitLoanApplication() {
+    // التحقق من الموافقة على الشروط
+    const agreementCheckbox = document.getElementById('loan-agreement');
+    if (!agreementCheckbox || !agreementCheckbox.checked) {
+        showNotification('يجب الموافقة على شروط وأحكام القرض', 'error');
+        return;
+    }
+    
+    // جمع بيانات القرض
+    const loanData = collectLoanFormData();
+    
+    // إضافة حقول إضافية
+    loanData.id = generateUniqueId();
+    loanData.status = 'pending';
+    loanData.createdAt = new Date().toISOString();
+    
+    // رفع المستندات المرفقة
+    uploadLoanDocuments(loanData).then(updatedLoanData => {
+        // إضافة القرض إلى القائمة
+        if (addLoan(updatedLoanData)) {
+            // إظهار رسالة النجاح
+            showNotification('تم إرسال طلب القرض بنجاح', 'success');
+            
+            // إعادة تعيين النموذج
+            resetLoanForm();
+            
+            // الانتقال إلى صفحة القروض
+            setActivePage('loans');
+        } else {
+            showNotification('حدث خطأ أثناء إرسال طلب القرض', 'error');
+        }
+    }).catch(error => {
+        console.error('خطأ في رفع مستندات القرض:', error);
+        showNotification('حدث خطأ أثناء رفع المستندات', 'error');
+    });
+}
+
+/**
+ * جمع بيانات نموذج القرض
+ * @returns {Object} - بيانات القرض
+ */
+function collectLoanFormData() {
+    // بيانات القرض الأساسية
+    const loanData = {
+        borrowerCategory: document.getElementById('borrower-category').value,
+        borrowerName: document.getElementById('borrower-name').value,
+        borrowerPhone: document.getElementById('borrower-phone').value,
+        borrowerAltPhone: document.getElementById('borrower-alt-phone').value,
+        borrowerIdNumber: document.getElementById('borrower-id-number').value,
+        borrowerAddress: document.getElementById('borrower-address').value,
+        loanAmount: parseFloat(document.getElementById('loan-amount').value),
+        interestRate: parseFloat(document.getElementById('interest-rate').value),
+        loanPeriod: parseInt(document.getElementById('loan-period').value),
+        
+        // بيانات المقترض
+        borrowerSalary: parseFloat(document.getElementById('borrower-salary').value),
+        borrowerWorkplace: document.getElementById('borrower-workplace').value,
+        borrowerWorkAddress: document.getElementById('borrower-work-address').value,
+        borrowerServiceYears: parseFloat(document.getElementById('borrower-service-years').value),
+        
+        // بيانات الكفيل الأول
+        guarantorName: document.getElementById('guarantor-name').value,
+        guarantorPhone: document.getElementById('guarantor-phone').value,
+        guarantorAltPhone: document.getElementById('guarantor-alt-phone').value,
+        guarantorAddress: document.getElementById('guarantor-address').value,
+        guarantorWorkplace: document.getElementById('guarantor-workplace').value,
+        guarantorSalary: parseFloat(document.getElementById('guarantor-salary').value)
+    };
+    
+    // التحقق من وجود كفيل ثاني
+    const secondGuarantorSection = document.getElementById('second-guarantor-section');
+    const hasSecondGuarantor = secondGuarantorSection && !secondGuarantorSection.classList.contains('hidden-section');
+    
+    loanData.hasSecondGuarantor = hasSecondGuarantor;
+    
+    if (hasSecondGuarantor) {
+        // بيانات الكفيل الثاني
+        loanData.guarantor2Name = document.getElementById('guarantor2-name').value;
+        loanData.guarantor2Phone = document.getElementById('guarantor2-phone').value;
+        loanData.guarantor2AltPhone = document.getElementById('guarantor2-alt-phone').value;
+        loanData.guarantor2Address = document.getElementById('guarantor2-address').value;
+        loanData.guarantor2Workplace = document.getElementById('guarantor2-workplace').value;
+        loanData.guarantor2Salary = parseFloat(document.getElementById('guarantor2-salary').value);
+    }
+    
+    return loanData;
+}
+
+/**
+ * رفع مستندات القرض
+ * @param {Object} loanData - بيانات القرض
+ * @returns {Promise} - وعد بالانتهاء
+ */
+async function uploadLoanDocuments(loanData) {
+    // نسخة من بيانات القرض
+    const updatedLoanData = { ...loanData };
+    
+    // قائمة المستندات للرفع
+    const documents = [
+        { field: 'borrowerIdFront', inputId: 'borrower-id-front' },
+        { field: 'borrowerIdBack', inputId: 'borrower-id-back' },
+        { field: 'borrowerResidenceFront', inputId: 'borrower-residence-front' },
+        { field: 'borrowerResidenceBack', inputId: 'borrower-residence-back' },
+        { field: 'borrowerSalaryCertificate', inputId: 'borrower-salary-certificate' },
+        { field: 'borrowerWorkCertificate', inputId: 'borrower-work-certificate' },
+        
+        { field: 'guarantorIdFront', inputId: 'guarantor-id-front' },
+        { field: 'guarantorIdBack', inputId: 'guarantor-id-back' },
+        { field: 'guarantorResidenceFront', inputId: 'guarantor-residence-front' },
+        { field: 'guarantorResidenceBack', inputId: 'guarantor-residence-back' },
+        { field: 'guarantorSalaryCertificate', inputId: 'guarantor-salary-certificate' },
+        { field: 'guarantorWorkCertificate', inputId: 'guarantor-work-certificate' }
+    ];
+    
+    // إضافة مستندات الكفيل الثاني إذا كان موجوداً
+    if (loanData.hasSecondGuarantor) {
+        documents.push(
+            { field: 'guarantor2IdFront', inputId: 'guarantor2-id-front' },
+            { field: 'guarantor2IdBack', inputId: 'guarantor2-id-back' },
+            { field: 'guarantor2ResidenceFront', inputId: 'guarantor2-residence-front' },
+            { field: 'guarantor2ResidenceBack', inputId: 'guarantor2-residence-back' },
+            { field: 'guarantor2SalaryCertificate', inputId: 'guarantor2-salary-certificate' },
+            { field: 'guarantor2WorkCertificate', inputId: 'guarantor2-work-certificate' }
+        );
+    }
+    
+    // رفع المستندات بالتتابع
+    for (const doc of documents) {
+        const fileInput = document.getElementById(doc.inputId);
+        
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const fileName = `${loanData.id}_${doc.field}.${fileExtension}`;
+            const filePath = `loans/${loanData.id}/${fileName}`;
+            
+            try {
+                // رفع الملف
+                const fileUrl = await uploadFileToStorage(file, filePath);
+                
+                // تحديث البيانات
+                updatedLoanData[doc.field] = fileUrl;
+            } catch (error) {
+                console.error(`خطأ في رفع الملف ${doc.inputId}:`, error);
+            }
+        }
+    }
+    
+    return updatedLoanData;
+}
+
+/**
+ * إعادة تعيين نموذج القرض
+ */
+function resetLoanForm() {
+    // إعادة تعيين النموذج
+    document.querySelectorAll('.loan-form').forEach(form => {
+        form.reset();
+    });
+    
+    // إخفاء قسم الكفيل الثاني
+    const secondGuarantorSection = document.getElementById('second-guarantor-section');
+    if (secondGuarantorSection) {
+        secondGuarantorSection.classList.add('hidden-section');
+    }
+    
+    // إظهار زر إضافة الكفيل الثاني
+    const addSecondGuarantorBtn = document.getElementById('add-second-guarantor-btn');
+    if (addSecondGuarantorBtn) {
+        addSecondGuarantorBtn.style.display = 'block';
+    }
+    
+    // مسح معاينة الملفات
+    document.querySelectorAll('.file-preview').forEach(preview => {
+        preview.innerHTML = '';
+        preview.classList.remove('has-preview');
+    });
+    
+    // العودة إلى الخطوة الأولى
+    goToLoanStep(1);
+}
+
+/**
+ * إعداد مستمعي أحداث صفحة الإعدادات
+ */
+function setupLoanSettingsEventListeners() {
+    // تبديل التبويبات
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // إزالة الكلاس النشط من جميع الأزرار والمحتويات
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // إضافة الكلاس النشط للزر المحدد
+            this.classList.add('active');
+            
+            // إظهار المحتوى المناسب
+            const tabId = this.getAttribute('data-tab');
+            const tabContent = document.querySelector(`.tab-content[data-tab="${tabId}"]`);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        });
+    });
+    
+    // حفظ الإعدادات
+    const saveSettingsBtn = document.getElementById('save-loan-settings-btn');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveLoanSettingsFromForm);
+    }
+    
+    // استعادة الإعدادات الافتراضية
+    const resetSettingsBtn = document.getElementById('reset-loan-settings-btn');
+    if (resetSettingsBtn) {
+        resetSettingsBtn.addEventListener('click', function() {
+            if (confirm('هل أنت متأكد من استعادة الإعدادات الافتراضية؟')) {
+                resetLoanSettings();
+            }
+        });
+    }
+    
+    // تحديث حالة إعدادات Firebase
+    const useFirebaseDB = document.getElementById('settings-use-firebase-db');
+    const useFirebaseStorage = document.getElementById('settings-use-firebase-storage');
+    const firebaseConfigSection = document.getElementById('firebase-config-section');
+    
+    function updateFirebaseVisibility() {
+        if (useFirebaseDB.checked || useFirebaseStorage.checked) {
+            firebaseConfigSection.style.display = 'block';
+        } else {
+            firebaseConfigSection.style.display = 'none';
+        }
+    }
+    
+    if (useFirebaseDB && useFirebaseStorage && firebaseConfigSection) {
+        useFirebaseDB.addEventListener('change', updateFirebaseVisibility);
+        useFirebaseStorage.addEventListener('change', updateFirebaseVisibility);
+        updateFirebaseVisibility();
+    }
+    
+    // تحميل الإعدادات الحالية إلى النموذج
+    loadLoanSettingsToForm();
+}
+
+/**
+ * تحميل إعدادات القروض إلى النموذج
+ */
+function loadLoanSettingsToForm() {
+    // الإعدادات العامة
+    document.getElementById('settings-loan-notifications').checked = loanSettings.enableNotifications;
+    document.getElementById('settings-require-all-documents').checked = loanSettings.requireAllDocuments;
+    
+    // إعدادات الفئات
+    const categories = ['kasb', 'employee', 'military', 'social'];
+    
+    categories.forEach(category => {
+        // الحد الأقصى لمبلغ القرض
+        document.getElementById(`settings-${category}-max-amount`).value = loanSettings.maxLoanAmount[category];
+        
+        // نسبة الفائدة الافتراضية
+        document.getElementById(`settings-${category}-interest-rate`).value = loanSettings.defaultInterestRate[category];
+        
+        // المدة الافتراضية للقرض
+        document.getElementById(`settings-${category}-period`).value = loanSettings.defaultLoanPeriod[category];
+        
+        // الحد الأدنى للراتب
+        document.getElementById(`settings-${category}-min-salary`).value = loanSettings.minSalary[category];
+        
+        // نسبة القرض للراتب القصوى
+        document.getElementById(`settings-${category}-loan-salary-ratio`).value = loanSettings.maxLoanToSalaryRatio[category];
+        
+        // كفيل ثاني إجباري
+        document.getElementById(`settings-${category}-second-guarantor`).checked = loanSettings.requireSecondGuarantor[category];
+    });
+    
+    // إعدادات Firebase
+    document.getElementById('settings-use-firebase-db').checked = loanSettings.useFirebaseDB;
+    document.getElementById('settings-use-firebase-storage').checked = loanSettings.useFirebaseStorage;
+    
+    document.getElementById('settings-firebase-api-key').value = loanSettings.firebaseConfig.apiKey || '';
+    document.getElementById('settings-firebase-auth-domain').value = loanSettings.firebaseConfig.authDomain || '';
+    document.getElementById('settings-firebase-project-id').value = loanSettings.firebaseConfig.projectId || '';
+    document.getElementById('settings-firebase-storage-bucket').value = loanSettings.firebaseConfig.storageBucket || '';
+    document.getElementById('settings-firebase-messaging-sender-id').value = loanSettings.firebaseConfig.messagingSenderId || '';
+    document.getElementById('settings-firebase-app-id').value = loanSettings.firebaseConfig.appId || '';
+}
+
+/**
+ * حفظ إعدادات القروض من النموذج
+ */
+function saveLoanSettingsFromForm() {
+    // نسخة من الإعدادات الحالية
+    const newSettings = { ...loanSettings };
+    
+    // الإعدادات العامة
+    newSettings.enableNotifications = document.getElementById('settings-loan-notifications').checked;
+    newSettings.requireAllDocuments = document.getElementById('settings-require-all-documents').checked;
+    
+    // إعدادات الفئات
+    const categories = ['kasb', 'employee', 'military', 'social'];
+    
+    categories.forEach(category => {
+        // الحد الأقصى لمبلغ القرض
+        newSettings.maxLoanAmount[category] = parseFloat(document.getElementById(`settings-${category}-max-amount`).value);
+        
+        // نسبة الفائدة الافتراضية
+        newSettings.defaultInterestRate[category] = parseFloat(document.getElementById(`settings-${category}-interest-rate`).value);
+        
+        // المدة الافتراضية للقرض
+        newSettings.defaultLoanPeriod[category] = parseInt(document.getElementById(`settings-${category}-period`).value);
+        
+        // الحد الأدنى للراتب
+        newSettings.minSalary[category] = parseFloat(document.getElementById(`settings-${category}-min-salary`).value);
+        
+        // نسبة القرض للراتب القصوى
+        newSettings.maxLoanToSalaryRatio[category] = parseFloat(document.getElementById(`settings-${category}-loan-salary-ratio`).value);
+        
+        // كفيل ثاني إجباري
+        newSettings.requireSecondGuarantor[category] = document.getElementById(`settings-${category}-second-guarantor`).checked;
+    });
+    
+    // إعدادات Firebase
+    newSettings.useFirebaseDB = document.getElementById('settings-use-firebase-db').checked;
+    newSettings.useFirebaseStorage = document.getElementById('settings-use-firebase-storage').checked;
+    
+    newSettings.firebaseConfig = {
+        apiKey: document.getElementById('settings-firebase-api-key').value,
+        authDomain: document.getElementById('settings-firebase-auth-domain').value,
+        projectId: document.getElementById('settings-firebase-project-id').value,
+        storageBucket: document.getElementById('settings-firebase-storage-bucket').value,
+        messagingSenderId: document.getElementById('settings-firebase-messaging-sender-id').value,
+        appId: document.getElementById('settings-firebase-app-id').value
+    };
+    
+    // تطبيق الإعدادات الجديدة
+    Object.assign(loanSettings, newSettings);
+    
+    // حفظ الإعدادات
+    if (saveLoanSettings()) {
+        showNotification('تم حفظ إعدادات القروض بنجاح', 'success');
+    } else {
+        showNotification('حدث خطأ أثناء حفظ الإعدادات', 'error');
+    }
+}
+
+/**
+ * إعادة تعيين إعدادات القروض إلى الافتراضية
+ */
+function resetLoanSettings() {
+    // إعدادات القروض الافتراضية
+    const defaultSettings = {
+        enableNotifications: true,           // تفعيل الإشعارات
+        maxLoanAmount: {                     // الحد الأقصى لمبلغ القرض حسب الفئة
+            kasb: 10000000,                  // كاسب
+            employee: 5000000,               // موظف
+            military: 7000000,               // عسكري
+            social: 3000000                  // رعاية اجتماعية
+        },
+        defaultInterestRate: {               // نسبة الفائدة الافتراضية حسب الفئة
+            kasb: 8,                         // كاسب
+            employee: 6,                     // موظف
+            military: 5,                     // عسكري
+            social: 4                        // رعاية اجتماعية
+        },
+        defaultLoanPeriod: {                 // المدة الافتراضية للقرض (بالأشهر)
+            kasb: 24,                        // كاسب
+            employee: 36,                    // موظف
+            military: 36,                    // عسكري
+            social: 24                       // رعاية اجتماعية
+        },
+        requireSecondGuarantor: {            // هل يتطلب كفيل ثاني إجباري؟
+            kasb: true,                      // كاسب
+            employee: false,                 // موظف
+            military: false,                 // عسكري
+            social: true                     // رعاية اجتماعية
+        },
+        minSalary: {                         // الحد الأدنى للراتب
+            kasb: 500000,                    // كاسب
+            employee: 500000,                // موظف
+            military: 600000,                // عسكري
+            social: 300000                   // رعاية اجتماعية
+        },
+        maxLoanToSalaryRatio: {              // نسبة القرض للراتب القصوى
+            kasb: 15,                        // كاسب (القرض يمكن أن يكون 15 ضعف الراتب)
+            employee: 12,                    // موظف
+            military: 12,                    // عسكري
+            social: 8                        // رعاية اجتماعية
+        },
+        autoSaveEnabled: true,               // حفظ تلقائي
+        requireAllDocuments: true,           // طلب جميع المستندات إجباري
+        useFirebaseStorage: false,           // استخدام تخزين Firebase
+        useFirebaseDB: false,                // استخدام قاعدة بيانات Firebase
+        firebaseConfig: {                    // إعدادات Firebase (يجب تعديلها)
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        }
+    };
+    
+    // تطبيق الإعدادات الافتراضية
+    Object.assign(loanSettings, defaultSettings);
+    
+    // حفظ الإعدادات
+    if (saveLoanSettings()) {
+        showNotification('تم استعادة إعدادات القروض الافتراضية بنجاح', 'success');
+        
+        // تحميل الإعدادات الافتراضية إلى النموذج
+        loadLoanSettingsToForm();
+    } else {
+        showNotification('حدث خطأ أثناء استعادة الإعدادات الافتراضية', 'error');
+    }
+}
+
+/**
+ * عرض إشعار في النظام
+ * @param {string} message - نص الإشعار
+ * @param {string} type - نوع الإشعار (success, error, warning, info)
+ */
+function showNotification(message, type = 'info') {
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+    } else {
+        const notificationContainer = document.querySelector('.notification-container');
+        
+        if (!notificationContainer) {
+            const container = document.createElement('div');
+            container.className = 'notification-container';
+            document.body.appendChild(container);
+        }
+        
+        // إنشاء الإشعار
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type} animate__animated animate__fadeInUp`;
+        
+        // اختيار أيقونة الإشعار
+        let icon = 'info-circle';
+        
+        switch (type) {
+            case 'success':
+                icon = 'check-circle';
+                break;
+            case 'error':
+                icon = 'times-circle';
+                break;
+            case 'warning':
+                icon = 'exclamation-triangle';
+                break;
+        }
+        
+        // محتوى الإشعار
+        notification.innerHTML = `
+            <div class="notification-icon">
+                <i class="fas fa-${icon}"></i>
+            </div>
+            <div class="notification-content">
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // إضافة الإشعار إلى الحاوية
+        const container = document.querySelector('.notification-container');
+        container.appendChild(notification);
+        
+        // زر إغلاق الإشعار
+        const closeButton = notification.querySelector('.notification-close');
+        closeButton.addEventListener('click', function() {
+            notification.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        });
+        
+        // إزالة الإشعار تلقائياً بعد فترة
+        setTimeout(() => {
+            notification.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 5000);
+    }
+}
+
+/**
+ * تقسيم العناصر إلى صفحات
+ * @param {Array} items - العناصر
+ * @param {number} currentPage - الصفحة الحالية
+ * @param {number} perPage - عدد العناصر في الصفحة
+ * @returns {Array} - العناصر في الصفحة الحالية
+ */
+function paginateItems(items, currentPage, perPage) {
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    
+    return items.slice(startIndex, endIndex);
+}
+
+/**
+ * تحديث عناصر الترقيم
+ * @param {string} paginationId - معرف حاوية الترقيم
+ * @param {Array} items - العناصر
+ * @param {number} currentPage - الصفحة الحالية
+ * @param {number} perPage - عدد العناصر في الصفحة
+ */
+function updatePagination(paginationId, items, currentPage, perPage) {
+    const paginationContainer = document.getElementById(paginationId);
+    
+    if (!paginationContainer) return;
+    
+    // حساب عدد الصفحات
+    const totalPages = Math.ceil(items.length / perPage);
+    
+    // إذا كانت هناك صفحة واحدة فقط، إخفاء الترقيم
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    // إنشاء أزرار الترقيم
+    let paginationHTML = '';
+    
+    // زر الصفحة السابقة
+    paginationHTML += `
+        <button class="pagination-btn prev-btn ${currentPage === 1 ? 'disabled' : ''}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+    
+    // زر الصفحة الأولى
+    paginationHTML += `
+        <button class="pagination-btn page-btn ${currentPage === 1 ? 'active' : ''}" data-page="1">1</button>
+    `;
+    
+    // النقاط الأولى
+    if (currentPage > 3) {
+        paginationHTML += '<span class="pagination-dots">...</span>';
+    }
+    
+    // الصفحات الوسطى
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        paginationHTML += `
+            <button class="pagination-btn page-btn ${currentPage === i ? 'active' : ''}" data-page="${i}">${i}</button>
+        `;
+    }
+    
+    // النقاط الثانية
+    if (currentPage < totalPages - 2) {
+        paginationHTML += '<span class="pagination-dots">...</span>';
+    }
+    
+    // زر الصفحة الأخيرة (إذا كان هناك أكثر من صفحة واحدة)
+    if (totalPages > 1) {
+        paginationHTML += `
+            <button class="pagination-btn page-btn ${currentPage === totalPages ? 'active' : ''}" data-page="${totalPages}">${totalPages}</button>
+        `;
+    }
+    
+    // زر الصفحة التالية
+    paginationHTML += `
+        <button class="pagination-btn next-btn ${currentPage === totalPages ? 'disabled' : ''}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+    
+    // تحديث المحتوى
+    paginationContainer.innerHTML = paginationHTML;
+    
+    // إضافة مستمعي الأحداث لأزرار الترقيم
+    setupPaginationEventListeners(paginationId);
+}
+
+/**
+ * إعداد مستمعي أحداث أزرار الترقيم
+ * @param {string} paginationId - معرف حاوية الترقيم
+ */
+function setupPaginationEventListeners(paginationId) {
+    // الحصول على أزرار الترقيم
+    const paginationButtons = document.querySelectorAll(`#${paginationId} .pagination-btn`);
+    
+    // إضافة مستمعي الأحداث
+    paginationButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.classList.contains('disabled')) return;
+            
+            // الحصول على رقم الصفحة
+            const page = parseInt(this.getAttribute('data-page'));
+            
+            // تحديث الصفحة الحالية حسب نوع الصفحة
+            switch (paginationId) {
+                case 'loans-pagination':
+                    currentLoanPage = page;
+                    renderLoansTable();
+                    break;
+                case 'approved-loans-pagination':
+                    renderApprovedLoansTable();
+                    break;
+                case 'rejected-loans-pagination':
+                    renderRejectedLoansTable();
+                    break;
+            }
+        });
+    });
+}
+
+/**
+ * فتح نافذة منبثقة
+ * @param {string} modalId - معرف النافذة
+ */
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    
+    // تأخير صغير لإضافة الفئة المتحركة
+    setTimeout(() => {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent) {
+            modalContent.classList.add('animate__fadeInUp');
+            modalContent.classList.remove('animate__fadeOutDown');
+        }
+    }, 10);
+}
+
+/**
+ * إغلاق نافذة منبثقة
+ * @param {string} modalId - معرف النافذة
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    
+    if (!modal) return;
+    
+    // إضافة فئة الخروج بالتأثير
+    const modalContent = modal.querySelector('.modal');
+    if (modalContent) {
+        modalContent.classList.remove('animate__fadeInUp');
+        modalContent.classList.add('animate__fadeOutDown');
+    }
+    
+    // تأخير قبل إخفاء النافذة
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+/**
+ * تعيين الصفحة النشطة
+ * @param {string} pageId - معرف الصفحة
+ */
+function setActivePage(pageId) {
+    // إخفاء جميع الصفحات
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
+    
+    // إظهار الصفحة المطلوبة
+    const activePage = document.getElementById(`${pageId}-page`);
+    if (activePage) {
+        activePage.style.display = 'block';
+    }
+    
+    // تحديث القائمة الجانبية
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+        
+        // في حالة الشاشات الصغيرة
+        if (window.innerWidth < 992) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('expanded')) {
+                sidebar.classList.remove('expanded');
+            }
+        }
+    }
+    
+    // تحديث عنوان الصفحة
+    updatePageTitle(pageId);
+    
+    // تحديث البيانات حسب الصفحة
+    switch (pageId) {
+        case 'loans':
+            renderLoansTable();
+            updateLoanDashboardStats();
+            break;
+        case 'approved-loans':
+            renderApprovedLoansTable();
+            break;
+        case 'rejected-loans':
+            renderRejectedLoansTable();
+            break;
+        case 'add-loan':
+            resetLoanForm();
+            break;
+    }
+}
+
+/**
+ * تحديث عنوان الصفحة
+ * @param {string} pageId - معرف الصفحة
+ */
+function updatePageTitle(pageId) {
+    let title = '';
+    
+    switch (pageId) {
+        case 'loans':
+            title = 'القروض النشطة';
+            break;
+        case 'add-loan':
+            title = 'إضافة قرض جديد';
+            break;
+        case 'approved-loans':
+            title = 'القروض الموافق عليها';
+            break;
+        case 'rejected-loans':
+            title = 'القروض المرفوضة';
+            break;
+        case 'loan-settings':
+            title = 'إعدادات نظام القروض';
+            break;
+        default:
+            return;
+    }
+    
+    // تحديث عنوان الصفحة
+    document.title = `${title} - نظام الإدارة`;
+    
+    // تحديث عنوان الصفحة في الواجهة
+    const pageTitle = document.querySelector('.page-title');
+    if (pageTitle) {
+        pageTitle.textContent = title;
+    }
+}
+
+// تصدير الوظائف والمتغيرات اللازمة
+window.LoanSystem = {
+    initLoanSystem,
+    addLoan,
+    updateLoan,
+    approveLoan,
+    rejectLoan,
+    deleteLoan,
+    calculateMonthlyPayment,
+    createInstallmentsForLoan,
+    renderLoansTable,
+    renderApprovedLoansTable,
+    renderRejectedLoansTable,
+    setupLoanEventListeners,
+    setActivePage
+};
+
+// تهيئة النظام عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('تهيئة نظام القروض...');
+    initLoanSystem();
+    
+    // تحديث علامات العملة
+    updateCurrencyDisplay();
+});
+
+// إعلان النظام عالمياً
+if (typeof window.loadedModules === 'undefined') {
+    window.loadedModules = {};
+}
+window.loadedModules.loanSystem = true;
+
+})();
