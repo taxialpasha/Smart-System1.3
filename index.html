@@ -1227,43 +1227,6 @@
     </div>
 
 
-
-<script>
-    // تهيئة نظام القروض عند تحميل الصفحة
-    document.addEventListener('DOMContentLoaded', function() {
-        // التحقق من تحميل نظام القروض
-        if (typeof initLoanSystem === 'function') {
-            console.log('تهيئة نظام القروض...');
-            
-            // تشغيل نظام القروض
-            initLoanSystem();
-            
-            // إضافة عناصر القروض إلى القائمة الجانبية
-            addLoanNavItems();
-            
-            // إنشاء صفحات القروض
-            createLoanPages();
-            
-            // تطبيق مظهر نظام القروض
-            applyLoanSystemTheme();
-            
-            // تحديث شارات الأرقام
-            updateNavBadges();
-            
-            // إعداد أحداث التنقل
-            setupLoanNavigationEvents();
-            
-            console.log('تم تهيئة نظام القروض بنجاح');
-        } else {
-            console.error('خطأ: نظام القروض غير موجود');
-            // تحميل السكربتات اللازمة إذا لم تكن موجودة
-            loadLoanScripts();
-        }
-    });
-</script>
-
-
-
     <script>
         async function fetchExchangeRate() {
             const display = document.getElementById("usd-iqd");
@@ -1353,7 +1316,13 @@
     <script src="permissions-monitor.js"></script>
     <script src="investor-card-system.js"></script>
     <script src="card-qr-generator.js"></script>
-  
+   
+
+   
+   
+   
+    
+
     <!-- نظام إعادة تعيين الأرباح -->
     <script src="profit-reset.js"></script>
 
@@ -1378,17 +1347,23 @@
     
     <script src="print-salaries.js"></script>
     
+    <!-- إضافة ملف إصلاح أزرار الشريط الجانبي -->
+<script src="fix-sidebar-buttons.js"></script>
+
+<!-- إضافة ملف مزامنة العمليات مع الصادرات والواردات -->
+<script src="transactions-sync-fix.js"></script>
+    <script src="buttons-functionality-fix.js"></script>
     
     <!-- نظام إدارة الأقساط باستخدام Firebase -->
    
     
+<script src="loans-management-system.js"></script>
 
 
-<script src="Loan and installment system"></script>
 
 
 
-    <!--  <script src="smart-search-assistant.js"></script>
+    <!--  <script src="buttons-functionality-fix.js"></script>
 
 <script src="aut2h-integration.js"></script>-->
 
